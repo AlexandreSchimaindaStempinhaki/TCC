@@ -58,7 +58,7 @@ class _LoginPageState extends State<LoginPage> {
                     label: 'Email',
                     hintText: 'demo@gmail.com',
                     controller: _emailController,
-                    prefixIcon: Icons.email_outlined,
+                    // prefixIcon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 20),
@@ -67,7 +67,7 @@ class _LoginPageState extends State<LoginPage> {
                     label: 'Senha',
                     hintText: '••••••••',
                     controller: _passwordController,
-                    prefixIcon: Icons.lock_outline_rounded,
+                    // prefixIcon: Icons.lock_outline_rounded,
                     obscureText: _obscurePassword,
                     suffixIcon: IconButton(
                       icon: Icon(

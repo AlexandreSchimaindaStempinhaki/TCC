@@ -79,7 +79,7 @@ class _SignupPageState extends State<SignupPage> {
                     label: 'Nome Completo',
                     hintText: 'Seu Nome',
                     controller: _nameController,
-                    prefixIcon: Icons.person_outline_rounded,
+                    // prefixIcon: Icons.person_outline_rounded,
                   ),
                   const SizedBox(height: 16),
 
@@ -87,7 +87,7 @@ class _SignupPageState extends State<SignupPage> {
                     label: 'Email',
                     hintText: 'demo@gmail.com',
                     controller: _emailController,
-                    prefixIcon: Icons.email_outlined,
+                    // prefixIcon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 16),
@@ -96,7 +96,7 @@ class _SignupPageState extends State<SignupPage> {
                     label: 'Senha',
                     hintText: '••••••••',
                     controller: _passwordController,
-                    prefixIcon: Icons.lock_outline_rounded,
+                    // prefixIcon: Icons.lock_outline_rounded,
                     obscureText: _obscurePassword,
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -118,7 +118,7 @@ class _SignupPageState extends State<SignupPage> {
                     label: 'Confirmar Senha',
                     hintText: '••••••••',
                     controller: _confirmPasswordController,
-                    prefixIcon: Icons.lock_reset_rounded,
+                    // prefixIcon: Icons.lock_reset_rounded,
                     obscureText: _obscureConfirmPassword,
                     suffixIcon: IconButton(
                       icon: Icon(
