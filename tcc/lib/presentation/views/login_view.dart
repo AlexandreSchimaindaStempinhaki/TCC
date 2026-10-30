@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../widgets/header_background.dart';
 import '../../core/extensions/context_extensions.dart';
 import '../../core/routes/auth_routes.dart';
@@ -155,7 +156,7 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 32),
 
                   SizedBox(
                     width: double.infinity,
@@ -191,7 +192,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 30),
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -205,7 +206,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       TextButton(
                         onPressed: () {
-                          // Implement navigation to registration view
+                          context.pushNamed(AuthRouteNames.signup);
                         },
                         child: const Text(
                           "Cadastre-se",
@@ -218,7 +219,6 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
                 ],
               ),
             ),
