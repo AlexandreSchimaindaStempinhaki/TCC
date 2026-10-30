@@ -89,7 +89,7 @@ class _LoginPageState extends State<LoginPage> {
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: () {
-                        //Função de esqueci minha senha
+                        context.pushNamed(AuthRouteNames.password);
                       },
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
