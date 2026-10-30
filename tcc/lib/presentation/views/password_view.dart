@@ -111,7 +111,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       const Text(
                         "Lembrou sua senha?     ",
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           color: Color(0xFF64748B),
                         ),
                       ),
@@ -120,7 +120,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         child: const Text(
                           "Voltar ao Login",
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF1E3A8A),
                           ),
