@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../widgets/header_background.dart';
+import '../../core/extensions/context_extensions.dart';
+import '../../core/routes/auth_routes.dart';
 
-class WelcomeScreen extends StatelessWidget {
-  const WelcomeScreen({super.key});
+class WelcomePage extends StatelessWidget {
+  const WelcomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = double.parse(
-      MediaQuery.of(context).size.height.toString(),
-    );
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          HeaderBackground(height: screenHeight * 0.7),
+          HeaderBackground(height: context.screenHeight * 0.7),
 
           Expanded(
             child: Padding(
@@ -50,7 +50,7 @@ class WelcomeScreen extends StatelessWidget {
                     alignment: Alignment.centerRight,
                     child: InkWell(
                       onTap: () {
-                        // Ação ao pressionar o botão
+                        context.pushNamed(AuthRouteNames.login);
                       },
                       borderRadius: BorderRadius.circular(30),
                       child: Padding(

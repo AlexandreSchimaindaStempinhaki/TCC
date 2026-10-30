@@ -1,11 +1,12 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:tcc/core/constants/app_assets.dart';
+import '../../core/extensions/context_extensions.dart';
 
 class HeaderBackground extends StatefulWidget {
-  final double height;
+  final double? height;
 
-  const HeaderBackground({super.key, this.height = 340.0});
+  const HeaderBackground({super.key, this.height});
 
   @override
   State<HeaderBackground> createState() => _HeaderBackgroundState();
@@ -33,8 +34,11 @@ class _HeaderBackgroundState extends State<HeaderBackground>
 
   @override
   Widget build(BuildContext context) {
+
+    final effectiveHeight = widget.height ?? context.screenHeight * 0.5;
+
     return SizedBox(
-      height: widget.height,
+      height: effectiveHeight,
       width: double.infinity,
       child: Stack(
         children: [
@@ -44,7 +48,7 @@ class _HeaderBackgroundState extends State<HeaderBackground>
               return ClipPath(
                 clipper: SingleFluidWaveClipper(_controller.value),
                 child: Container(
-                  height: widget.height,
+                  height: effectiveHeight,
                   width: double.infinity,
                   color: const Color(0xFF1E3A8A),
                 ),
@@ -63,11 +67,6 @@ class _HeaderBackgroundState extends State<HeaderBackground>
                     height: 120,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      boxShadow: [
-                        // Sombra projetada para dar profundidade (3D)
-
-                        // Brilho azul (Glow effect) que combina com a cor da marca
-                      ],
                     ),
                     child: Image.asset(
                       AppAssets.logo,
