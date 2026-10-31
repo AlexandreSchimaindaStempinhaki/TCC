@@ -10,28 +10,30 @@ class RouteDetailsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     final isHomePickup = (route['isHomePickup'] as bool?) ?? false;
     final List<String> shifts = List<String>.from(
       route['shifts'] ?? ['Manhã (07:00)', 'Noite (18:00)'],
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
-          // Header com Foto
           SliverAppBar(
             expandedHeight: 220,
             pinned: true,
-            backgroundColor: const Color(0xFF1E3A8A),
+            backgroundColor: colorScheme.primary,
             leading: Padding(
               padding: const EdgeInsets.all(8.0),
               child: CircleAvatar(
-                backgroundColor: Colors.white.withOpacity(0.9),
+                backgroundColor: theme.cardColor.withOpacity(0.9),
                 child: IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.arrow_back_rounded,
-                    color: Color(0xFF0F172A),
+                    color: colorScheme.onSurface,
                     size: 20,
                   ),
                   onPressed: () => context.pushNamed(IndigoRouteNames.home),
@@ -42,11 +44,11 @@ class RouteDetailsView extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: CircleAvatar(
-                  backgroundColor: Colors.white.withOpacity(0.9),
+                  backgroundColor: theme.cardColor.withOpacity(0.9),
                   child: IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.favorite_border_rounded,
-                      color: Color(0xFF0F172A),
+                      color: colorScheme.onSurface,
                       size: 20,
                     ),
                     onPressed: () {},
@@ -62,11 +64,11 @@ class RouteDetailsView extends StatelessWidget {
                     route['image'] as String,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
-                      color: const Color(0xFF1E3A8A).withOpacity(0.1),
-                      child: const Icon(
+                      color: colorScheme.primary.withOpacity(0.1),
+                      child: Icon(
                         Icons.directions_bus_rounded,
                         size: 64,
-                        color: Color(0xFF1E3A8A),
+                        color: colorScheme.primary,
                       ),
                     ),
                   ),
@@ -87,15 +89,12 @@ class RouteDetailsView extends StatelessWidget {
               ),
             ),
           ),
-
-          // Conteúdo
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Nome da Empresa e Avaliação
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,18 +105,18 @@ class RouteDetailsView extends StatelessWidget {
                           children: [
                             Text(
                               route['companyName'] as String,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF0F172A),
+                                color: colorScheme.onSurface,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               route['category'] ?? 'Transporte Contratado',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
-                                color: Color(0xFF64748B),
+                                color: colorScheme.secondary,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -143,10 +142,10 @@ class RouteDetailsView extends StatelessWidget {
                             const SizedBox(width: 4),
                             Text(
                               '${route['rating'] ?? 4.9}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
-                                color: Color(0xFF0F172A),
+                                color: colorScheme.onSurface,
                               ),
                             ),
                           ],
@@ -154,10 +153,7 @@ class RouteDetailsView extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 12),
-
-                  // Botão: Página da Empresa
                   InkWell(
                     onTap: () {
                       context.pushNamed(
@@ -177,45 +173,44 @@ class RouteDetailsView extends StatelessWidget {
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: theme.cardColor,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFF1F5F9)),
+                        border: Border.all(color: theme.dividerColor),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
                           Icon(
                             Icons.storefront_rounded,
                             size: 18,
-                            color: Color(0xFF0F172A),
+                            color: colorScheme.onSurface,
                           ),
-                          SizedBox(width: 10),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               'Visualizar página da empresa',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF0F172A),
+                                color: colorScheme.onSurface,
                               ),
                             ),
                           ),
                           Icon(
                             Icons.chevron_right_rounded,
                             size: 18,
-                            color: Color(0xFF94A3B8),
+                            color: colorScheme.secondary,
                           ),
                         ],
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 12),
-
-                  // Modalidade de Coleta
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: theme.brightness == Brightness.dark
+                          ? colorScheme.surface
+                          : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Row(
@@ -224,7 +219,7 @@ class RouteDetailsView extends StatelessWidget {
                           isHomePickup
                               ? Icons.home_rounded
                               : Icons.location_on_rounded,
-                          color: const Color(0xFF1E3A8A),
+                          color: colorScheme.primary,
                           size: 22,
                         ),
                         const SizedBox(width: 12),
@@ -236,10 +231,10 @@ class RouteDetailsView extends StatelessWidget {
                                 isHomePickup
                                     ? 'Modalidade: Busca em Casa'
                                     : 'Modalidade: Ponto Próximo',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F172A),
+                                  color: colorScheme.onSurface,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -247,9 +242,9 @@ class RouteDetailsView extends StatelessWidget {
                                 isHomePickup
                                     ? 'O veículo realiza a busca diretamente na porta da sua residência.'
                                     : 'O embarque é realizado em pontos fixos cadastrados no bairro.',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
-                                  color: Color(0xFF64748B),
+                                  color: colorScheme.secondary,
                                 ),
                               ),
                             ],
@@ -258,9 +253,7 @@ class RouteDetailsView extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 12),
-
                   InkWell(
                     onTap: () => {
                       context.pushNamed(
@@ -275,50 +268,47 @@ class RouteDetailsView extends StatelessWidget {
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: theme.cardColor,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFF1F5F9)),
+                        border: Border.all(color: theme.dividerColor),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
                           Icon(
                             Icons.map_outlined,
                             size: 18,
-                            color: Color(0xFF0F172A),
+                            color: colorScheme.onSurface,
                           ),
-                          SizedBox(width: 10),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               'Visualizar trajeto no mapa',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF0F172A),
+                                color: colorScheme.onSurface,
                               ),
                             ),
                           ),
                           Icon(
                             Icons.chevron_right_rounded,
                             size: 18,
-                            color: Color(0xFF94A3B8),
+                            color: colorScheme.secondary,
                           ),
                         ],
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
-                  const Text(
+                  Text(
                     'Itinerário e Turnos',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 12),
-
                   RouteItineraryCard(
                     origin: route['origin'] as String,
                     destination: route['destination'] as String,
@@ -327,7 +317,6 @@ class RouteDetailsView extends StatelessWidget {
                         'Segunda a Sexta-feira',
                     shifts: shifts,
                   ),
-
                   const SizedBox(height: 100),
                 ],
               ),
@@ -335,10 +324,9 @@ class RouteDetailsView extends StatelessWidget {
           ),
         ],
       ),
-
       bottomSheet: Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(color: Color(0xFFFAFAFA)),
+        decoration: BoxDecoration(color: theme.scaffoldBackgroundColor),
         child: SafeArea(
           child: SizedBox(
             width: double.infinity,
@@ -346,16 +334,16 @@ class RouteDetailsView extends StatelessWidget {
             child: ElevatedButton(
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
+                  SnackBar(
+                    content: const Text(
                       'Solicitação de vínculo enviada com sucesso!',
                     ),
-                    backgroundColor: Color(0xFF1E3A8A),
+                    backgroundColor: colorScheme.primary,
                   ),
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1E3A8A),
+                backgroundColor: colorScheme.primary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

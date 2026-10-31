@@ -36,6 +36,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   go_router: ^18.1.2
   google_fonts: ^6.2.1
+  signals_flutter: ^7.1.0
+  get_it: ^7.6.0
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_test:
@@ -45,7 +48,6 @@ dev_dependencies:
   latlong2: ^0.9.1
   google_maps_flutter: ^2.5.3
   http: ^1.2.0
-
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your

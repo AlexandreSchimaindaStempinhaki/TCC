@@ -30,7 +30,6 @@ class _RouteMapViewState extends State<RouteMapView> {
     _fetchRoadRoute();
   }
 
-  // Requisição ao OSRM para traçar a rota exata pelas pistas
   Future<void> _fetchRoadRoute() async {
     final url = Uri.parse(
       'https://router.project-osrm.org/route/v1/driving/'
@@ -63,6 +62,9 @@ class _RouteMapViewState extends State<RouteMapView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     final origin = widget.route['origin'] as String? ?? 'Av. das Magnólias, 58';
     final destination = widget.route['destination'] as String? ?? 'IFPR - Campus Paranaguá';
     final companyName = widget.route['companyName'] as String? ?? 'Linha Universitária';
@@ -87,7 +89,7 @@ class _RouteMapViewState extends State<RouteMapView> {
         Polyline(
           polylineId: const PolylineId('indigo_real_route'),
           points: _routePoints,
-          color: const Color(0xFF1E3A8A), // Azul Índigo
+          color: colorScheme.primary, // Adapta para azul claro no escuro / azul escuro no claro
           width: 5,
           jointType: JointType.round,
           startCap: Cap.roundCap,
@@ -121,22 +123,25 @@ class _RouteMapViewState extends State<RouteMapView> {
 
           // Feedback visual durante o cálculo da rota
           if (_isLoadingRoute)
-            const Positioned(
+            Positioned(
               top: 100,
               left: 0,
               right: 0,
               child: Center(
                 child: Chip(
-                  backgroundColor: Colors.white,
+                  backgroundColor: theme.cardColor,
                   elevation: 2,
                   avatar: SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colorScheme.primary,
+                    ),
                   ),
                   label: Text(
                     'Calculando trajeto via rodovia...',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF0F172A)),
+                    style: TextStyle(fontSize: 12, color: colorScheme.onSurface),
                   ),
                 ),
               ),
@@ -147,13 +152,13 @@ class _RouteMapViewState extends State<RouteMapView> {
             top: 50,
             left: 20,
             child: CircleAvatar(
-              backgroundColor: Colors.white,
+              backgroundColor: theme.cardColor,
               radius: 20,
               child: IconButton(
                 padding: EdgeInsets.zero,
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back_rounded,
-                  color: Color(0xFF0F172A),
+                  color: colorScheme.onSurface,
                   size: 20,
                 ),
                 onPressed: () => Navigator.pop(context),
@@ -169,11 +174,12 @@ class _RouteMapViewState extends State<RouteMapView> {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.cardColor,
                 borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: theme.dividerColor),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withOpacity(theme.brightness == Brightness.dark ? 0.3 : 0.08),
                     blurRadius: 16,
                     offset: const Offset(0, 4),
                   ),
@@ -185,41 +191,41 @@ class _RouteMapViewState extends State<RouteMapView> {
                 children: [
                   Text(
                     companyName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.radio_button_checked_rounded,
                         size: 16,
-                        color: Color(0xFF1E3A8A),
+                        color: colorScheme.primary,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           origin,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF334155),
+                            color: colorScheme.onSurface,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 7),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 7),
                     child: SizedBox(
                       height: 10,
                       child: VerticalDivider(
                         width: 2,
-                        color: Color(0xFFCBD5E1),
+                        color: colorScheme.secondary.withOpacity(0.4),
                       ),
                     ),
                   ),
@@ -234,10 +240,10 @@ class _RouteMapViewState extends State<RouteMapView> {
                       Expanded(
                         child: Text(
                           destination,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF334155),
+                            color: colorScheme.onSurface,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),

@@ -19,11 +19,10 @@ class _SavedViewState extends State<SavedView> {
       'origin': 'Pontal do Sul',
       'destination': 'Campus IFPR / UFPR',
       'status': 'Solicitação Pendente',
-      'statusColor': const Color(0xFFD97706), // Apenas a cor do texto (Laranja)
+      'statusColor': const Color(0xFFD97706),
       'isHomePickup': true,
       'rating': 4.9,
-      'image':
-          'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=800&auto=format&fit=crop',
+      'image': 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=800&auto=format&fit=crop',
     },
     {
       'id': '2',
@@ -31,27 +30,29 @@ class _SavedViewState extends State<SavedView> {
       'origin': 'Praia de Leste',
       'destination': 'UFPR - Centro Politécnico',
       'status': 'Vagas Abertas',
-      'statusColor': const Color(0xFF15803D), // Apenas a cor do texto (Verde)
+      'statusColor': const Color(0xFF15803D),
       'isHomePickup': false,
       'rating': 4.95,
-      'image':
-          'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=800&auto=format&fit=crop',
+      'image': 'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=800&auto=format&fit=crop',
     },
   ];
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
       extendBody: true,
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         bottom: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 16),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.0),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -60,13 +61,13 @@ class _SavedViewState extends State<SavedView> {
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: colorScheme.onSurface,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     'Linhas favoritadas e solicitações de vínculo',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                    style: TextStyle(fontSize: 13, color: colorScheme.secondary),
                   ),
                 ],
               ),
@@ -74,10 +75,10 @@ class _SavedViewState extends State<SavedView> {
             const SizedBox(height: 16),
             Expanded(
               child: _savedRoutes.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text(
                         'Nenhuma rota salva no momento.',
-                        style: TextStyle(color: Color(0xFF64748B)),
+                        style: TextStyle(color: colorScheme.secondary),
                       ),
                     )
                   : ListView.builder(

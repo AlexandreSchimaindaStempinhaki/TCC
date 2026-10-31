@@ -29,8 +29,11 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,12 +47,12 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Login',
                     style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: colorScheme.onSurface,
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -59,7 +62,6 @@ class _LoginPageState extends State<LoginPage> {
                     label: 'Email',
                     hintText: 'demo@gmail.com',
                     controller: _emailController,
-                    // prefixIcon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 20),
@@ -68,14 +70,13 @@ class _LoginPageState extends State<LoginPage> {
                     label: 'Senha',
                     hintText: '••••••••',
                     controller: _passwordController,
-                    // prefixIcon: Icons.lock_outline_rounded,
                     obscureText: _obscurePassword,
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
-                        color: Colors.black45,
+                        color: colorScheme.secondary,
                       ),
                       onPressed: () {
                         setState(() {
@@ -97,12 +98,12 @@ class _LoginPageState extends State<LoginPage> {
                         minimumSize: const Size(0, 30),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: const Text(
+                      child: Text(
                         'Esqueceu a senha?',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF1E3A8A),
+                          color: colorScheme.primary,
                         ),
                       ),
                     ),
@@ -118,7 +119,7 @@ class _LoginPageState extends State<LoginPage> {
                         context.pushNamed(IndigoRouteNames.home);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E3A8A),
+                        backgroundColor: colorScheme.primary,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -137,22 +138,22 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 24),
 
                   Row(
-                    children: const [
+                    children: [
                       Expanded(
-                        child: Divider(color: Color(0xFFE2E8F0), thickness: 1),
+                        child: Divider(color: theme.dividerColor, thickness: 1),
                       ),
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
                         child: Text(
                           'Ou continue com',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF94A3B8),
+                            color: colorScheme.secondary,
                           ),
                         ),
                       ),
                       Expanded(
-                        child: Divider(color: Color(0xFFE2E8F0), thickness: 1),
+                        child: Divider(color: theme.dividerColor, thickness: 1),
                       ),
                     ],
                   ),
@@ -163,12 +164,10 @@ class _LoginPageState extends State<LoginPage> {
                     width: double.infinity,
                     height: 52,
                     child: OutlinedButton(
-                      onPressed: () {
-                        // Lógica aqui
-                      },
+                      onPressed: () {},
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(
-                          color: Color(0xFFE2E8F0),
+                        side: BorderSide(
+                          color: theme.dividerColor,
                           width: 1.5,
                         ),
                         shape: RoundedRectangleBorder(
@@ -180,12 +179,12 @@ class _LoginPageState extends State<LoginPage> {
                         children: [
                           Image.asset(AppAssets.googleLogo, height: 22),
                           const SizedBox(width: 8),
-                          const Text(
+                          Text(
                             'Google',
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF0F172A),
+                              color: colorScheme.onSurface,
                             ),
                           ),
                         ],
@@ -198,23 +197,23 @@ class _LoginPageState extends State<LoginPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         "Não tem uma conta? ",
                         style: TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF64748B),
+                          color: colorScheme.secondary,
                         ),
                       ),
                       TextButton(
                         onPressed: () {
                           context.pushNamed(AuthRouteNames.signup);
                         },
-                        child: const Text(
+                        child: Text(
                           "Cadastre-se",
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E3A8A),
+                            color: colorScheme.primary,
                           ),
                         ),
                       ),

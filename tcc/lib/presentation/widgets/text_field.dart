@@ -4,7 +4,6 @@ class CustomTextField extends StatelessWidget {
   final String label;
   final String hintText;
   final TextEditingController controller;
-  // final IconData prefixIcon;
   final bool obscureText;
   final TextInputType keyboardType;
   final Widget? suffixIcon;
@@ -14,7 +13,6 @@ class CustomTextField extends StatelessWidget {
     required this.label,
     required this.hintText,
     required this.controller,
-    // required this.prefixIcon,
     this.obscureText = false,
     this.keyboardType = TextInputType.text,
     this.suffixIcon,
@@ -22,34 +20,38 @@ class CustomTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF475569),
+            color: colorScheme.secondary,
           ),
         ),
         const SizedBox(height: 8),
-
         TextField(
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
+          style: TextStyle(color: colorScheme.onSurface),
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: const TextStyle(color: Colors.black38),
-            // prefixIcon: Icon(prefixIcon, color: const Color(0xFF1E3A8A)),
+            hintStyle: TextStyle(
+              color: colorScheme.secondary.withOpacity(0.5),
+            ),
             suffixIcon: suffixIcon,
             contentPadding: const EdgeInsets.symmetric(vertical: 16),
             enabledBorder: UnderlineInputBorder(
-              borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
+              borderSide: BorderSide(color: theme.dividerColor, width: 1.5),
             ),
             focusedBorder: UnderlineInputBorder(
-              borderSide: const BorderSide(color: Color(0xFF1E3A8A), width: 2),
+              borderSide: BorderSide(color: colorScheme.primary, width: 2),
             ),
           ),
         ),

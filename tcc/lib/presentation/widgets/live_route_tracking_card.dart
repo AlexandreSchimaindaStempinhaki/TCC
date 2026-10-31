@@ -19,15 +19,18 @@ class LiveRouteTrackingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Localização em Tempo Real',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF0F172A),
+            color: colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 10),
@@ -35,7 +38,7 @@ class LiveRouteTrackingCard extends StatelessWidget {
           height: 200,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: theme.dividerColor),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
@@ -76,7 +79,7 @@ class LiveRouteTrackingCard extends StatelessWidget {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1E3A8A),
+                      color: colorScheme.primary,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
@@ -114,15 +117,15 @@ class LiveRouteTrackingCard extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFF1F5F9)),
+            border: Border.all(color: theme.dividerColor),
           ),
           child: Row(
             children: [
-              const CircleAvatar(
-                backgroundColor: Color(0xFFF1F5F9),
-                child: Icon(Icons.person_outline, color: Color(0xFF1E3A8A)),
+              CircleAvatar(
+                backgroundColor: theme.dividerColor,
+                child: Icon(Icons.person_outline, color: colorScheme.primary),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -131,17 +134,17 @@ class LiveRouteTrackingCard extends StatelessWidget {
                   children: [
                     Text(
                       driverName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     Text(
                       vehicleInfo,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: Color(0xFF64748B),
+                        color: colorScheme.secondary,
                       ),
                     ),
                   ],

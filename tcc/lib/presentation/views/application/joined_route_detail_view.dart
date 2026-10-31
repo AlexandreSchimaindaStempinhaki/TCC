@@ -18,41 +18,40 @@ class JoinedRouteDetailView extends StatefulWidget {
 class _JoinedRouteDetailViewState extends State<JoinedRouteDetailView> {
   bool _isReadyForPickup = false;
 
-  // Coordenadas fictícias do motorista e parada do usuário
   final LatLng _driverPosition = const LatLng(-25.5450, -48.5900);
   final LatLng _userPickupPosition = const LatLng(-25.5188, -48.5496);
 
-  // Pop-up de Reconfirmação de Embarque
-  Future<void> _handlePickupToggle(bool newValue) async {
+  Future<void> _handlePickupToggle(bool newValue, ThemeData theme, ColorScheme colorScheme) async {
     if (newValue) {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
+          backgroundColor: theme.cardColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text(
+          title: Text(
             'Confirmar Presença',
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0F172A),
+              color: colorScheme.onSurface,
               fontSize: 18,
             ),
           ),
-          content: const Text(
+          content: Text(
             'Você confirma que estará no ponto de embarque no horário agendado de hoje?',
             style: TextStyle(
               fontSize: 13,
-              color: Color(0xFF64748B),
+              color: colorScheme.secondary,
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text(
+              child: Text(
                 'Cancelar',
                 style: TextStyle(
-                  color: Color(0xFF64748B),
+                  color: colorScheme.secondary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -60,7 +59,7 @@ class _JoinedRouteDetailViewState extends State<JoinedRouteDetailView> {
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1E3A8A),
+                backgroundColor: colorScheme.primary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -87,24 +86,27 @@ class _JoinedRouteDetailViewState extends State<JoinedRouteDetailView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     final routeName = widget.route['routeName'] as String? ?? 'Detalhes da Rota';
     final driverName = widget.route['driverName'] as String? ?? 'Carlos Andrade';
     final vehicleInfo = widget.route['vehicleInfo'] as String? ?? 'Mercedes-Benz Sprinter';
     final eta = widget.route['etaMinutes'] ?? 12;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.cardColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           routeName,
-          style: const TextStyle(
-            color: Color(0xFF0F172A),
+          style: TextStyle(
+            color: colorScheme.onSurface,
             fontWeight: FontWeight.bold,
             fontSize: 16,
           ),
@@ -115,7 +117,6 @@ class _JoinedRouteDetailViewState extends State<JoinedRouteDetailView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. COMPONENTE DE RASTREAMENTO DO MAPA + MOTORISTA + ETA
             LiveRouteTrackingCard(
               driverName: driverName,
               vehicleInfo: vehicleInfo,
@@ -123,16 +124,13 @@ class _JoinedRouteDetailViewState extends State<JoinedRouteDetailView> {
               driverPosition: _driverPosition,
               userPickupPosition: _userPickupPosition,
             ),
-
             const SizedBox(height: 24),
-
-            // 2. CARD DE CONFIRMAÇÃO COM RECONFIRMAÇÃO EM POP-UP
-            const Text(
+            Text(
               'Confirmação para Hoje',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 10),
@@ -140,13 +138,13 @@ class _JoinedRouteDetailViewState extends State<JoinedRouteDetailView> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: _isReadyForPickup
-                    ? const Color(0xFFF0FDF4)
-                    : Colors.white,
+                    ? (theme.brightness == Brightness.dark ? const Color(0xFF064E3B) : const Color(0xFFF0FDF4))
+                    : theme.cardColor,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: _isReadyForPickup
                       ? const Color(0xFFBBF7D0)
-                      : const Color(0xFFF1F5F9),
+                      : theme.dividerColor,
                 ),
               ),
               child: Row(
@@ -156,8 +154,8 @@ class _JoinedRouteDetailViewState extends State<JoinedRouteDetailView> {
                         ? Icons.check_circle_rounded
                         : Icons.do_not_disturb_on_outlined,
                     color: _isReadyForPickup
-                        ? const Color(0xFF166534)
-                        : const Color(0xFF64748B),
+                        ? Colors.greenAccent
+                        : colorScheme.secondary,
                     size: 28,
                   ),
                   const SizedBox(width: 12),
@@ -173,8 +171,8 @@ class _JoinedRouteDetailViewState extends State<JoinedRouteDetailView> {
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: _isReadyForPickup
-                                ? const Color(0xFF14532D)
-                                : const Color(0xFF0F172A),
+                                ? Colors.white
+                                : colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -182,9 +180,9 @@ class _JoinedRouteDetailViewState extends State<JoinedRouteDetailView> {
                           _isReadyForPickup
                               ? 'O motorista foi notificado da sua presença.'
                               : 'Avisar o motorista se você vai embarcar na corrida de hoje.',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: Color(0xFF64748B),
+                            color: _isReadyForPickup ? Colors.white70 : colorScheme.secondary,
                           ),
                         ),
                       ],
@@ -192,28 +190,23 @@ class _JoinedRouteDetailViewState extends State<JoinedRouteDetailView> {
                   ),
                   Switch(
                     value: _isReadyForPickup,
-                    activeColor: const Color(0xFF1E3A8A),
-                    onChanged: (val) => _handlePickupToggle(val),
+                    activeColor: colorScheme.primary,
+                    onChanged: (val) => _handlePickupToggle(val, theme, colorScheme),
                   ),
                 ],
               ),
             ),
-
             const SizedBox(height: 24),
-
-            // 3. COMPONENTE DE PROGRAMAÇÃO MENSAL
-            const Text(
+            Text(
               'Programação Mensal',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 10),
-
             const MonthlyScheduleCard(),
-
             const SizedBox(height: 30),
           ],
         ),

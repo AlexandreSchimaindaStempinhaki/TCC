@@ -19,7 +19,6 @@ class _HeaderBackgroundState extends State<HeaderBackground>
   @override
   void initState() {
     super.initState();
-    // Ciclo contínuo infinito (ida sempre para a frente)
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 8),
@@ -34,7 +33,7 @@ class _HeaderBackgroundState extends State<HeaderBackground>
 
   @override
   Widget build(BuildContext context) {
-
+    final colorScheme = Theme.of(context).colorScheme;
     final effectiveHeight = widget.height ?? context.screenHeight * 0.5;
 
     return SizedBox(
@@ -50,7 +49,7 @@ class _HeaderBackgroundState extends State<HeaderBackground>
                 child: Container(
                   height: effectiveHeight,
                   width: double.infinity,
-                  color: const Color(0xFF1E3A8A),
+                  color: colorScheme.primary,
                 ),
               );
             },
@@ -65,7 +64,7 @@ class _HeaderBackgroundState extends State<HeaderBackground>
                   Container(
                     width: 120,
                     height: 120,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       shape: BoxShape.circle,
                     ),
                     child: Image.asset(
@@ -75,8 +74,7 @@ class _HeaderBackgroundState extends State<HeaderBackground>
                       fit: BoxFit.contain,
                     ),
                   ),
-
-                  Text(
+                  const Text(
                     'Índigo',
                     style: TextStyle(
                       fontSize: 32,

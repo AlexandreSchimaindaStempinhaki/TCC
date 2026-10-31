@@ -16,12 +16,15 @@ class RouteItineraryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         children: [
@@ -29,26 +32,28 @@ class RouteItineraryCard extends StatelessWidget {
             title: 'Origem',
             subtitle: origin,
             isFirst: true,
+            colorScheme: colorScheme,
           ),
           _buildTimelineItem(
             title: 'Destino',
             subtitle: destination,
             isLast: true,
+            colorScheme: colorScheme,
           ),
-          const Divider(height: 24, color: Color(0xFFF1F5F9)),
+          Divider(height: 24, color: theme.dividerColor),
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.calendar_today_rounded,
                 size: 16,
-                color: Color(0xFF64748B),
+                color: colorScheme.secondary,
               ),
               const SizedBox(width: 8),
               Text(
                 operatingDays,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
-                  color: Color(0xFF334155),
+                  color: colorScheme.onSurface,
                 ),
               ),
             ],
@@ -66,15 +71,15 @@ class RouteItineraryCard extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
+                    color: theme.dividerColor,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     shift,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1E3A8A),
+                      color: colorScheme.primary,
                     ),
                   ),
                 );
@@ -89,6 +94,7 @@ class RouteItineraryCard extends StatelessWidget {
   Widget _buildTimelineItem({
     required String title,
     required String subtitle,
+    required ColorScheme colorScheme,
     bool isFirst = false,
     bool isLast = false,
   }) {
@@ -101,13 +107,13 @@ class RouteItineraryCard extends StatelessWidget {
                   ? Icons.radio_button_checked_rounded
                   : Icons.location_on_rounded,
               size: 16,
-              color: isFirst ? const Color(0xFF1E3A8A) : Colors.redAccent,
+              color: isFirst ? colorScheme.primary : Colors.redAccent,
             ),
             if (!isLast)
               Container(
                 height: 24,
                 width: 2,
-                color: const Color(0xFFCBD5E1),
+                color: colorScheme.secondary.withOpacity(0.3),
               ),
           ],
         ),
@@ -118,18 +124,18 @@ class RouteItineraryCard extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF64748B),
+                  color: colorScheme.secondary,
                 ),
               ),
               Text(
                 subtitle,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF0F172A),
+                  color: colorScheme.onSurface,
                 ),
               ),
             ],

@@ -8,6 +8,9 @@ class MyRoutesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     final List myJoinedRoutes = [
       {
         'id': 'joined_1',
@@ -38,24 +41,24 @@ class MyRoutesView extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.cardColor,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Minhas Rotas',
           style: TextStyle(
-            color: Color(0xFF0F172A),
+            color: colorScheme.onSurface,
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
         ),
       ),
       body: myJoinedRoutes.isEmpty
-          ? const Center(
+          ? Center(
               child: Text(
                 'Você ainda não possui vínculo com nenhuma rota.',
-                style: TextStyle(color: Color(0xFF64748B)),
+                style: TextStyle(color: colorScheme.secondary),
               ),
             )
           : ListView.separated(
@@ -75,9 +78,9 @@ class MyRoutesView extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: theme.cardColor,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFF1F5F9)),
+                      border: Border.all(color: theme.dividerColor),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,28 +90,18 @@ class MyRoutesView extends StatelessWidget {
                           children: [
                             Text(
                               item['companyName'] as String,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1E3A8A),
+                                color: colorScheme.primary,
                               ),
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEFF6FF),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                item['status'] as String,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1E3A8A),
-                                ),
+                            Text(
+                              item['status'] as String,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.primary,
                               ),
                             ),
                           ],
@@ -116,47 +109,47 @@ class MyRoutesView extends StatelessWidget {
                         const SizedBox(height: 6),
                         Text(
                           item['routeName'] as String,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
+                            color: colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.schedule_rounded,
                               size: 16,
-                              color: Color(0xFF64748B),
+                              color: colorScheme.secondary,
                             ),
                             const SizedBox(width: 6),
                             Text(
                               'Próxima viagem: ${item['nextTrip']}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF334155),
+                                color: colorScheme.onSurface,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
                         ),
-                        const Divider(height: 20, color: Color(0xFFF1F5F9)),
-                        const Row(
+                        Divider(height: 20, color: theme.dividerColor),
+                        Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               'Gerenciar embarque e rastreamento',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: Color(0xFF64748B),
+                                color: colorScheme.secondary,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             Icon(
                               Icons.chevron_right_rounded,
                               size: 18,
-                              color: Color(0xFF94A3B8),
+                              color: colorScheme.secondary,
                             ),
                           ],
                         ),
@@ -166,7 +159,6 @@ class MyRoutesView extends StatelessWidget {
                 );
               },
             ),
-      
       bottomNavigationBar: const BottomNavBar(currentIndex: 2),
     );
   }

@@ -23,7 +23,6 @@ class _HomeViewState extends State<HomeView> {
     {'label': 'Próximas', 'icon': Icons.near_me_rounded},
   ];
 
-  // Dados com ponto de partida detalhado, destino, dias, turnos e modalidade de embarque
   final List _availableRoutes = [
     {
       'companyName': 'Associação Estudantil Litoral',
@@ -31,12 +30,11 @@ class _HomeViewState extends State<HomeView> {
       'destination': 'Campus IFPR Paranaguá / UFPR Litoral',
       'operatingDays': 'Segunda a Sexta-feira',
       'shifts': ['Manhã (06:30)', 'Tarde (12:15)', 'Noite (18:10)'],
-      'isHomePickup': true, // Pega em casa
+      'isHomePickup': true,
       'vacancies': '5 vagas restantes',
       'rating': 4.9,
       'isFavorite': false,
-      'image':
-          'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=800&auto=format&fit=crop',
+      'image': 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=800&auto=format&fit=crop',
     },
     {
       'companyName': 'Expresso Fretamentos Corp',
@@ -44,12 +42,11 @@ class _HomeViewState extends State<HomeView> {
       'destination': 'Distrito Industrial Paranaguá (Polos A e B)',
       'operatingDays': 'Segunda a Sábado',
       'shifts': ['Turno 1 (05:40)', 'Turno 2 (13:30)', 'Turno 3 (21:40)'],
-      'isHomePickup': false, // Ponto próximo
+      'isHomePickup': false,
       'vacancies': 'Vagas abertas para colaboradores',
       'rating': 4.8,
       'isFavorite': false,
-      'image':
-          'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?q=80&w=800&auto=format&fit=crop',
+      'image': 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?q=80&w=800&auto=format&fit=crop',
     },
     {
       'companyName': 'Viação Universitária Índigo',
@@ -57,12 +54,11 @@ class _HomeViewState extends State<HomeView> {
       'destination': 'UFPR - Centro Politécnico Curitiba',
       'operatingDays': 'Segunda, Quarta e Sexta',
       'shifts': ['Manhã (06:00)', 'Noite (17:30)'],
-      'isHomePickup': false, // Ponto próximo
+      'isHomePickup': false,
       'vacancies': 'Cadastro reserva',
       'rating': 4.95,
       'isFavorite': true,
-      'image':
-          'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=800&auto=format&fit=crop',
+      'image': 'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=800&auto=format&fit=crop',
     },
   ];
 
@@ -74,26 +70,27 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
       extendBody: true,
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
             const SizedBox(height: 12),
-
-            // 1. BARRA DE BUSCA
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+                  border: Border.all(color: theme.dividerColor, width: 1),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black,
+                      color: Colors.black.withOpacity(theme.brightness == Brightness.dark ? 0.3 : 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -101,18 +98,19 @@ class _HomeViewState extends State<HomeView> {
                 ),
                 child: TextField(
                   controller: _searchController,
+                  style: TextStyle(color: colorScheme.onSurface),
                   decoration: InputDecoration(
                     hintText: 'Buscar empresa, bairro de origem ou destino...',
-                    hintStyle: const TextStyle(
+                    hintStyle: TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF64748B),
+                      color: colorScheme.secondary,
                       fontWeight: FontWeight.w400,
                     ),
-                    prefixIcon: const Padding(
-                      padding: EdgeInsets.only(left: 16.0, right: 12.0),
+                    prefixIcon: Padding(
+                      padding: const EdgeInsets.only(left: 16.0, right: 12.0),
                       child: Icon(
                         Icons.search_rounded,
-                        color: Color(0xFF1E3A8A),
+                        color: colorScheme.primary,
                         size: 22,
                       ),
                     ),
@@ -120,12 +118,12 @@ class _HomeViewState extends State<HomeView> {
                       margin: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFFCBD5E1)),
+                        border: Border.all(color: theme.dividerColor),
                       ),
                       child: IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.tune_rounded,
-                          color: Color(0xFF0F172A),
+                          color: colorScheme.onSurface,
                           size: 16,
                         ),
                         onPressed: () {},
@@ -138,8 +136,6 @@ class _HomeViewState extends State<HomeView> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // 2. CARROSSEL DE CATEGORIAS
             SizedBox(
               height: 78,
               child: ListView.builder(
@@ -164,8 +160,8 @@ class _HomeViewState extends State<HomeView> {
                           Icon(
                             cat['icon'] as IconData,
                             color: isSelected
-                                ? const Color(0xFF1E3A8A)
-                                : const Color(0xFF94A3B8),
+                                ? colorScheme.primary
+                                : colorScheme.secondary.withOpacity(0.7),
                             size: 28,
                           ),
                           const SizedBox(height: 6),
@@ -177,8 +173,8 @@ class _HomeViewState extends State<HomeView> {
                                   ? FontWeight.bold
                                   : FontWeight.w500,
                               color: isSelected
-                                  ? const Color(0xFF1E3A8A)
-                                  : const Color(0xFF64748B),
+                                  ? colorScheme.primary
+                                  : colorScheme.secondary,
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -186,7 +182,7 @@ class _HomeViewState extends State<HomeView> {
                             height: 2.5,
                             width: 24,
                             color: isSelected
-                                ? const Color(0xFF1E3A8A)
+                                ? colorScheme.primary
                                 : Colors.transparent,
                           ),
                         ],
@@ -196,9 +192,7 @@ class _HomeViewState extends State<HomeView> {
                 },
               ),
             ),
-
-            const Divider(height: 1, color: Color(0xFFF1F5F9)),
-
+            Divider(height: 1, color: theme.dividerColor),
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 80),
@@ -208,12 +202,11 @@ class _HomeViewState extends State<HomeView> {
                   return CompanyRouteCard(
                     route: route,
                     onTap: () {
-          // AQUI: Abre a tela de detalhes passando os dados da rota
-          context.pushNamed(
-            IndigoRouteNames.routeDetails,
-            extra: route,
-          );
-        },
+                      context.pushNamed(
+                        IndigoRouteNames.routeDetails,
+                        extra: route,
+                      );
+                    },
                     onFavoriteTap: () {
                       setState(() {
                         route['isFavorite'] = !(route['isFavorite'] as bool);

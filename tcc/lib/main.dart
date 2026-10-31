@@ -1,26 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:signals_flutter/signals_flutter.dart';
+
+import 'core/di/dependency_injection.dart';
 import 'core/routes/app_router.dart';
+import 'core/theme/app_theme.dart'; // Sem o 'as AppTheme'
+import 'core/theme/theme_controller.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-}
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.immersiveSticky,
+  );
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  setupDependencyInjection();
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        textTheme: GoogleFonts.plusJakartaSansTextTheme(),
+  final themeController = injector.get<ThemeController>();
+
+  await themeController.loadTheme();
+
+  // Resgata o controller injetado
+
+  runApp(
+    Watch(
+      (_) => MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        title: 'Injustice App',
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: themeController.themeMode.value,
+        routerConfig: AppRouter.router,
       ),
-      routerConfig: AppRouter.router,
-    );
-  }
+    ),
+  );
 }

@@ -8,13 +8,9 @@ class MonthlyScheduleCard extends StatefulWidget {
 }
 
 class _MonthlyScheduleCardState extends State<MonthlyScheduleCard> {
-  // Modalidade de Turno Ex: 0 = Manhã/Manhã, 1 = Tarde/Tarde, 2 = Manhã/Tarde
-  int _comboPreset = 2; // Padrão: Vai de Manhã e Volta de Tarde
-
+  int _comboPreset = 2;
   String _outboundShift = 'Manhã (07:00)';
   String _inboundShift = 'Tarde (18:00)';
-
-  // Dias selecionados do mês atual (ex: 1 a 31)
   final Set<int> _selectedDays = {2, 3, 4, 5, 6, 9, 10, 11, 12, 13};
 
   void _applyComboPreset(int index) {
@@ -39,44 +35,44 @@ class _MonthlyScheduleCardState extends State<MonthlyScheduleCard> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Combinação de Turnos (Ida e Volta)',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF64748B),
+              color: colorScheme.secondary,
             ),
           ),
           const SizedBox(height: 10),
-
-          // Presets de Combinação
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildPresetChip('Manhã / Manhã', 0),
-              _buildPresetChip('Tarde / Tarde', 1),
-              _buildPresetChip('Manhã / Tarde', 2),
+              _buildPresetChip('Manhã / Manhã', 0, colorScheme),
+              _buildPresetChip('Tarde / Tarde', 1, colorScheme),
+              _buildPresetChip('Manhã / Tarde', 2, colorScheme),
             ],
           ),
-
           const SizedBox(height: 14),
-
-          // Resumo dos Horários Selecionados
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: theme.brightness == Brightness.dark
+                  ? colorScheme.surface
+                  : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -85,20 +81,20 @@ class _MonthlyScheduleCardState extends State<MonthlyScheduleCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Ida',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Color(0xFF64748B),
+                          color: colorScheme.secondary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
                         _outboundShift,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E3A8A),
+                          color: colorScheme.primary,
                         ),
                       ),
                     ],
@@ -107,27 +103,27 @@ class _MonthlyScheduleCardState extends State<MonthlyScheduleCard> {
                 Container(
                   height: 24,
                   width: 1,
-                  color: const Color(0xFFCBD5E1),
+                  color: theme.dividerColor,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Volta',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Color(0xFF64748B),
+                          color: colorScheme.secondary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
                         _inboundShift,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E3A8A),
+                          color: colorScheme.primary,
                         ),
                       ),
                     ],
@@ -136,25 +132,21 @@ class _MonthlyScheduleCardState extends State<MonthlyScheduleCard> {
               ],
             ),
           ),
-
-          const Divider(height: 24, color: Color(0xFFF1F5F9)),
-
-          const Text(
+          Divider(height: 24, color: theme.dividerColor),
+          Text(
             'Calendário Mensal de Presença',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF64748B),
+              color: colorScheme.secondary,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Toque nos dias do mês em que você irá utilizar o transporte:',
-            style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+            style: TextStyle(fontSize: 11, color: colorScheme.secondary.withOpacity(0.8)),
           ),
           const SizedBox(height: 12),
-
-          // Grade Numérica do Mês (1 a 31)
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -183,8 +175,8 @@ class _MonthlyScheduleCardState extends State<MonthlyScheduleCard> {
                 child: Container(
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? const Color(0xFF1E3A8A)
-                        : const Color(0xFFF1F5F9),
+                        ? colorScheme.primary
+                        : theme.dividerColor,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Center(
@@ -195,7 +187,7 @@ class _MonthlyScheduleCardState extends State<MonthlyScheduleCard> {
                         fontWeight: FontWeight.bold,
                         color: isSelected
                             ? Colors.white
-                            : const Color(0xFF334155),
+                            : colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -208,14 +200,14 @@ class _MonthlyScheduleCardState extends State<MonthlyScheduleCard> {
     );
   }
 
-  Widget _buildPresetChip(String label, int index) {
+  Widget _buildPresetChip(String label, int index, ColorScheme colorScheme) {
     final isSelected = _comboPreset == index;
     return ChoiceChip(
       label: Text(label),
       selected: isSelected,
-      selectedColor: const Color(0xFF1E3A8A),
+      selectedColor: colorScheme.primary,
       labelStyle: TextStyle(
-        color: isSelected ? Colors.white : const Color(0xFF0F172A),
+        color: isSelected ? Colors.white : colorScheme.onSurface,
         fontWeight: FontWeight.bold,
         fontSize: 11,
       ),

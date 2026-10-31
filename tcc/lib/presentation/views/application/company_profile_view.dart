@@ -12,13 +12,15 @@ class CompanyProfileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     final companyName = company['companyName'] as String? ?? 'Empresa de Transporte';
     final rating = company['rating'] ?? 4.9;
     final category = company['category'] as String? ?? 'Fretamento & Escolar';
     final coverImage = company['image'] as String? ??
         'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=800&auto=format&fit=crop';
 
-    // Lista fictícia de rotas operadas por esta empresa
     final List companyRoutes = [
       {
         'id': 'route_1',
@@ -45,22 +47,21 @@ class CompanyProfileView extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
-          // 1. CAPA COM BANNER E BOTÃO VOLTAR
           SliverAppBar(
             expandedHeight: 180,
             pinned: true,
-            backgroundColor: const Color(0xFF1E3A8A),
+            backgroundColor: colorScheme.primary,
             leading: Padding(
               padding: const EdgeInsets.all(8.0),
               child: CircleAvatar(
-                backgroundColor: Colors.white.withOpacity(0.9),
+                backgroundColor: theme.cardColor.withOpacity(0.9),
                 child: IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.arrow_back_rounded,
-                    color: Color(0xFF0F172A),
+                    color: colorScheme.onSurface,
                     size: 20,
                   ),
                   onPressed: () => Navigator.pop(context),
@@ -75,7 +76,7 @@ class CompanyProfileView extends StatelessWidget {
                     coverImage,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
-                      color: const Color(0xFF1E3A8A),
+                      color: colorScheme.primary,
                     ),
                   ),
                   Container(
@@ -95,15 +96,12 @@ class CompanyProfileView extends StatelessWidget {
               ),
             ),
           ),
-
-          // 2. DETALHES DA EMPRESA
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Nome da Empresa e Tag de Verificado
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -111,7 +109,7 @@ class CompanyProfileView extends StatelessWidget {
                         width: 56,
                         height: 56,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E3A8A),
+                          color: colorScheme.primary,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: const Icon(
@@ -130,18 +128,18 @@ class CompanyProfileView extends StatelessWidget {
                                 Flexible(
                                   child: Text(
                                     companyName,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF0F172A),
+                                      color: colorScheme.onSurface,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                                 const SizedBox(width: 6),
-                                const Icon(
+                                Icon(
                                   Icons.verified_rounded,
-                                  color: Color(0xFF1E3A8A),
+                                  color: colorScheme.primary,
                                   size: 18,
                                 ),
                               ],
@@ -149,9 +147,9 @@ class CompanyProfileView extends StatelessWidget {
                             const SizedBox(height: 2),
                             Text(
                               category,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
-                                color: Color(0xFF64748B),
+                                color: colorScheme.secondary,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -160,65 +158,56 @@ class CompanyProfileView extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 20),
-
-                  // ESTATÍSTICAS / INDICADORES
                   Container(
                     padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: theme.cardColor,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFF1F5F9)),
+                      border: Border.all(color: theme.dividerColor),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        _buildStatItem('Avaliação', '★ $rating'),
-                        _buildDivider(),
-                        _buildStatItem('Linhas Ativas', '${companyRoutes.length}'),
-                        _buildDivider(),
-                        _buildStatItem('Frota', '12 veículos'),
+                        _buildStatItem('Avaliação', '★ $rating', colorScheme),
+                        _buildDivider(theme),
+                        _buildStatItem('Linhas Ativas', '${companyRoutes.length}', colorScheme),
+                        _buildDivider(theme),
+                        _buildStatItem('Frota', '12 veículos', colorScheme),
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
-                  // SOBRE A EMPRESA
-                  const Text(
+                  Text(
                     'Sobre a Empresa',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Empresa especializada em transporte privado universitário e corporativo. Frota regulamentada com veículos executivos, ar-condicionado e rastreamento em tempo real.',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF64748B),
+                      color: colorScheme.secondary,
                       height: 1.4,
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
-                  // BOTÕES DE CONTATO RÁPIDO
                   Row(
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () {},
-                          icon: const Icon(Icons.phone_outlined, size: 18, color: Color(0xFF1E3A8A)),
-                          label: const Text(
+                          icon: Icon(Icons.phone_outlined, size: 18, color: colorScheme.primary),
+                          label: Text(
                             'Telefone',
-                            style: TextStyle(color: Color(0xFF1E3A8A), fontWeight: FontWeight.bold),
+                            style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold),
                           ),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFCBD5E1)),
+                            side: BorderSide(color: theme.dividerColor),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
@@ -234,7 +223,7 @@ class CompanyProfileView extends StatelessWidget {
                             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1E3A8A),
+                            backgroundColor: colorScheme.primary,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
@@ -242,21 +231,16 @@ class CompanyProfileView extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 28),
-
-                  // LINHAS OPERADAS
                   Text(
                     'Linhas Disponíveis (${companyRoutes.length})',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 12),
-
-                  // Lista de cards de rotas da empresa
                   ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -275,41 +259,41 @@ class CompanyProfileView extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: theme.cardColor,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFF1F5F9)),
+                            border: Border.all(color: theme.dividerColor),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.radio_button_checked_rounded,
                                     size: 16,
-                                    color: Color(0xFF1E3A8A),
+                                    color: colorScheme.primary,
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       item['origin'] as String,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
-                                        color: Color(0xFF0F172A),
+                                        color: colorScheme.onSurface,
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
                               ),
-                              const Padding(
-                                padding: EdgeInsets.only(left: 7),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 7),
                                 child: SizedBox(
                                   height: 10,
                                   child: VerticalDivider(
                                     width: 2,
-                                    color: Color(0xFFCBD5E1),
+                                    color: colorScheme.secondary.withOpacity(0.4),
                                   ),
                                 ),
                               ),
@@ -324,30 +308,30 @@ class CompanyProfileView extends StatelessWidget {
                                   Expanded(
                                     child: Text(
                                       item['destination'] as String,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
-                                        color: Color(0xFF0F172A),
+                                        color: colorScheme.onSurface,
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
                               ),
-                              const Divider(height: 20, color: Color(0xFFF1F5F9)),
+                              Divider(height: 20, color: theme.dividerColor),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     item['operatingDays'] as String,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 11,
-                                      color: Color(0xFF64748B),
+                                      color: colorScheme.secondary,
                                     ),
                                   ),
-                                  const Icon(
+                                  Icon(
                                     Icons.chevron_right_rounded,
-                                    color: Color(0xFF94A3B8),
+                                    color: colorScheme.secondary,
                                     size: 18,
                                   ),
                                 ],
@@ -358,7 +342,6 @@ class CompanyProfileView extends StatelessWidget {
                       );
                     },
                   ),
-
                   const SizedBox(height: 40),
                 ],
               ),
@@ -369,34 +352,34 @@ class CompanyProfileView extends StatelessWidget {
     );
   }
 
-  Widget _buildStatItem(String label, String value) {
+  Widget _buildStatItem(String label, String value, ColorScheme colorScheme) {
     return Column(
       children: [
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF0F172A),
+            color: colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
-            color: Color(0xFF64748B),
+            color: colorScheme.secondary,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildDivider() {
+  Widget _buildDivider(ThemeData theme) {
     return Container(
       height: 24,
       width: 1,
-      color: const Color(0xFFE2E8F0),
+      color: theme.dividerColor,
     );
   }
 }

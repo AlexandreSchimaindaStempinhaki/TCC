@@ -14,17 +14,19 @@ class CompanyRouteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final isFavorite = (route['isFavorite'] as bool?) ?? false;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(color: theme.dividerColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(theme.brightness == Brightness.dark ? 0.3 : 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -36,7 +38,6 @@ class CompanyRouteCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Foto da Linha/Empresa com Favorito
             Stack(
               children: [
                 ClipRRect(
@@ -50,11 +51,11 @@ class CompanyRouteCard extends StatelessWidget {
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
                       height: 160,
-                      color: const Color(0xFF1E3A8A).withOpacity(0.08),
-                      child: const Icon(
+                      color: colorScheme.primary.withOpacity(0.08),
+                      child: Icon(
                         Icons.directions_bus_rounded,
                         size: 48,
-                        color: Color(0xFF1E3A8A),
+                        color: colorScheme.primary,
                       ),
                     ),
                   ),
@@ -63,7 +64,7 @@ class CompanyRouteCard extends StatelessWidget {
                   top: 12,
                   right: 12,
                   child: CircleAvatar(
-                    backgroundColor: Colors.white.withOpacity(0.9),
+                    backgroundColor: theme.cardColor.withOpacity(0.9),
                     radius: 16,
                     child: IconButton(
                       padding: EdgeInsets.zero,
@@ -73,7 +74,7 @@ class CompanyRouteCard extends StatelessWidget {
                             : Icons.favorite_border_rounded,
                         color: isFavorite
                             ? Colors.redAccent
-                            : const Color(0xFF0F172A),
+                            : colorScheme.onSurface,
                         size: 18,
                       ),
                       onPressed: onFavoriteTap,
@@ -82,24 +83,21 @@ class CompanyRouteCard extends StatelessWidget {
                 ),
               ],
             ),
-
-            // Informações Essenciais: Empresa, Destino, Avaliação e CTA
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Linha 1: Nome da Empresa + Nota
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: Text(
                           route['companyName'] as String,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
+                            color: colorScheme.onSurface,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -111,10 +109,10 @@ class CompanyRouteCard extends StatelessWidget {
                           const SizedBox(width: 4),
                           Text(
                             '${route['rating']}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
-                              color: Color(0xFF0F172A),
+                              color: colorScheme.onSurface,
                             ),
                           ),
                         ],
@@ -122,22 +120,20 @@ class CompanyRouteCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 6),
-
-                  // Linha 2: Destino da Rota
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.location_on_rounded,
                         size: 15,
-                        color: Color(0xFF1E3A8A),
+                        color: colorScheme.primary,
                       ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           'Destino: ${route['destination']}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF64748B),
+                            color: colorScheme.secondary,
                             fontWeight: FontWeight.w500,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -145,26 +141,23 @@ class CompanyRouteCard extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 14),
-
-                  // Linha 3: CTA "Ver mais informações"
-                  const Row(
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(
                         'Ver mais informações',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF1E3A8A),
+                          color: colorScheme.primary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(width: 4),
+                      const SizedBox(width: 4),
                       Icon(
                         Icons.arrow_forward_ios_rounded,
                         size: 12,
-                        color: Color(0xFF1E3A8A),
+                        color: colorScheme.primary,
                       ),
                     ],
                   ),

@@ -35,8 +35,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,21 +54,21 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Recuperar Senha',
                     style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: colorScheme.onSurface,
                       letterSpacing: -0.5,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     'Digite o seu e-mail cadastrado para receber as instruções para redefinir sua senha.',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Color(0xFF64748B),
+                      color: colorScheme.secondary,
                       height: 1.4,
                     ),
                   ),
@@ -75,7 +78,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     label: 'Email',
                     hintText: 'demo@gmail.com',
                     controller: _emailController,
-                    // prefixIcon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
                   ),
 
@@ -87,7 +89,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     child: ElevatedButton(
                       onPressed: _handleResetPassword,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E3A8A),
+                        backgroundColor: colorScheme.primary,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -108,21 +110,21 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         "Lembrou sua senha?     ",
                         style: TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF64748B),
+                          color: colorScheme.secondary,
                         ),
                       ),
                       GestureDetector(
                         onTap: () => context.pushNamed(AuthRouteNames.login),
-                        child: const Text(
+                        child: Text(
                           "Voltar ao Login",
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E3A8A),
+                            color: colorScheme.primary,
                           ),
                         ),
                       ),

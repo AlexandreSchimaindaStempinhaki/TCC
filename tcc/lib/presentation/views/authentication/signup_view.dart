@@ -43,14 +43,15 @@ class _SignupPageState extends State<SignupPage> {
       );
       return;
     }
-
-    // Executar lógica de cadastro na API / Firebase
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,12 +65,12 @@ class _SignupPageState extends State<SignupPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Criar Conta',
                     style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: colorScheme.onSurface,
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -79,7 +80,6 @@ class _SignupPageState extends State<SignupPage> {
                     label: 'Nome Completo',
                     hintText: 'Seu Nome',
                     controller: _nameController,
-                    // prefixIcon: Icons.person_outline_rounded,
                   ),
                   const SizedBox(height: 16),
 
@@ -87,7 +87,6 @@ class _SignupPageState extends State<SignupPage> {
                     label: 'Email',
                     hintText: 'demo@gmail.com',
                     controller: _emailController,
-                    // prefixIcon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 16),
@@ -96,14 +95,13 @@ class _SignupPageState extends State<SignupPage> {
                     label: 'Senha',
                     hintText: '••••••••',
                     controller: _passwordController,
-                    // prefixIcon: Icons.lock_outline_rounded,
                     obscureText: _obscurePassword,
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
-                        color: Colors.black45,
+                        color: colorScheme.secondary,
                       ),
                       onPressed: () {
                         setState(() {
@@ -118,14 +116,13 @@ class _SignupPageState extends State<SignupPage> {
                     label: 'Confirmar Senha',
                     hintText: '••••••••',
                     controller: _confirmPasswordController,
-                    // prefixIcon: Icons.lock_reset_rounded,
                     obscureText: _obscureConfirmPassword,
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureConfirmPassword
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
-                        color: Colors.black45,
+                        color: colorScheme.secondary,
                       ),
                       onPressed: () {
                         setState(() {
@@ -142,7 +139,7 @@ class _SignupPageState extends State<SignupPage> {
                     child: ElevatedButton(
                       onPressed: _handleRegister,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E3A8A),
+                        backgroundColor: colorScheme.primary,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -163,23 +160,23 @@ class _SignupPageState extends State<SignupPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         "Já tem uma conta?   ",
                         style: TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF64748B),
+                          color: colorScheme.secondary,
                         ),
                       ),
                       GestureDetector(
                         onTap: () {
                           context.pushNamed(AuthRouteNames.login);
                         },
-                        child: const Text(
+                        child: Text(
                           "Entrar",
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E3A8A),
+                            color: colorScheme.primary,
                           ),
                         ),
                       ),

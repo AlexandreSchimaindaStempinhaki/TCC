@@ -9,9 +9,11 @@ class WelcomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
           HeaderBackground(height: context.screenHeight * 0.7),
@@ -25,22 +27,22 @@ class WelcomePage extends StatelessWidget {
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
                         'Bem vindo!',
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
+                          color: colorScheme.onSurface,
                           letterSpacing: -0.5,
                         ),
                       ),
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
                       Text(
                         'Acompanhe rotas em tempo real, gerencie viagens e otimize seus deslocamentos com precisão com o app da índigo.',
                         style: TextStyle(
                           fontSize: 15,
-                          color: Color(0xFF0F172A),
+                          color: colorScheme.onSurface,
                           height: 1.5,
                         ),
                       ),
@@ -65,19 +67,19 @@ class WelcomePage extends StatelessWidget {
                               'Começar',
                               style: TextStyle(
                                 fontSize: 18,
-                                color: Color(0xFF1E3A8A),
+                                color: colorScheme.primary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            SizedBox(width: 12),
+                            const SizedBox(width: 12),
                             Container(
                               width: 40,
                               height: 40,
                               decoration: BoxDecoration(
-                                color: Color(0xFF1E3A8A),
+                                color: colorScheme.primary,
                                 shape: BoxShape.circle,
                               ),
-                              child: Icon(
+                              child: const Icon(
                                 Icons.arrow_forward_rounded,
                                 color: Colors.white,
                                 size: 22,

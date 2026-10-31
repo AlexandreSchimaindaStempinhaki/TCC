@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:signals_flutter/signals_flutter.dart';
+
+import '../../../core/di/dependency_injection.dart';
+import '../../../core/theme/theme_controller.dart';
 import 'package:tcc/presentation/widgets/nav_bar.dart';
+import '../../../core/routes/auth_routes.dart';
 
 class AccountView extends StatefulWidget {
   const AccountView({super.key});
@@ -13,9 +19,14 @@ class _AccountViewState extends State<AccountView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final themeController = injector.get<ThemeController>();
+
     return Scaffold(
       extendBody: true,
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      bottomNavigationBar: const BottomNavBar(currentIndex: 3), 
       body: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
@@ -23,30 +34,25 @@ class _AccountViewState extends State<AccountView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Minha Conta',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 20),
 
               // 1. DADOS DO PERFIL
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFF1F5F9)),
-                ),
+              _buildCard(
+                context: context,
                 child: Row(
                   children: [
-                    const CircleAvatar(
+                    CircleAvatar(
                       radius: 26,
-                      backgroundColor: Color(0xFF1E3A8A),
-                      child: Text(
+                      backgroundColor: colorScheme.primary,
+                      child: const Text(
                         'GS',
                         style: TextStyle(
                           color: Colors.white,
@@ -56,7 +62,7 @@ class _AccountViewState extends State<AccountView> {
                       ),
                     ),
                     const SizedBox(width: 14),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -65,24 +71,24 @@ class _AccountViewState extends State<AccountView> {
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF0F172A),
+                              color: colorScheme.onSurface,
                             ),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Text(
                             'Estudante • UFPR Litoral',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF64748B),
+                              color: colorScheme.secondary,
                             ),
                           ),
                         ],
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.edit_outlined,
-                        color: Color(0xFF64748B),
+                        color: colorScheme.secondary,
                         size: 20,
                       ),
                       onPressed: () {},
@@ -93,97 +99,110 @@ class _AccountViewState extends State<AccountView> {
 
               const SizedBox(height: 16),
 
-              // 2. CARTEIRINHA DIGITAL
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E3A8A),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.qr_code_2_rounded,
-                      color: Colors.white,
-                      size: 28,
+              // 2. TOGGLE DO MODO ESCURO (GLOBAL VIA SIGNALS)
+              Watch(
+                (context) {
+                  final isDarkMode = themeController.isDarkMode;
+
+                  return _buildCard(
+                    context: context,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
                     ),
-                    const SizedBox(width: 14),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Carteirinha de Embarque',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          isDarkMode
+                              ? Icons.dark_mode_rounded
+                              : Icons.light_mode_rounded,
+                          color: colorScheme.primary,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Modo Escuro',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                isDarkMode
+                                    ? 'Tema escuro ativo'
+                                    : 'Alternar visual do aplicativo',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: colorScheme.secondary,
+                                ),
+                              ),
+                            ],
                           ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Validação via QR Code com o motorista',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                        Switch(
+                          value: isDarkMode,
+                          activeColor: colorScheme.primary,
+                          onChanged: (val) {
+                            themeController.toggleTheme(val);
+                          },
+                        ),
+                      ],
                     ),
-                    const Icon(
-                      Icons.chevron_right_rounded,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
 
               const SizedBox(height: 24),
 
               // 3. SEÇÃO DE CONFIGURAÇÕES / EMBARQUE
-              const Text(
+              Text(
                 'Configurações de Transporte',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF64748B),
+                  color: colorScheme.secondary,
                 ),
               ),
               const SizedBox(height: 10),
 
               _buildOptionTile(
+                context: context,
                 icon: Icons.home_outlined,
                 title: 'Endereço Residencial',
                 subtitle: 'Pontal do Sul - R. Barão do Rio Branco',
                 onTap: () {},
               ),
               _buildOptionTile(
+                context: context,
                 icon: Icons.place_outlined,
                 title: 'Pontos de Parada Salvos',
                 subtitle: 'Gerenciar locais de embarque',
                 onTap: () {},
               ),
 
-              // Switch de Avisos (Ícone Limpo)
-              Container(
+              // Switch de Avisos do Motorista
+              _buildCard(
+                context: context,
                 margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFF1F5F9)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.notifications_none_rounded,
-                      color: Color(0xFF0F172A),
+                      color: colorScheme.onSurface,
                       size: 20,
                     ),
                     const SizedBox(width: 14),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -192,14 +211,14 @@ class _AccountViewState extends State<AccountView> {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF0F172A),
+                              color: colorScheme.onSurface,
                             ),
                           ),
                           Text(
                             'Notificar quando o veículo estiver próximo',
                             style: TextStyle(
                               fontSize: 11,
-                              color: Color(0xFF64748B),
+                              color: colorScheme.secondary,
                             ),
                           ),
                         ],
@@ -207,6 +226,7 @@ class _AccountViewState extends State<AccountView> {
                     ),
                     Switch(
                       value: _notificationsEnabled,
+                      activeColor: colorScheme.primary,
                       onChanged: (val) {
                         setState(() {
                           _notificationsEnabled = val;
@@ -220,50 +240,45 @@ class _AccountViewState extends State<AccountView> {
               const SizedBox(height: 20),
 
               // 4. ÁREA B2B / CADASTRAR EMPRESA
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              _buildCard(
+                context: context,
+                child: Row(
                   children: [
-                    const Text(
-                      'Você é motorista ou gestor?',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                    Icon(
+                      Icons.business_center_outlined,
+                      color: colorScheme.primary,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Cadastrar Empresa',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Vincule seu plano corporativo',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: colorScheme.secondary,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Cadastre sua empresa para gerenciar passageiros e criar rotas.',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 40,
-                      child: OutlinedButton(
-                        onPressed: () {},
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFF1E3A8A), width: 1.5),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text(
-                          'Cadastrar Empresa / Fretado',
-                          style: TextStyle(
-                            color: Color(0xFF1E3A8A),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.chevron_right_rounded,
+                        color: colorScheme.secondary,
                       ),
+                      onPressed: () {},
                     ),
                   ],
                 ),
@@ -271,18 +286,41 @@ class _AccountViewState extends State<AccountView> {
 
               const SizedBox(height: 16),
 
-              // 5. BOTÃO DE SAIR
-              SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: () {},
-                  child: const Text(
+              // 5. BOTÃO DE SAIR DA CONTA
+              Container(
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: theme.dividerColor),
+                ),
+                child: ListTile(
+                  onTap: () {
+                    context.pushNamed(AuthRouteNames.login);
+                  },
+                  leading: const Icon(
+                    Icons.logout_rounded,
+                    color: Colors.redAccent,
+                    size: 20,
+                  ),
+                  title: const Text(
                     'Sair da Conta',
                     style: TextStyle(
-                      color: Colors.redAccent,
-                      fontWeight: FontWeight.bold,
                       fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.redAccent,
                     ),
+                  ),
+                  subtitle: Text(
+                    'Encerrar sessão atual neste dispositivo',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colorScheme.secondary,
+                    ),
+                  ),
+                  trailing: const Icon(
+                    Icons.chevron_right_rounded,
+                    color: Colors.redAccent,
+                    size: 20,
                   ),
                 ),
               ),
@@ -290,44 +328,67 @@ class _AccountViewState extends State<AccountView> {
           ),
         ),
       ),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 3),
+    );
+  }
+
+  Widget _buildCard({
+    required BuildContext context,
+    required Widget child,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(16),
+    EdgeInsetsGeometry? margin,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      margin: margin,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: child,
     );
   }
 
   Widget _buildOptionTile({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String subtitle,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: ListTile(
         onTap: onTap,
-        dense: true,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: Icon(icon, color: const Color(0xFF0F172A), size: 20),
+        leading: Icon(icon, color: colorScheme.onSurface, size: 20),
         title: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF0F172A),
+            color: colorScheme.onSurface,
           ),
         ),
         subtitle: Text(
           subtitle,
-          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+          style: TextStyle(
+            fontSize: 11,
+            color: colorScheme.secondary,
+          ),
         ),
-        trailing: const Icon(
+        trailing: Icon(
           Icons.chevron_right_rounded,
-          color: Color(0xFF94A3B8),
-          size: 18,
+          color: colorScheme.secondary,
+          size: 20,
         ),
       ),
     );
