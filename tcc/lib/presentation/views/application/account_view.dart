@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:tcc/presentation/widgets/nav_bar.dart';
+import 'package:go_router/go_router.dart';
+import '../../../presentation/widgets/nav_bar.dart';
+import '../../../core/routes/auth_routes.dart';
 
 class AccountView extends StatefulWidget {
   const AccountView({super.key});
@@ -43,7 +45,7 @@ class _AccountViewState extends State<AccountView> {
                   border: Border.all(color: const Color(0xFFF1F5F9)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black,
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -122,7 +124,7 @@ class _AccountViewState extends State<AccountView> {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF1E3A8A).withOpacity(0.25),
+                      color: const Color(0xFF1E3A8A),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -133,7 +135,7 @@ class _AccountViewState extends State<AccountView> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: const Icon(
@@ -262,7 +264,6 @@ class _AccountViewState extends State<AccountView> {
                     ),
                     Switch(
                       value: _notificationsEnabled,
-                      activeColor: const Color(0xFF1E3A8A),
                       onChanged: (val) {
                         setState(() {
                           _notificationsEnabled = val;
@@ -353,7 +354,9 @@ class _AccountViewState extends State<AccountView> {
               SizedBox(
                 width: double.infinity,
                 child: TextButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    context.goNamed(AuthRouteNames.login);
+                  },
                   icon: const Icon(
                     Icons.logout_rounded,
                     color: Colors.redAccent,
