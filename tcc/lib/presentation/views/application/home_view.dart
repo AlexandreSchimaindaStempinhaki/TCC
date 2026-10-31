@@ -33,7 +33,8 @@ class _HomeViewState extends State<HomeView> {
       'vacancies': '5 vagas restantes',
       'rating': 4.9,
       'isFavorite': false,
-      'image': 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=800&auto=format&fit=crop',
+      'image':
+          'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=800&auto=format&fit=crop',
     },
     {
       'companyName': 'Expresso Fretamentos Corp',
@@ -45,7 +46,8 @@ class _HomeViewState extends State<HomeView> {
       'vacancies': 'Vagas abertas para colaboradores',
       'rating': 4.8,
       'isFavorite': false,
-      'image': 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?q=80&w=800&auto=format&fit=crop',
+      'image':
+          'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?q=80&w=800&auto=format&fit=crop',
     },
     {
       'companyName': 'Viação Universitária Índigo',
@@ -57,7 +59,8 @@ class _HomeViewState extends State<HomeView> {
       'vacancies': 'Cadastro reserva',
       'rating': 4.95,
       'isFavorite': true,
-      'image': 'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=800&auto=format&fit=crop',
+      'image':
+          'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=800&auto=format&fit=crop',
     },
   ];
 
@@ -65,110 +68,6 @@ class _HomeViewState extends State<HomeView> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
-  }
-
-  void _showRequestDialog(Map<String, dynamic> route) {
-    final isHomePickup = (route['isHomePickup'] as bool?) ?? false;
-
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                route['companyName'] as String,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '${route['origin']} ➔ ${route['destination']}',
-                style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isHomePickup
-                      ? const Color(0xFFF0FDF4)
-                      : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isHomePickup
-                        ? const Color(0xFFBBF7D0)
-                        : const Color(0xFFE2E8F0),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      isHomePickup ? Icons.home_rounded : Icons.place_rounded,
-                      color: isHomePickup
-                          ? const Color(0xFF166534)
-                          : const Color(0xFF1E3A8A),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        isHomePickup
-                            ? 'Esta empresa realiza a coleta na porta da sua residência no horário agendado.'
-                            : 'Esta empresa realiza o embarque em pontos fixos cadastrados próximos ao seu endereço.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isHomePickup
-                              ? const Color(0xFF14532D)
-                              : const Color(0xFF334155),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Solicitação de entrada enviada com sucesso!'),
-                        backgroundColor: Color(0xFF1E3A8A),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1E3A8A),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Confirmar Solicitação de Vínculo',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   @override
@@ -192,7 +91,7 @@ class _HomeViewState extends State<HomeView> {
                   border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black,
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -301,13 +200,13 @@ class _HomeViewState extends State<HomeView> {
             // 3. LISTA DE CARDS COMPONENTIZADOS
             Expanded(
               child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 80),
                 itemCount: _availableRoutes.length,
                 itemBuilder: (context, index) {
                   final route = _availableRoutes[index];
                   return CompanyRouteCard(
                     route: route,
-                    onTap: () => _showRequestDialog(route),
+                    onTap: () => (),
                     onFavoriteTap: () {
                       setState(() {
                         route['isFavorite'] = !(route['isFavorite'] as bool);
@@ -317,7 +216,6 @@ class _HomeViewState extends State<HomeView> {
                 },
               ),
             ),
-            SizedBox(height: 60),
           ],
         ),
       ),

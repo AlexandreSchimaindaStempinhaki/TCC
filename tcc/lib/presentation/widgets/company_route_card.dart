@@ -15,11 +15,9 @@ class CompanyRouteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isFavorite = (route['isFavorite'] as bool?) ?? false;
-    final isHomePickup = (route['isHomePickup'] as bool?) ?? false;
-    final List<String> shifts = List<String>.from(route['shifts'] as List);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 24),
+      margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -38,7 +36,7 @@ class CompanyRouteCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Foto com Badges de Vagas, Tipo de Embarque e Favorito
+            // Foto da Linha/Empresa com Favorito
             Stack(
               children: [
                 ClipRRect(
@@ -61,7 +59,6 @@ class CompanyRouteCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Botão de Favorito
                 Positioned(
                   top: 12,
                   right: 12,
@@ -83,77 +80,16 @@ class CompanyRouteCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Badge de Tipo de Coleta (Em Casa vs Ponto Próximo)
-                Positioned(
-                  top: 12,
-                  left: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isHomePickup
-                          ? const Color(0xFF166534) // Verde para busca em casa
-                          : const Color(0xFF1E3A8A), // Azul para ponto próximo
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isHomePickup
-                              ? Icons.home_rounded
-                              : Icons.location_on_rounded,
-                          color: Colors.white,
-                          size: 13,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          isHomePickup ? 'Busca em Casa' : 'Ponto Próximo',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // Badge de Vagas
-                Positioned(
-                  bottom: 12,
-                  left: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.75),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      route['vacancies'] as String,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
 
-            // Informações Detalhadas do Trajeto e Operação
+            // Informações Essenciais: Empresa, Destino, Avaliação e CTA
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Nome da Empresa e Avaliação
+                  // Linha 1: Nome da Empresa + Nota
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -185,157 +121,52 @@ class CompanyRouteCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 6),
 
-                  // Trajeto Especificado: Origem ➔ Destino
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.radio_button_checked_rounded,
-                              size: 14,
-                              color: Color(0xFF1E3A8A),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Partida: ${route['origin']}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF334155),
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.only(left: 6.0),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: SizedBox(
-                              height: 10,
-                              child: VerticalDivider(
-                                color: Color(0xFFCBD5E1),
-                                thickness: 1.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.location_on_rounded,
-                              size: 14,
-                              color: Colors.redAccent,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Destino: ${route['destination']}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF334155),
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Dias de Operação
+                  // Linha 2: Destino da Rota
                   Row(
                     children: [
                       const Icon(
-                        Icons.calendar_today_rounded,
-                        size: 14,
-                        color: Color(0xFF64748B),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        route['operatingDays'] as String,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Turnos Disponíveis
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 2.0),
-                        child: Icon(
-                          Icons.schedule_rounded,
-                          size: 14,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Wrap(
-                          spacing: 6,
-                          runSpacing: 4,
-                          children: shifts.map((shift) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEFF6FF),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: const Color(0xFFBFDBFE),
-                                ),
-                              ),
-                              child: Text(
-                                shift,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1E3A8A),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-                  const Align(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      'Pedir Entrada ➔',
-                      style: TextStyle(
-                        fontSize: 12,
+                        Icons.location_on_rounded,
+                        size: 15,
                         color: Color(0xFF1E3A8A),
-                        fontWeight: FontWeight.bold,
                       ),
-                    ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          'Destino: ${route['destination']}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF64748B),
+                            fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Linha 3: CTA "Ver mais informações"
+                  const Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        'Ver mais informações',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF1E3A8A),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(width: 4),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 12,
+                        color: Color(0xFF1E3A8A),
+                      ),
+                    ],
                   ),
                 ],
               ),
