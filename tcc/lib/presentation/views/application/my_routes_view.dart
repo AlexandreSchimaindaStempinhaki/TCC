@@ -23,7 +23,6 @@ class _MyRoutesViewState extends State<MyRoutesView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Cabeçalho
               const Text(
                 'Minhas Rotas',
                 style: TextStyle(
@@ -42,15 +41,15 @@ class _MyRoutesViewState extends State<MyRoutesView> {
               ),
               const SizedBox(height: 20),
 
-              // CARD PRINCIPAL: ROTA EM ANDAMENTO (TELEMETRIA AO VIVO)
+              // CARD PRINCIPAL: TELEMETRIA AO VIVO
               Container(
-                padding: const EdgeInsets.all(18),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E3A8A),
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF1E3A8A).withOpacity(0.25),
+                      color: const Color(0xFF1E3A8A),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                     ),
@@ -62,40 +61,34 @@ class _MyRoutesViewState extends State<MyRoutesView> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 4,
-                                backgroundColor: Color(0xFF22C55E), // Verde Pulsante
+                        Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF22C55E),
+                                shape: BoxShape.circle,
                               ),
-                              SizedBox(width: 6),
-                              Text(
-                                'EM TRÂNSITO',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
-                                ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'EM TRÂNSITO',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                         const Text(
                           'Chegada em ~8 min',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
@@ -113,7 +106,7 @@ class _MyRoutesViewState extends State<MyRoutesView> {
                     Text(
                       'Linha 101 • Turno Manhã (Saída 06:30)',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white,
                         fontSize: 12,
                       ),
                     ),
@@ -121,17 +114,13 @@ class _MyRoutesViewState extends State<MyRoutesView> {
                     const Divider(color: Colors.white24, height: 1),
                     const SizedBox(height: 14),
 
-                    // Dados do Motorista e Veículo
+                    // Motorista sem fundo azul em volta do ícone
                     Row(
                       children: [
-                        const CircleAvatar(
-                          radius: 18,
-                          backgroundColor: Colors.white24,
-                          child: Icon(
-                            Icons.person_rounded,
-                            color: Colors.white,
-                            size: 20,
-                          ),
+                        const Icon(
+                          Icons.person_outline_rounded,
+                          color: Colors.white,
+                          size: 20,
                         ),
                         const SizedBox(width: 10),
                         const Expanded(
@@ -139,7 +128,7 @@ class _MyRoutesViewState extends State<MyRoutesView> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Motorista: Carlos Eduardo',
+                                'Carlos Eduardo',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 13,
@@ -147,7 +136,7 @@ class _MyRoutesViewState extends State<MyRoutesView> {
                                 ),
                               ),
                               Text(
-                                'Marcopolo Volare • Placa ABC-1234',
+                                'Volare • Placa ABC-1234',
                                 style: TextStyle(
                                   color: Colors.white70,
                                   fontSize: 11,
@@ -168,14 +157,11 @@ class _MyRoutesViewState extends State<MyRoutesView> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Botão para abrir o Mapa ao Vivo
                     SizedBox(
                       width: double.infinity,
                       height: 44,
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          // Navegar para o mapa interativo
-                        },
+                        onPressed: () {},
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xFF1E3A8A),
@@ -184,10 +170,7 @@ class _MyRoutesViewState extends State<MyRoutesView> {
                           ),
                           elevation: 0,
                         ),
-                        icon: const Icon(
-                          Icons.map_rounded,
-                          size: 18,
-                        ),
+                        icon: const Icon(Icons.map_rounded, size: 18),
                         label: const Text(
                           'Acompanhar no Mapa ao Vivo',
                           style: TextStyle(
@@ -201,35 +184,26 @@ class _MyRoutesViewState extends State<MyRoutesView> {
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
-              // CHAVE DE CONFIRMAÇÃO DE PRESENÇA (RECURSO B2B2C CRUCIAL)
+              // SWITCH DE PRESENÇA (Ícone limpo)
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: const Color(0xFFF1F5F9)),
                 ),
                 child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: _isAttendingToday
-                            ? const Color(0xFFF0FDF4)
-                            : const Color(0xFFFEF2F2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        _isAttendingToday
-                            ? Icons.check_circle_rounded
-                            : Icons.cancel_rounded,
-                        color: _isAttendingToday
-                            ? const Color(0xFF166534)
-                            : Colors.redAccent,
-                        size: 22,
-                      ),
+                    Icon(
+                      _isAttendingToday
+                          ? Icons.check_circle_outline_rounded
+                          : Icons.highlight_off_rounded,
+                      color: _isAttendingToday
+                          ? const Color(0xFF166534)
+                          : Colors.redAccent,
+                      size: 22,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -246,8 +220,8 @@ class _MyRoutesViewState extends State<MyRoutesView> {
                           ),
                           Text(
                             _isAttendingToday
-                                ? 'Você confirmou embarque nesta rota'
-                                : 'Você marcou ausência hoje',
+                                ? 'Vou embarcar nesta rota'
+                                : 'Marquei ausência hoje',
                             style: const TextStyle(
                               fontSize: 11,
                               color: Color(0xFF64748B),
@@ -258,7 +232,6 @@ class _MyRoutesViewState extends State<MyRoutesView> {
                     ),
                     Switch(
                       value: _isAttendingToday,
-                      activeColor: const Color(0xFF1E3A8A),
                       onChanged: (val) {
                         setState(() {
                           _isAttendingToday = val;
@@ -273,18 +246,16 @@ class _MyRoutesViewState extends State<MyRoutesView> {
               const Text(
                 'Outros Contratos Ativos',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF0F172A),
                 ),
               ),
               const SizedBox(height: 12),
 
-              // Outra Rota do Usuário (ex: Rota de Volta)
               _buildActiveContractTile(
                 title: 'Linha Volta • Campus ➔ Pontal do Sul',
                 schedule: 'Saída às 18:15 • Segunda a Sexta',
-                vehicle: 'Ônibus 02',
               ),
             ],
           ),
@@ -297,7 +268,6 @@ class _MyRoutesViewState extends State<MyRoutesView> {
   Widget _buildActiveContractTile({
     required String title,
     required String schedule,
-    required String vehicle,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -308,15 +278,12 @@ class _MyRoutesViewState extends State<MyRoutesView> {
       ),
       child: Row(
         children: [
-          const CircleAvatar(
-            backgroundColor: Color(0xFFEFF6FF),
-            child: Icon(
-              Icons.directions_bus_rounded,
-              color: Color(0xFF1E3A8A),
-              size: 20,
-            ),
+          const Icon(
+            Icons.directions_bus_outlined,
+            color: Color(0xFF1E3A8A),
+            size: 20,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -343,6 +310,7 @@ class _MyRoutesViewState extends State<MyRoutesView> {
           const Icon(
             Icons.chevron_right_rounded,
             color: Color(0xFF94A3B8),
+            size: 20,
           ),
         ],
       ),

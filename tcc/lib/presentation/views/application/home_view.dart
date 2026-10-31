@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:tcc/presentation/widgets/nav_bar.dart';
 import 'package:tcc/presentation/widgets/company_route_card.dart';
+import '../../../core/routes/indigo_routes.dart';
+import 'package:go_router/go_router.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -197,7 +199,6 @@ class _HomeViewState extends State<HomeView> {
 
             const Divider(height: 1, color: Color(0xFFF1F5F9)),
 
-            // 3. LISTA DE CARDS COMPONENTIZADOS
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 80),
@@ -206,7 +207,13 @@ class _HomeViewState extends State<HomeView> {
                   final route = _availableRoutes[index];
                   return CompanyRouteCard(
                     route: route,
-                    onTap: () => (),
+                    onTap: () {
+          // AQUI: Abre a tela de detalhes passando os dados da rota
+          context.pushNamed(
+            IndigoRouteNames.routeDetails,
+            extra: route,
+          );
+        },
                     onFavoriteTap: () {
                       setState(() {
                         route['isFavorite'] = !(route['isFavorite'] as bool);

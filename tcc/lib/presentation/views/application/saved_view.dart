@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tcc/presentation/widgets/nav_bar.dart';
+import 'package:tcc/presentation/widgets/saved_route_card.dart';
 
 class SavedView extends StatefulWidget {
   const SavedView({super.key});
@@ -9,7 +10,6 @@ class SavedView extends StatefulWidget {
 }
 
 class _SavedViewState extends State<SavedView> {
-  // Dados mockados de rotas salvas e status de solicitações
   final List _savedRoutes = [
     {
       'id': '1',
@@ -17,7 +17,7 @@ class _SavedViewState extends State<SavedView> {
       'origin': 'Pontal do Sul',
       'destination': 'Campus IFPR / UFPR',
       'status': 'Solicitação Pendente',
-      'statusColor': const Color(0xFFD97706), // Laranja (Em análise)
+      'statusColor': const Color(0xFFD97706), // Apenas a cor do texto (Laranja)
       'isHomePickup': true,
       'rating': 4.9,
       'image': 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=800&auto=format&fit=crop',
@@ -28,7 +28,7 @@ class _SavedViewState extends State<SavedView> {
       'origin': 'Praia de Leste',
       'destination': 'UFPR - Centro Politécnico',
       'status': 'Vagas Abertas',
-      'statusColor': const Color(0xFF166534), // Verde (Disponível)
+      'statusColor': const Color(0xFF15803D), // Apenas a cor do texto (Verde)
       'isHomePickup': false,
       'rating': 4.95,
       'image': 'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=800&auto=format&fit=crop',
@@ -46,7 +46,6 @@ class _SavedViewState extends State<SavedView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 16),
-            // Cabeçalho da Tela
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: Column(
@@ -72,8 +71,6 @@ class _SavedViewState extends State<SavedView> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // Conteúdo ou Estado Vazio
             Expanded(
               child: _savedRoutes.isEmpty
                   ? const Center(
@@ -87,7 +84,17 @@ class _SavedViewState extends State<SavedView> {
                       itemCount: _savedRoutes.length,
                       itemBuilder: (context, index) {
                         final route = _savedRoutes[index];
-                        return _buildSavedCard(route);
+                        return SavedRouteCard(
+                          route: route,
+                          onTap: () {
+                            // Abrir detalhes da rota salva
+                          },
+                          onFavoriteTap: () {
+                            setState(() {
+                              _savedRoutes.removeWhere((item) => item['id'] == route['id']);
+                            });
+                          },
+                        );
                       },
                     ),
             ),
@@ -95,139 +102,6 @@ class _SavedViewState extends State<SavedView> {
         ),
       ),
       bottomNavigationBar: const BottomNavBar(currentIndex: 1),
-    );
-  }
-
-  Widget _buildSavedCard(Map<String, dynamic> route) {
-    final isHomePickup = route['isHomePickup'] as bool;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    route['image'] as String,
-                    height: 70,
-                    width: 70,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Badge de Status da Solicitação/Vaga
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: (route['statusColor'] as Color).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          route['status'] as String,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: route['statusColor'] as Color,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        route['companyName'] as String,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${route['origin']} ➔${route['destination']}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF64748B),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(
-                    Icons.favorite_rounded,
-                    color: Colors.redAccent,
-                    size: 20,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _savedRoutes.removeWhere((item) => item['id'] == route['id']);
-                    });
-                  },
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      isHomePickup ? Icons.home_rounded : Icons.location_on_rounded,
-                      size: 14,
-                      color: const Color(0xFF1E3A8A),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      isHomePickup ? 'Coleta em Casa' : 'Ponto Próximo',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF1E3A8A),
-                      ),
-                    ),
-                  ],
-                ),
-                const Text(
-                  'Ver Detalhes ➔',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E3A8A),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

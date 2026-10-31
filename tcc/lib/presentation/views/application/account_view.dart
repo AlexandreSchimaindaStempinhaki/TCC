@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import '../../../presentation/widgets/nav_bar.dart';
-import '../../../core/routes/auth_routes.dart';
+import 'package:tcc/presentation/widgets/nav_bar.dart';
 
 class AccountView extends StatefulWidget {
   const AccountView({super.key});
@@ -25,7 +23,6 @@ class _AccountViewState extends State<AccountView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Cabeçalho da Tela
               const Text(
                 'Minha Conta',
                 style: TextStyle(
@@ -36,31 +33,24 @@ class _AccountViewState extends State<AccountView> {
               ),
               const SizedBox(height: 20),
 
-              // 1. CARD DE PERFIL DO USUÁRIO
+              // 1. DADOS DO PERFIL
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: const Color(0xFFF1F5F9)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black,
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
                 ),
                 child: Row(
                   children: [
                     const CircleAvatar(
-                      radius: 30,
+                      radius: 26,
                       backgroundColor: Color(0xFF1E3A8A),
                       child: Text(
                         'GS',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -73,7 +63,7 @@ class _AccountViewState extends State<AccountView> {
                           Text(
                             'Gabriel Silva',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 17,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF0F172A),
                             ),
@@ -81,15 +71,6 @@ class _AccountViewState extends State<AccountView> {
                           SizedBox(height: 2),
                           Text(
                             'Estudante • UFPR Litoral',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF1E3A8A),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'gabriel.silva@email.com',
                             style: TextStyle(
                               fontSize: 12,
                               color: Color(0xFF64748B),
@@ -100,7 +81,7 @@ class _AccountViewState extends State<AccountView> {
                     ),
                     IconButton(
                       icon: const Icon(
-                        Icons.edit_rounded,
+                        Icons.edit_outlined,
                         color: Color(0xFF64748B),
                         size: 20,
                       ),
@@ -110,39 +91,21 @@ class _AccountViewState extends State<AccountView> {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-              // 2. CARTEIRINHA DIGITAL / QR CODE DE EMBARQUE (Recurso Chave)
+              // 2. CARTEIRINHA DIGITAL
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF1E3A8A), Color(0xFF1E40AF)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: const Color(0xFF1E3A8A),
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF1E3A8A),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
                 ),
                 child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Icon(
-                        Icons.qr_code_2_rounded,
-                        color: Colors.white,
-                        size: 32,
-                      ),
+                    const Icon(
+                      Icons.qr_code_2_rounded,
+                      color: Colors.white,
+                      size: 28,
                     ),
                     const SizedBox(width: 14),
                     const Expanded(
@@ -153,13 +116,13 @@ class _AccountViewState extends State<AccountView> {
                             'Carteirinha de Embarque',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 15,
+                              fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           SizedBox(height: 2),
                           Text(
-                            'Apresente ao motorista para validação',
+                            'Validação via QR Code com o motorista',
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 11,
@@ -169,9 +132,9 @@ class _AccountViewState extends State<AccountView> {
                       ),
                     ),
                     const Icon(
-                      Icons.arrow_forward_ios_rounded,
+                      Icons.chevron_right_rounded,
                       color: Colors.white,
-                      size: 14,
+                      size: 20,
                     ),
                   ],
                 ),
@@ -179,11 +142,11 @@ class _AccountViewState extends State<AccountView> {
 
               const SizedBox(height: 24),
 
-              // 3. SEÇÃO DE ENDEREÇO E EMBARQUE
+              // 3. SEÇÃO DE CONFIGURAÇÕES / EMBARQUE
               const Text(
-                'Dados de Embarque',
+                'Configurações de Transporte',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF64748B),
                 ),
@@ -191,38 +154,22 @@ class _AccountViewState extends State<AccountView> {
               const SizedBox(height: 10),
 
               _buildOptionTile(
-                icon: Icons.home_work_rounded,
-                title: 'Meu Endereço Residencial',
-                subtitle: 'Rua Barão do Rio Branco, 450 - Pontal do Sul',
+                icon: Icons.home_outlined,
+                title: 'Endereço Residencial',
+                subtitle: 'Pontal do Sul - R. Barão do Rio Branco',
                 onTap: () {},
               ),
               _buildOptionTile(
-                icon: Icons.pin_drop_rounded,
-                title: 'Pontos de Parada Favoritos',
-                subtitle: 'Gerenciar pontos de coleta cadastrados',
+                icon: Icons.place_outlined,
+                title: 'Pontos de Parada Salvos',
+                subtitle: 'Gerenciar locais de embarque',
                 onTap: () {},
               ),
 
-              const SizedBox(height: 24),
-
-              // 4. PREFERÊNCIAS E CONTRATOS
-              const Text(
-                'Preferências e Contratos',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // Switch de Notificações
+              // Switch de Avisos (Ícone Limpo)
               Container(
                 margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -230,16 +177,12 @@ class _AccountViewState extends State<AccountView> {
                 ),
                 child: Row(
                   children: [
-                    const CircleAvatar(
-                      radius: 18,
-                      backgroundColor: Color(0xFFEFF6FF),
-                      child: Icon(
-                        Icons.notifications_active_rounded,
-                        color: Color(0xFF1E3A8A),
-                        size: 18,
-                      ),
+                    const Icon(
+                      Icons.notifications_none_rounded,
+                      color: Color(0xFF0F172A),
+                      size: 20,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
                     const Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,7 +196,7 @@ class _AccountViewState extends State<AccountView> {
                             ),
                           ),
                           Text(
-                            'Notificar quando a van estiver próxima',
+                            'Notificar quando o veículo estiver próximo',
                             style: TextStyle(
                               fontSize: 11,
                               color: Color(0xFF64748B),
@@ -274,67 +217,42 @@ class _AccountViewState extends State<AccountView> {
                 ),
               ),
 
-              _buildOptionTile(
-                icon: Icons.description_rounded,
-                title: 'Meus Contratos e Comprovantes',
-                subtitle: 'Termos de adesão e fichas de matrícula',
-                onTap: () {},
-              ),
-              _buildOptionTile(
-                icon: Icons.help_outline_rounded,
-                title: 'Suporte e Atendimento',
-                subtitle: 'Falar com a administração do Índigo',
-                onTap: () {},
-              ),
-
               const SizedBox(height: 20),
 
-              // Adicionar na AccountView logo acima do botão "Sair da Conta"
+              // 4. ÁREA B2B / CADASTRAR EMPRESA
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.business_rounded, color: Color(0xFF1E3A8A)),
-                        SizedBox(width: 8),
-                        Text(
-                          'Você é motorista ou gestor?',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
                     const Text(
-                      'Cadastre sua empresa ou associação para gerenciar passageiros e criar novas rotas.',
+                      'Você é motorista ou gestor?',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Cadastre sua empresa para gerenciar passageiros e criar rotas.',
                       style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
-                      height: 42,
+                      height: 40,
                       child: OutlinedButton(
-                        onPressed: () {
-                          // Navega para o cadastro de empresa
-                          // context.pushNamed('create_company');
-                        },
+                        onPressed: () {},
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(
-                            color: Color(0xFF1E3A8A),
-                            width: 1.5,
-                          ),
+                          side: const BorderSide(color: Color(0xFF1E3A8A), width: 1.5),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                         child: const Text(
@@ -351,23 +269,19 @@ class _AccountViewState extends State<AccountView> {
                 ),
               ),
 
+              const SizedBox(height: 16),
+
+              // 5. BOTÃO DE SAIR
               SizedBox(
                 width: double.infinity,
-                child: TextButton.icon(
-                  onPressed: () {
-                    context.goNamed(AuthRouteNames.login);
-                  },
-                  icon: const Icon(
-                    Icons.logout_rounded,
-                    color: Colors.redAccent,
-                    size: 18,
-                  ),
-                  label: const Text(
+                child: TextButton(
+                  onPressed: () {},
+                  child: const Text(
                     'Sair da Conta',
                     style: TextStyle(
                       color: Colors.redAccent,
                       fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                      fontSize: 13,
                     ),
                   ),
                 ),
@@ -395,12 +309,9 @@ class _AccountViewState extends State<AccountView> {
       ),
       child: ListTile(
         onTap: onTap,
+        dense: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: CircleAvatar(
-          radius: 18,
-          backgroundColor: const Color(0xFFEFF6FF),
-          child: Icon(icon, color: const Color(0xFF1E3A8A), size: 18),
-        ),
+        leading: Icon(icon, color: const Color(0xFF0F172A), size: 20),
         title: Text(
           title,
           style: const TextStyle(
@@ -416,7 +327,7 @@ class _AccountViewState extends State<AccountView> {
         trailing: const Icon(
           Icons.chevron_right_rounded,
           color: Color(0xFF94A3B8),
-          size: 20,
+          size: 18,
         ),
       ),
     );
