@@ -1,96 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:tcc/presentation/widgets/route_itinerary_card.dart';
+import '../../../core/routes/indigo_routes.dart';
+import 'package:go_router/go_router.dart';
 
 class RouteDetailsView extends StatelessWidget {
   final Map<String, dynamic> route;
 
-  const RouteDetailsView({
-    super.key,
-    required this.route,
-  });
-
-  void _openMapModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.8,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFCBD5E1),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Visualização do Trajeto',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1, color: Color(0xFFF1F5F9)),
-            Expanded(
-              child: Container(
-                color: const Color(0xFFE2E8F0),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.map_rounded,
-                        size: 56,
-                        color: Color(0xFF1E3A8A),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Mapa Interativo de ${route['companyName']}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${route['origin']} ➔ ${route['destination']}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  const RouteDetailsView({super.key, required this.route});
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +34,7 @@ class RouteDetailsView extends StatelessWidget {
                     color: Color(0xFF0F172A),
                     size: 20,
                   ),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => context.pushNamed(IndigoRouteNames.home),
                 ),
               ),
             ),
@@ -146,7 +62,7 @@ class RouteDetailsView extends StatelessWidget {
                     route['image'] as String,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
-                      color: const Color(0xFF1E3A8A),
+                      color: const Color(0xFF1E3A8A).withOpacity(0.1),
                       child: const Icon(
                         Icons.directions_bus_rounded,
                         size: 64,
@@ -160,9 +76,9 @@ class RouteDetailsView extends StatelessWidget {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.black,
+                          Colors.black.withOpacity(0.4),
                           Colors.transparent,
-                          Colors.black,
+                          Colors.black.withOpacity(0.6),
                         ],
                       ),
                     ),
@@ -214,7 +130,7 @@ class RouteDetailsView extends StatelessWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.amber,
+                          color: Colors.amber.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -243,7 +159,17 @@ class RouteDetailsView extends StatelessWidget {
 
                   // Botão: Página da Empresa
                   InkWell(
-                    onTap: () {},
+                    onTap: () {
+                      context.pushNamed(
+                        IndigoRouteNames.companyProfile,
+                        extra: {
+                          'companyName': route['companyName'],
+                          'rating': route['rating'],
+                          'category': route['category'],
+                          'image': route['image'],
+                        },
+                      );
+                    },
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -335,9 +261,13 @@ class RouteDetailsView extends StatelessWidget {
 
                   const SizedBox(height: 12),
 
-                  // Botão Limpo: Visualizar Trajeto no Mapa (Sem fundo azul e sem subtítulo)
                   InkWell(
-                    onTap: () => _openMapModal(context),
+                    onTap: () => {
+                      context.pushNamed(
+                        IndigoRouteNames.routeMap,
+                        extra: route,
+                      ),
+                    },
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -379,7 +309,6 @@ class RouteDetailsView extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
-                  // Seção Itinerário e Turnos isolada em Componente
                   const Text(
                     'Itinerário e Turnos',
                     style: TextStyle(
@@ -393,7 +322,8 @@ class RouteDetailsView extends StatelessWidget {
                   RouteItineraryCard(
                     origin: route['origin'] as String,
                     destination: route['destination'] as String,
-                    operatingDays: route['operatingDays'] as String? ??
+                    operatingDays:
+                        route['operatingDays'] as String? ??
                         'Segunda a Sexta-feira',
                     shifts: shifts,
                   ),
@@ -406,19 +336,9 @@ class RouteDetailsView extends StatelessWidget {
         ],
       ),
 
-      // Botão Fixo de Solicitação
       bottomSheet: Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black,
-              blurRadius: 10,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
+        decoration: BoxDecoration(color: Color(0xFFFAFAFA)),
         child: SafeArea(
           child: SizedBox(
             width: double.infinity,
@@ -427,7 +347,9 @@ class RouteDetailsView extends StatelessWidget {
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Solicitação de vínculo enviada com sucesso!'),
+                    content: Text(
+                      'Solicitação de vínculo enviada com sucesso!',
+                    ),
                     backgroundColor: Color(0xFF1E3A8A),
                   ),
                 );

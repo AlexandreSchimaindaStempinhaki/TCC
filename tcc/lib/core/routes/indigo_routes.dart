@@ -5,7 +5,10 @@ import '../../presentation/views/application/saved_view.dart';
 import '../../presentation/views/application/my_routes_view.dart';
 import '../../presentation/views/application/account_view.dart';
 import '../../presentation/views/application/route_details_view.dart';
+import '../../presentation/views/application/route_map_view.dart';
 // import '../../presentation/views/application/create_company_view.dart';
+import '../../presentation/views/application/company_profile_view.dart';
+import '../../presentation/views/application/joined_route_detail_view.dart';
 
 class IndigoRouteNames {
   static const home = 'home';
@@ -14,6 +17,9 @@ class IndigoRouteNames {
   static const account = 'account';
   static const routeDetails = 'route_details';
   static const createCompany = 'create_company';
+  static const routeMap = 'route_map';
+  static const companyProfile = 'company_profile';
+  static const joinedRouteDetail = 'joined_route_detail';
 }
 
 class IndigoPaths {
@@ -23,6 +29,9 @@ class IndigoPaths {
   static const account = '/account';
   static const routeDetails = '/route-details';
   static const createCompany = '/create-company';
+  static const routeMap = '/route-map';
+  static const companyProfile = '/company-profile';
+  static const joinedRouteDetail = '/joined-route-detail';
 }
 
 final List<RouteBase> indigoRoutes = [
@@ -56,6 +65,30 @@ final List<RouteBase> indigoRoutes = [
     builder: (context, state) {
       final routeData = state.extra as Map<String, dynamic>;
       return RouteDetailsView(route: routeData);
+    },
+  ),
+  GoRoute(
+    path: IndigoPaths.routeMap,
+    name: IndigoRouteNames.routeMap,
+    builder: (context, state) {
+      final routeData = state.extra as Map<String, dynamic>;
+      return RouteMapView(route: routeData);
+    },
+  ),
+  GoRoute(
+    path: IndigoPaths.companyProfile,
+    name: IndigoRouteNames.companyProfile,
+    builder: (context, state) {
+      final companyData = state.extra as Map<String, dynamic>;
+      return CompanyProfileView(company: companyData);
+    },
+  ),
+  GoRoute(
+    path: IndigoPaths.joinedRouteDetail,
+    name: IndigoRouteNames.joinedRouteDetail,
+    builder: (context, state) {
+      final routeData = state.extra as Map<String, dynamic>;
+      return JoinedRouteDetailView(route: routeData);
     },
   ),
 ];

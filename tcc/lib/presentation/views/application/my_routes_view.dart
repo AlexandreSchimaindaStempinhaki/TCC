@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:tcc/presentation/widgets/nav_bar.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../../widgets/live_route_tracking_card.dart';
+import '../../widgets/monthly_schedule_card.dart';
 
 class MyRoutesView extends StatefulWidget {
   const MyRoutesView({super.key});
@@ -9,310 +11,203 @@ class MyRoutesView extends StatefulWidget {
 }
 
 class _MyRoutesViewState extends State<MyRoutesView> {
-  bool _isAttendingToday = true;
+  bool _isReadyForPickup = false;
+
+  final LatLng _driverPosition = const LatLng(-25.5450, -48.5900);
+  final LatLng _userPickupPosition = const LatLng(-25.5188, -48.5496);
+
+  // Pop-up de Reconfirmação de Embarque
+  Future<void> _handlePickupToggle(bool newValue) async {
+    if (newValue) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Confirmar Presença',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0F172A),
+              fontSize: 18,
+            ),
+          ),
+          content: const Text(
+            'Você confirma que estará no ponto de embarque no horário agendado de hoje?',
+            style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1E3A8A),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text(
+                'Sim, estou pronto',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed == true) {
+        setState(() => _isReadyForPickup = true);
+      }
+    } else {
+      setState(() => _isReadyForPickup = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final routeName = 'Detalhes da Rota';
+    final driverName = 'Carlos Andrade';
+    final vehicleInfo = 'Mercedes-Benz Sprinter';
+    final eta = 12;
+
     return Scaffold(
-      extendBody: true,
       backgroundColor: const Color(0xFFFAFAFA),
-      body: SafeArea(
-        bottom: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Minhas Rotas',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
-                ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Acompanhamento e telemetria do seu transporte ativo',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // CARD PRINCIPAL: TELEMETRIA AO VIVO
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E3A8A),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF1E3A8A),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF22C55E),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'EM TRÂNSITO',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Text(
-                          'Chegada em ~8 min',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Associação Estudantil Litoral',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Linha 101 • Turno Manhã (Saída 06:30)',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Divider(color: Colors.white24, height: 1),
-                    const SizedBox(height: 14),
-
-                    // Motorista sem fundo azul em volta do ícone
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.person_outline_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 10),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Carlos Eduardo',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              Text(
-                                'Volare • Placa ABC-1234',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.phone_in_talk_rounded,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          onPressed: () {},
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: 44,
-                      child: ElevatedButton.icon(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFF1E3A8A),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          elevation: 0,
-                        ),
-                        icon: const Icon(Icons.map_rounded, size: 18),
-                        label: const Text(
-                          'Acompanhar no Mapa ao Vivo',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // SWITCH DE PRESENÇA (Ícone limpo)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFF1F5F9)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      _isAttendingToday
-                          ? Icons.check_circle_outline_rounded
-                          : Icons.highlight_off_rounded,
-                      color: _isAttendingToday
-                          ? const Color(0xFF166534)
-                          : Colors.redAccent,
-                      size: 22,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Status para a viagem de hoje',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF0F172A),
-                            ),
-                          ),
-                          Text(
-                            _isAttendingToday
-                                ? 'Vou embarcar nesta rota'
-                                : 'Marquei ausência hoje',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Switch(
-                      value: _isAttendingToday,
-                      onChanged: (val) {
-                        setState(() {
-                          _isAttendingToday = val;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-              const Text(
-                'Outros Contratos Ativos',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              _buildActiveContractTile(
-                title: 'Linha Volta • Campus ➔ Pontal do Sul',
-                schedule: 'Saída às 18:15 • Segunda a Sexta',
-              ),
-            ],
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF0F172A)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          routeName,
+          style: const TextStyle(
+            color: Color(0xFF0F172A),
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
           ),
         ),
       ),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 2),
-    );
-  }
-
-  Widget _buildActiveContractTile({
-    required String title,
-    required String schedule,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.directions_bus_outlined,
-            color: Color(0xFF1E3A8A),
-            size: 20,
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  schedule,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF64748B),
-                  ),
-                ),
-              ],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. COMPONENTE DE RASTREAMENTO DO MAPA + MOTORISTA + ETA
+            LiveRouteTrackingCard(
+              driverName: driverName,
+              vehicleInfo: vehicleInfo,
+              etaMinutes: eta,
+              driverPosition: _driverPosition,
+              userPickupPosition: _userPickupPosition,
             ),
-          ),
-          const Icon(
-            Icons.chevron_right_rounded,
-            color: Color(0xFF94A3B8),
-            size: 20,
-          ),
-        ],
+
+            const SizedBox(height: 24),
+
+            // 2. CARD DE CONFIRMAÇÃO COM RECONFIRMAÇÃO EM POP-UP
+            const Text(
+              'Confirmação para Hoje',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _isReadyForPickup
+                    ? const Color(0xFFF0FDF4)
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: _isReadyForPickup
+                      ? const Color(0xFFBBF7D0)
+                      : const Color(0xFFF1F5F9),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _isReadyForPickup
+                        ? Icons.check_circle_rounded
+                        : Icons.do_not_disturb_on_outlined,
+                    color: _isReadyForPickup
+                        ? const Color(0xFF166534)
+                        : const Color(0xFF64748B),
+                    size: 28,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _isReadyForPickup
+                              ? 'Pronto para Embarque'
+                              : 'Aguardando sua confirmação',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: _isReadyForPickup
+                                ? const Color(0xFF14532D)
+                                : const Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _isReadyForPickup
+                              ? 'O motorista foi notificado da sua presença.'
+                              : 'Avisar o motorista se você vai embarcar na corrida de hoje.',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Switch(
+                    value: _isReadyForPickup,
+                    activeColor: const Color(0xFF1E3A8A),
+                    onChanged: (val) => _handlePickupToggle(val),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // 3. COMPONENTE DE PROGRAMAÇÃO MENSAL
+            const Text(
+              'Programação Mensal',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            const MonthlyScheduleCard(),
+
+            const SizedBox(height: 30),
+          ],
+        ),
       ),
     );
   }

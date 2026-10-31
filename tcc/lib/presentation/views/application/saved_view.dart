@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:tcc/presentation/widgets/nav_bar.dart';
 import 'package:tcc/presentation/widgets/saved_route_card.dart';
+import '../../../core/routes/indigo_routes.dart';
+import 'package:go_router/go_router.dart';
 
 class SavedView extends StatefulWidget {
   const SavedView({super.key});
@@ -20,7 +22,8 @@ class _SavedViewState extends State<SavedView> {
       'statusColor': const Color(0xFFD97706), // Apenas a cor do texto (Laranja)
       'isHomePickup': true,
       'rating': 4.9,
-      'image': 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=800&auto=format&fit=crop',
+      'image':
+          'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=800&auto=format&fit=crop',
     },
     {
       'id': '2',
@@ -31,7 +34,8 @@ class _SavedViewState extends State<SavedView> {
       'statusColor': const Color(0xFF15803D), // Apenas a cor do texto (Verde)
       'isHomePickup': false,
       'rating': 4.95,
-      'image': 'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=800&auto=format&fit=crop',
+      'image':
+          'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=800&auto=format&fit=crop',
     },
   ];
 
@@ -62,10 +66,7 @@ class _SavedViewState extends State<SavedView> {
                   SizedBox(height: 4),
                   Text(
                     'Linhas favoritadas e solicitações de vínculo',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF64748B),
-                    ),
+                    style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
                   ),
                 ],
               ),
@@ -87,11 +88,16 @@ class _SavedViewState extends State<SavedView> {
                         return SavedRouteCard(
                           route: route,
                           onTap: () {
-                            // Abrir detalhes da rota salva
+                            context.pushNamed(
+                              IndigoRouteNames.routeDetails,
+                              extra: route,
+                            );
                           },
                           onFavoriteTap: () {
                             setState(() {
-                              _savedRoutes.removeWhere((item) => item['id'] == route['id']);
+                              _savedRoutes.removeWhere(
+                                (item) => item['id'] == route['id'],
+                              );
                             });
                           },
                         );
