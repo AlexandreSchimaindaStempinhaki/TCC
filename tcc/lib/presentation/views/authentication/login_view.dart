@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../widgets/header_background.dart';
-import '../../core/extensions/context_extensions.dart';
-import '../../core/routes/auth_routes.dart';
-import '../widgets/text_field.dart';
-import '../../core/constants/app_assets.dart';
+import '../../widgets/header_background.dart';
+import '../../../core/extensions/context_extensions.dart';
+import '../../../core/routes/auth_routes.dart';
+import '../../../core/routes/indigo_routes.dart';
+import '../../widgets/text_field.dart';
+import '../../../core/constants/app_assets.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -114,7 +115,7 @@ class _LoginPageState extends State<LoginPage> {
                     height: 52,
                     child: ElevatedButton(
                       onPressed: () {
-                        // Lógica aqui
+                        context.pushNamed(IndigoRouteNames.home);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1E3A8A),

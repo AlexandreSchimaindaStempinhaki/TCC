@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../widgets/header_background.dart';
-import '../../core/extensions/context_extensions.dart';
-import '../../core/routes/auth_routes.dart';
+import '../../widgets/header_background.dart';
+import '../../../core/extensions/context_extensions.dart';
+import '../../../core/routes/auth_routes.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});

@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'auth_routes.dart';
+import 'indigo_routes.dart';
 
 class AppRouter {
   AppRouter._();
@@ -8,6 +9,7 @@ class AppRouter {
     initialLocation: AuthPaths.welcome,
     routes: <RouteBase>[
       ...authRoutes,
+      ...indigoRoutes
     ],
   );
 }

@@ -1,8 +1,8 @@
 import 'package:go_router/go_router.dart';
-import '../../presentation/views/welcome_view.dart';
-import '../../presentation/views/login_view.dart';
-import '../../presentation/views/signup_view.dart';
-import '../../presentation/views/password_view.dart';
+import '../../presentation/views/authentication/welcome_view.dart';
+import '../../presentation/views/authentication/login_view.dart';
+import '../../presentation/views/authentication/signup_view.dart';
+import '../../presentation/views/authentication/password_view.dart';
 
 class AuthRouteNames {
   static const welcome = '/welcome';

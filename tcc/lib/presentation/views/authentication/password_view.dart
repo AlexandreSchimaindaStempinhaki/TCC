@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tcc/core/extensions/context_extensions.dart';
-import '../widgets/header_background.dart';
-import '../widgets/text_field.dart';
-import '../../core/routes/auth_routes.dart';
+import '../../widgets/header_background.dart';
+import '../../widgets/text_field.dart';
+import '../../../core/routes/auth_routes.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
