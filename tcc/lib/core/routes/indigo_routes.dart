@@ -10,6 +10,7 @@ import '../../presentation/views/application/company_profile_view.dart';
 import '../../presentation/views/application/joined_route_detail_view.dart';
 import '../../presentation/views/application/edit_profile_view.dart';
 import '../../presentation/views/application/location_picker_view.dart';
+import '../../presentation/views/application/manage_adress_view.dart';
 
 class IndigoRouteNames {
   static const home = 'home';
@@ -23,6 +24,7 @@ class IndigoRouteNames {
   static const joinedRouteDetail = 'joined_route_detail';
   static const editProfile = 'edit_profile';
   static const locationPicker = 'location_picker';
+  static const manageAddress = 'manage_address';
 }
 
 class IndigoPaths {
@@ -37,6 +39,7 @@ class IndigoPaths {
   static const joinedRouteDetail = '/joined-route-detail';
   static const editProfile = '/edit-profile';
   static const locationPicker = '/location-picker';
+  static const manageAddress = '/manage-address';
 }
 
 final List<RouteBase> indigoRoutes = [
@@ -107,6 +110,13 @@ final List<RouteBase> indigoRoutes = [
     name: IndigoRouteNames.locationPicker,
     builder: (context, state) {
       return const LocationPickerView();
+    },
+  ),
+  GoRoute(
+    path: IndigoPaths.manageAddress,
+    name: IndigoRouteNames.manageAddress,
+    builder: (context, state) {
+      return const ManageAddressView();
     },
   ),
 ];

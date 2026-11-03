@@ -183,7 +183,9 @@ class _AccountViewState extends State<AccountView> {
                 icon: Icons.home_outlined,
                 title: 'Endereço Residencial',
                 subtitle: 'Pontal do Sul - R. Barão do Rio Branco',
-                onTap: () {},
+                onTap: () {
+                  context.pushNamed(IndigoRouteNames.manageAddress);
+                },
               ),
               _buildOptionTile(
                 context: context,
