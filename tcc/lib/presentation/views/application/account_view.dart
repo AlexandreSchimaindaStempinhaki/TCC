@@ -6,6 +6,8 @@ import '../../../core/di/dependency_injection.dart';
 import '../../../core/theme/theme_controller.dart';
 import 'package:tcc/presentation/widgets/nav_bar.dart';
 import '../../../core/routes/auth_routes.dart';
+import '../../../core/routes/indigo_routes.dart';
+
 
 class AccountView extends StatefulWidget {
   const AccountView({super.key});
@@ -44,7 +46,6 @@ class _AccountViewState extends State<AccountView> {
               ),
               const SizedBox(height: 20),
 
-              // 1. DADOS DO PERFIL
               _buildCard(
                 context: context,
                 child: Row(
@@ -91,7 +92,15 @@ class _AccountViewState extends State<AccountView> {
                         color: colorScheme.secondary,
                         size: 20,
                       ),
-                      onPressed: () {},
+                      onPressed: () {
+                        context.pushNamed(
+                          IndigoRouteNames.editProfile,
+                          extra: {
+                            'name': 'Gabriel Silva',
+                            'role': 'Estudante • UFPR Litoral',
+                          },
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -99,7 +108,6 @@ class _AccountViewState extends State<AccountView> {
 
               const SizedBox(height: 16),
 
-              // 2. TOGGLE DO MODO ESCURO (GLOBAL VIA SIGNALS)
               Watch(
                 (context) {
                   final isDarkMode = themeController.isDarkMode;
@@ -160,7 +168,6 @@ class _AccountViewState extends State<AccountView> {
 
               const SizedBox(height: 24),
 
-              // 3. SEÇÃO DE CONFIGURAÇÕES / EMBARQUE
               Text(
                 'Configurações de Transporte',
                 style: TextStyle(
@@ -186,7 +193,6 @@ class _AccountViewState extends State<AccountView> {
                 onTap: () {},
               ),
 
-              // Switch de Avisos do Motorista
               _buildCard(
                 context: context,
                 margin: const EdgeInsets.only(bottom: 10),
@@ -239,7 +245,6 @@ class _AccountViewState extends State<AccountView> {
 
               const SizedBox(height: 20),
 
-              // 4. ÁREA B2B / CADASTRAR EMPRESA
               _buildCard(
                 context: context,
                 child: Row(
@@ -286,7 +291,6 @@ class _AccountViewState extends State<AccountView> {
 
               const SizedBox(height: 16),
 
-              // 5. BOTÃO DE SAIR DA CONTA
               Container(
                 decoration: BoxDecoration(
                   color: theme.cardColor,

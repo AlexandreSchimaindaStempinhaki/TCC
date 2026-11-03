@@ -6,9 +6,10 @@ import '../../presentation/views/application/my_routes_view.dart';
 import '../../presentation/views/application/account_view.dart';
 import '../../presentation/views/application/route_details_view.dart';
 import '../../presentation/views/application/route_map_view.dart';
-// import '../../presentation/views/application/create_company_view.dart';
 import '../../presentation/views/application/company_profile_view.dart';
 import '../../presentation/views/application/joined_route_detail_view.dart';
+import '../../presentation/views/application/edit_profile_view.dart';
+import '../../presentation/views/application/location_picker_view.dart';
 
 class IndigoRouteNames {
   static const home = 'home';
@@ -20,6 +21,8 @@ class IndigoRouteNames {
   static const routeMap = 'route_map';
   static const companyProfile = 'company_profile';
   static const joinedRouteDetail = 'joined_route_detail';
+  static const editProfile = 'edit_profile';
+  static const locationPicker = 'location_picker';
 }
 
 class IndigoPaths {
@@ -32,20 +35,20 @@ class IndigoPaths {
   static const routeMap = '/route-map';
   static const companyProfile = '/company-profile';
   static const joinedRouteDetail = '/joined-route-detail';
+  static const editProfile = '/edit-profile';
+  static const locationPicker = '/location-picker';
 }
 
 final List<RouteBase> indigoRoutes = [
   GoRoute(
     path: IndigoPaths.home,
     name: IndigoRouteNames.home,
-    pageBuilder: (context, state) =>
-        const NoTransitionPage(child: HomeView()),
+    pageBuilder: (context, state) => const NoTransitionPage(child: HomeView()),
   ),
   GoRoute(
     path: IndigoPaths.saved,
     name: IndigoRouteNames.saved,
-    pageBuilder: (context, state) =>
-        const NoTransitionPage(child: SavedView()),
+    pageBuilder: (context, state) => const NoTransitionPage(child: SavedView()),
   ),
   GoRoute(
     path: IndigoPaths.myRoutes,
@@ -89,6 +92,21 @@ final List<RouteBase> indigoRoutes = [
     builder: (context, state) {
       final routeData = state.extra as Map<String, dynamic>;
       return JoinedRouteDetailView(route: routeData);
+    },
+  ),
+  GoRoute(
+    path: IndigoPaths.editProfile,
+    name: IndigoRouteNames.editProfile,
+    builder: (context, state) {
+      final userData = state.extra as Map<String, dynamic>;
+      return EditProfileView(user: userData);
+    },
+  ),
+  GoRoute(
+    path: IndigoPaths.locationPicker,
+    name: IndigoRouteNames.locationPicker,
+    builder: (context, state) {
+      return const LocationPickerView();
     },
   ),
 ];

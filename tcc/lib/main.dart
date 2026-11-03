@@ -20,8 +20,6 @@ void main() async {
 
   await themeController.loadTheme();
 
-  // Resgata o controller injetado
-
   runApp(
     Watch(
       (_) => MaterialApp.router(

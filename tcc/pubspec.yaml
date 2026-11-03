@@ -39,6 +39,7 @@ dependencies:
   signals_flutter: ^7.1.0
   get_it: ^7.6.0
   shared_preferences: ^2.2.2
+  geolocator: ^10.1.0  
 
 dev_dependencies:
   flutter_test:
