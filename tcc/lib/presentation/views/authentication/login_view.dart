@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:signals_flutter/signals_flutter.dart';
 import '../../widgets/header_background.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../core/routes/auth_routes.dart';
@@ -21,6 +22,7 @@ class _LoginPageState extends State<LoginPage> {
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final isLoading = signal(false);
 
   bool _obscurePassword = true;
 
@@ -175,7 +177,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
+
                   Row(
                     children: [
                       Expanded(
@@ -199,52 +201,85 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: 24),
 
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: OutlinedButton(
-                      onPressed: () async {
-                        try {
-                          final router = GoRouter.of(context);
+                  Watch(
+                    (context) => SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: OutlinedButton(
+                        onPressed: isLoading.value
+                            ? null
+                            : () async {
+                                try {
+                                  isLoading.value = true; // Ativa o loading
+                                  final router = GoRouter.of(context);
 
-                          await authController.commands.signInWithGoogle();
+                                  await authController.commands
+                                      .signInWithGoogle();
 
-                          if (authController.session.message.value != null) {
-                            _showSnack(authController.session.message.value!);
-                            return;
-                          }
+                                  if (!context.mounted) return;
 
-                          final auth = authController.session.session.value;
-                          if (auth == null) {
-                            _showSnack('Login com Google cancelado ou falhou.');
-                            return;
-                          }
+                                  if (authController.session.message.value !=
+                                      null) {
+                                    _showSnack(
+                                      authController.session.message.value!,
+                                    );
+                                    return;
+                                  }
 
-                          router.goNamed(IndigoRouteNames.home);
-                        } catch (e) {
-                          _showSnack('Erro ao fazer login com o Google: $e');
-                        }
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: theme.dividerColor, width: 1.5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset(AppAssets.googleLogo, height: 22),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Google',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: colorScheme.onSurface,
-                            ),
+                                  final auth =
+                                      authController.session.session.value;
+                                  if (auth == null) {
+                                    _showSnack(
+                                      'Login com Google cancelado ou falhou.',
+                                    );
+                                    return;
+                                  }
+
+                                  router.goNamed(IndigoRouteNames.home);
+                                } catch (e) {
+                                  if (!context.mounted) return;
+                                  _showSnack(
+                                    'Erro ao fazer login com o Google: $e',
+                                  );
+                                } finally {
+                                  if (context.mounted) {
+                                    isLoading.value = false;
+                                  }
+                                }
+                              },
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                            color: theme.dividerColor,
+                            width: 1.5,
                           ),
-                        ],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: isLoading.value
+                            ? SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: colorScheme.onSurface,
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(AppAssets.googleLogo, height: 22),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Google',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ],
+                              ),
                       ),
                     ),
                   ),
