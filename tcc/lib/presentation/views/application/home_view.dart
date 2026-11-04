@@ -34,7 +34,7 @@ class _HomeViewState extends State<HomeView> {
       'vacancies': '5 vagas restantes',
       'rating': 4.9,
       'isFavorite': false,
-      'image': 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=800&auto=format&fit=crop',
+      'image': 'https://ifpr.edu.br/paranagua/wp-content/uploads/sites/20/2021/08/241126748_1632298510296715_3679175102561492871_n.jpg',
     },
     {
       'companyName': 'Expresso Fretamentos Corp',
@@ -46,7 +46,7 @@ class _HomeViewState extends State<HomeView> {
       'vacancies': 'Vagas abertas para colaboradores',
       'rating': 4.8,
       'isFavorite': false,
-      'image': 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?q=80&w=800&auto=format&fit=crop',
+      'image': 'https://upload.wikimedia.org/wikipedia/commons/7/7d/UFPR_vista_frontal.jpg?utm_source=pt.wikipedia.org&utm_campaign=index&utm_content=original',
     },
     {
       'companyName': 'Viação Universitária Índigo',
@@ -58,7 +58,7 @@ class _HomeViewState extends State<HomeView> {
       'vacancies': 'Cadastro reserva',
       'rating': 4.95,
       'isFavorite': true,
-      'image': 'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=800&auto=format&fit=crop',
+      'image': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTCVHV0baSZSxF8qkOJYHX9fKyMuQWhWskNurlEjKM3KnsEtUszJ_ThetA&s=10',
     },
   ];
 

@@ -22,7 +22,7 @@ class _SavedViewState extends State<SavedView> {
       'statusColor': const Color(0xFFD97706),
       'isHomePickup': true,
       'rating': 4.9,
-      'image': 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=800&auto=format&fit=crop',
+      'image': 'https://ifpr.edu.br/paranagua/wp-content/uploads/sites/20/2021/08/241126748_1632298510296715_3679175102561492871_n.jpg',
     },
     {
       'id': '2',
@@ -33,7 +33,7 @@ class _SavedViewState extends State<SavedView> {
       'statusColor': const Color(0xFF15803D),
       'isHomePickup': false,
       'rating': 4.95,
-      'image': 'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=800&auto=format&fit=crop',
+      'image': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTCVHV0baSZSxF8qkOJYHX9fKyMuQWhWskNurlEjKM3KnsEtUszJ_ThetA&s=10',
     },
   ];
 
