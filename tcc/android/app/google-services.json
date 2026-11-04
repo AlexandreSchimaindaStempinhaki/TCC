@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1059001276713",
+    "project_id": "indigo-app-66d82",
+    "storage_bucket": "indigo-app-66d82.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1059001276713:android:5852b96286eb158572bf38",
+        "android_client_info": {
+          "package_name": "com.example.tcc"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBH2jipgISm3FvfOfVXHroISn4xPBU1_OU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

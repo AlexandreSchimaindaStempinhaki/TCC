@@ -6,6 +6,8 @@ import '../../../core/routes/auth_routes.dart';
 import '../../../core/routes/indigo_routes.dart';
 import '../../widgets/text_field.dart';
 import '../../../core/constants/app_assets.dart';
+import '../../../core/di/dependency_injection.dart';
+import '../../../presentation/controllers/authentication/auth_session_viewmodel.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,16 +17,28 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  late final AuthViewModel authController;
+
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
 
   @override
+  void initState() {
+    super.initState();
+    authController = injector.get<AuthViewModel>();
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override
@@ -115,8 +129,33 @@ class _LoginPageState extends State<LoginPage> {
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton(
-                      onPressed: () {
-                        context.pushNamed(IndigoRouteNames.home);
+                      onPressed: () async {
+                        if (_emailController.text.isEmpty ||
+                            _passwordController.text.isEmpty) {
+                          _showSnack('Preencha todos os campos.');
+                          return;
+                        }
+
+                        try {
+                          await authController.commands.signIn(
+                            _emailController.text.trim(),
+                            _passwordController.text.trim(),
+                          );
+
+                          if (authController.session.message.value != null) {
+                            _showSnack(authController.session.message.value!);
+                            return;
+                          }
+
+                          final auth = authController.session.session.value;
+                          if (auth == null) {
+                            _showSnack('Falha ao autenticar usuário.');
+                          } else {
+                            context.goNamed(IndigoRouteNames.home);
+                          }
+                        } catch (e) {
+                          _showSnack('Erro ao fazer login: $e');
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: colorScheme.primary,
@@ -136,7 +175,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 24),
-
+                  
                   Row(
                     children: [
                       Expanded(
@@ -158,18 +197,36 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
 
                   SizedBox(
                     width: double.infinity,
                     height: 52,
                     child: OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () async {
+                        try {
+                          final router = GoRouter.of(context);
+
+                          await authController.commands.signInWithGoogle();
+
+                          if (authController.session.message.value != null) {
+                            _showSnack(authController.session.message.value!);
+                            return;
+                          }
+
+                          final auth = authController.session.session.value;
+                          if (auth == null) {
+                            _showSnack('Login com Google cancelado ou falhou.');
+                            return;
+                          }
+
+                          router.goNamed(IndigoRouteNames.home);
+                        } catch (e) {
+                          _showSnack('Erro ao fazer login com o Google: $e');
+                        }
+                      },
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color: theme.dividerColor,
-                          width: 1.5,
-                        ),
+                        side: BorderSide(color: theme.dividerColor, width: 1.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
