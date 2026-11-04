@@ -69,7 +69,7 @@ class _SignupPageState extends State<SignupPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Criar Conta',
+                    'Criar  Conta',
                     style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,

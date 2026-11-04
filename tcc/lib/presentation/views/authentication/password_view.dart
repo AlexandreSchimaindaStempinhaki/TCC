@@ -55,7 +55,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Recuperar Senha',
+                    'Recuperar  Senha',
                     style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,

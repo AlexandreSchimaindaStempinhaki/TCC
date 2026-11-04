@@ -216,6 +216,7 @@ class _HomeViewState extends State<HomeView> {
                 },
               ),
             ),
+            SizedBox(height: 5),
           ],
         ),
       ),
