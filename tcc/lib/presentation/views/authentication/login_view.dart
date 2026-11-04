@@ -22,7 +22,9 @@ class _LoginPageState extends State<LoginPage> {
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final isLoading = signal(false);
+
+  final isLoadingButton = signal(false);
+  final isLoadingGoogle = signal(false);
 
   bool _obscurePassword = true;
 
@@ -127,52 +129,80 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: 16),
 
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        if (_emailController.text.isEmpty ||
-                            _passwordController.text.isEmpty) {
-                          _showSnack('Preencha todos os campos.');
-                          return;
-                        }
+                  Watch(
+                    (context) => SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: isLoadingButton.value
+                            ? null
+                            : () async {
+                                if (_emailController.text.isEmpty ||
+                                    _passwordController.text.isEmpty) {
+                                  _showSnack('Preencha todos os campos.');
+                                  return;
+                                }
 
-                        try {
-                          await authController.commands.signIn(
-                            _emailController.text.trim(),
-                            _passwordController.text.trim(),
-                          );
+                                try {
+                                  isLoadingButton.value = true; // Ativa o loading
+                                  final router = GoRouter.of(context);
 
-                          if (authController.session.message.value != null) {
-                            _showSnack(authController.session.message.value!);
-                            return;
-                          }
+                                  await authController.commands.signIn(
+                                    _emailController.text.trim(),
+                                    _passwordController.text.trim(),
+                                  );
 
-                          final auth = authController.session.session.value;
-                          if (auth == null) {
-                            _showSnack('Falha ao autenticar usuário.');
-                          } else {
-                            context.goNamed(IndigoRouteNames.home);
-                          }
-                        } catch (e) {
-                          _showSnack('Erro ao fazer login: $e');
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colorScheme.primary,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                                  if (!context.mounted) return;
+
+                                  if (authController.session.message.value !=
+                                      null) {
+                                    _showSnack(
+                                      authController.session.message.value!,
+                                    );
+                                    return;
+                                  }
+
+                                  final auth =
+                                      authController.session.session.value;
+                                  if (auth == null) {
+                                    _showSnack('Falha ao autenticar usuário.');
+                                  } else {
+                                    router.goNamed(IndigoRouteNames.home);
+                                  }
+                                } catch (e) {
+                                  if (!context.mounted) return;
+                                  _showSnack('Erro ao fazer login: $e');
+                                } finally {
+                                  if (context.mounted) {
+                                    isLoadingButton.value =
+                                        false; // Desativa o loading no final
+                                  }
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colorScheme.primary,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                      ),
-                      child: const Text(
-                        'Entrar',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                        child: isLoadingButton.value
+                            ? const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Entrar',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
                       ),
                     ),
                   ),
@@ -206,11 +236,11 @@ class _LoginPageState extends State<LoginPage> {
                       width: double.infinity,
                       height: 52,
                       child: OutlinedButton(
-                        onPressed: isLoading.value
+                        onPressed: isLoadingGoogle.value
                             ? null
                             : () async {
                                 try {
-                                  isLoading.value = true; // Ativa o loading
+                                  isLoadingGoogle.value = true; // Ativa o loading
                                   final router = GoRouter.of(context);
 
                                   await authController.commands
@@ -243,7 +273,7 @@ class _LoginPageState extends State<LoginPage> {
                                   );
                                 } finally {
                                   if (context.mounted) {
-                                    isLoading.value = false;
+                                    isLoadingGoogle.value = false;
                                   }
                                 }
                               },
@@ -256,7 +286,7 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: isLoading.value
+                        child: isLoadingGoogle.value
                             ? SizedBox(
                                 height: 24,
                                 width: 24,

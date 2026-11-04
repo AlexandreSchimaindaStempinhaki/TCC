@@ -7,7 +7,7 @@ import '../../../core/theme/theme_controller.dart';
 import 'package:tcc/presentation/widgets/nav_bar.dart';
 import '../../../core/routes/auth_routes.dart';
 import '../../../core/routes/indigo_routes.dart';
-
+import '../../controllers/authentication/auth_session_viewmodel.dart';
 
 class AccountView extends StatefulWidget {
   const AccountView({super.key});
@@ -17,7 +17,15 @@ class AccountView extends StatefulWidget {
 }
 
 class _AccountViewState extends State<AccountView> {
+  late final AuthViewModel authController;
+
   bool _notificationsEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    authController = injector.get<AuthViewModel>();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +36,7 @@ class _AccountViewState extends State<AccountView> {
     return Scaffold(
       extendBody: true,
       backgroundColor: theme.scaffoldBackgroundColor,
-      bottomNavigationBar: const BottomNavBar(currentIndex: 3), 
+      bottomNavigationBar: const BottomNavBar(currentIndex: 3),
       body: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
@@ -108,63 +116,61 @@ class _AccountViewState extends State<AccountView> {
 
               const SizedBox(height: 16),
 
-              Watch(
-                (context) {
-                  final isDarkMode = themeController.isDarkMode;
+              Watch((context) {
+                final isDarkMode = themeController.isDarkMode;
 
-                  return _buildCard(
-                    context: context,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          isDarkMode
-                              ? Icons.dark_mode_rounded
-                              : Icons.light_mode_rounded,
-                          color: colorScheme.primary,
-                          size: 24,
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Modo Escuro',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: colorScheme.onSurface,
-                                ),
+                return _buildCard(
+                  context: context,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isDarkMode
+                            ? Icons.dark_mode_rounded
+                            : Icons.light_mode_rounded,
+                        color: colorScheme.primary,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Modo Escuro',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onSurface,
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                isDarkMode
-                                    ? 'Tema escuro ativo'
-                                    : 'Alternar visual do aplicativo',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: colorScheme.secondary,
-                                ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              isDarkMode
+                                  ? 'Tema escuro ativo'
+                                  : 'Alternar visual do aplicativo',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: colorScheme.secondary,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                        Switch(
-                          value: isDarkMode,
-                          activeColor: colorScheme.primary,
-                          onChanged: (val) {
-                            themeController.toggleTheme(val);
-                          },
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+                      ),
+                      Switch(
+                        value: isDarkMode,
+                        activeColor: colorScheme.primary,
+                        onChanged: (val) {
+                          themeController.toggleTheme(val);
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              }),
 
               const SizedBox(height: 24),
 
@@ -300,8 +306,24 @@ class _AccountViewState extends State<AccountView> {
                   border: Border.all(color: theme.dividerColor),
                 ),
                 child: ListTile(
-                  onTap: () {
-                    context.pushNamed(AuthRouteNames.login);
+                  onTap: () async {
+                    try {
+                      final router = GoRouter.of(context);
+
+                      // 1. Executa o comando de logout no seu ViewModel de autenticação
+                      await authController.commands
+                          .signOut(); // ou signOutUser() dependendo do nome no seu projeto
+
+                      if (!context.mounted) return;
+
+                      // 2. Redireciona para a tela de welcome ou login (o router redirect também fará isso automaticamente)
+                      router.goNamed(AuthRouteNames.welcome);
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Erro ao sair da conta: $e')),
+                      );
+                    }
                   },
                   leading: const Icon(
                     Icons.logout_rounded,
@@ -386,10 +408,7 @@ class _AccountViewState extends State<AccountView> {
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(
-            fontSize: 11,
-            color: colorScheme.secondary,
-          ),
+          style: TextStyle(fontSize: 11, color: colorScheme.secondary),
         ),
         trailing: Icon(
           Icons.chevron_right_rounded,

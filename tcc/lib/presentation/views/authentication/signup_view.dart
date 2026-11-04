@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:signals_flutter/signals_flutter.dart';
 import 'package:tcc/core/routes/auth_routes.dart';
 import 'package:tcc/presentation/widgets/text_field.dart';
+import '../../../core/routes/indigo_routes.dart';
 import '../../widgets/header_background.dart';
 import '../../../core/extensions/context_extensions.dart';
+import '../../controllers/authentication/auth_session_viewmodel.dart';
+import '../../../core/di/dependency_injection.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -13,13 +17,23 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
+  late final AuthViewModel authController;
+
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  final isLoading = signal(false);
+
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    authController = injector.get<AuthViewModel>();
+  }
 
   @override
   void dispose() {
@@ -30,19 +44,8 @@ class _SignupPageState extends State<SignupPage> {
     super.dispose();
   }
 
-  void _handleRegister() {
-    final password = _passwordController.text;
-    final confirmPassword = _confirmPasswordController.text;
-
-    if (password != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('As senhas não coincidem!'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-      return;
-    }
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override
@@ -74,7 +77,7 @@ class _SignupPageState extends State<SignupPage> {
                       letterSpacing: -0.5,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
                   CustomTextField(
                     label: 'Nome Completo',
@@ -133,25 +136,85 @@ class _SignupPageState extends State<SignupPage> {
                   ),
                   const SizedBox(height: 28),
 
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: _handleRegister,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colorScheme.primary,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                  Watch(
+                    (context) => SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: isLoading.value
+                            ? null
+                            : () async {
+                                final name = _nameController.text.trim();
+                                final email = _emailController.text.trim();
+                                final password = _passwordController.text.trim();
+                                final confirmPassword = _confirmPasswordController.text.trim();
+
+                                if (name.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+                                  _showSnack('Preencha todos os campos.');
+                                  return;
+                                }
+
+                                if (password != confirmPassword) {
+                                  _showSnack('As senhas não coincidem.');
+                                  return;
+                                }
+
+                                try {
+                                  isLoading.value = true;
+                                  final router = GoRouter.of(context);
+
+                                  await authController.commands.signUp(
+                                    email: email,
+                                    password: password,
+                                    // Se o seu método aceitar o nome, passe aqui, ex: name: name
+                                  );
+
+                                  if (!context.mounted) return;
+
+                                  if (authController.session.message.value != null) {
+                                    _showSnack(authController.session.message.value!);
+                                    return;
+                                  }
+
+                                  final auth = authController.session.session.value;
+                                  if (auth == null) {
+                                    _showSnack('Falha ao criar conta.');
+                                  } else {
+                                    router.goNamed(IndigoRouteNames.home);
+                                  }
+                                } catch (e) {
+                                  if (!context.mounted) return;
+                                  _showSnack('Erro ao cadastrar: $e');
+                                } finally {
+                                  if (context.mounted) {
+                                    isLoading.value = false;
+                                  }
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colorScheme.primary,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                      ),
-                      child: const Text(
-                        'Cadastrar',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                        child: isLoading.value
+                            ? const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Cadastrar',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
                       ),
                     ),
                   ),
@@ -167,10 +230,15 @@ class _SignupPageState extends State<SignupPage> {
                           color: colorScheme.secondary,
                         ),
                       ),
-                      GestureDetector(
-                        onTap: () {
+                      TextButton(
+                        onPressed: () {
                           context.pushNamed(AuthRouteNames.login);
                         },
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: const Size(0, 30),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
                         child: Text(
                           "Entrar",
                           style: TextStyle(
