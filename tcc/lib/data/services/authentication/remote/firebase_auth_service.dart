@@ -153,7 +153,7 @@ class FirebaseAuthService implements IAuthService {
       //final googleUser = await GoogleSignIn().signIn();
 
       // Obtém a instância global do GoogleSignIn
-      final googleSignIn = GoogleSignIn(serverClientId: 'YOUR_SERVER_CLIENT_ID');
+      final googleSignIn = GoogleSignIn.instance;
       // Inicializa se necessário
       await googleSignIn.initialize();
       // Inicia o fluxo de login
