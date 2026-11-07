@@ -67,3 +67,7 @@ class GoogleLoginCancelledFailure extends Failure {
 class GoogleLoginFailedFailure extends Failure {
   GoogleLoginFailedFailure([String? msg]) : super(msg ?? AppMessages.error.googleLoginFailed);
 }
+
+class EmailAlreadyInUseFailure extends Failure {
+  EmailAlreadyInUseFailure([String? msg]) : super(msg ?? AppMessages.error.emailAlreadyInUse);
+}

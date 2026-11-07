@@ -36,4 +36,6 @@ class _Error {
   final String loginFailed = 'E-mail ou senha incorretos.';
   final String googleLoginCancelled = 'Login com Google cancelado.';
   final String googleLoginFailed = 'Não foi possível entrar com o Google.';
+
+  final String emailAlreadyInUse = 'Já existe uma conta cadastrada com este e-mail.';
 }

@@ -41,7 +41,7 @@ class BottomNavBar extends StatelessWidget {
       {'icon': Icons.explore_rounded, 'label': 'Explorar'},
       {'icon': Icons.bookmark_rounded, 'label': 'Rotas Salvas'},
       {'icon': Icons.alt_route_rounded, 'label': 'Minhas Rotas'},
-      {'icon': Icons.person_rounded, 'label': 'Conta'},
+      {'icon': Icons.settings_rounded, 'label': 'Configurações'},
     ];
 
     return Container(

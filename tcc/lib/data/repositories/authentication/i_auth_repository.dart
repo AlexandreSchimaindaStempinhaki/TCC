@@ -2,6 +2,8 @@ import '../../../../core/typedefs/types_defs.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../domain/models/authentication/auth_entities.dart';
+import '../../../core/patterns/result.dart';
+import '../../../core/failure/failure.dart';
 
 /// Interface para o repositório de autenticação
 abstract class IAuthRepository {
@@ -17,9 +19,11 @@ abstract class IAuthRepository {
   /// login com Google
   Future<AuthSessionResult> signInWithGoogle();
 
-  /// Registro com email e senha. Name é opcional
-  Future<AuthSessionResult> signUp({
-    String? name,
+  Future<Result<void, Failure>> sendEmailVerificationCode(String email);
+
+  /// Cria o usuário de fato após a validação do e-mail
+  Future<AuthSessionResult> signUpWithVerifiedEmail({
+    required String name,
     required String email,
     required String password,
   });

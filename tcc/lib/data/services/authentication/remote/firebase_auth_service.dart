@@ -217,15 +217,26 @@ class FirebaseAuthService implements IAuthService {
     }
   }
 
-  /// Registro com email, senha e nome opcional
   @override
-  Future<AuthSessionResult> signUp({
-    String? name,
+  Future<Result<void, Failure>> sendEmailVerificationCode(String email) async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user != null && !user.emailVerified) {
+        await user.sendEmailVerification();
+      }
+      return const Success(null);
+    } catch (e) {
+      return Error(DefaultFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<AuthSessionResult> signUpWithVerifiedEmail({
+    required String name,
     required String email,
     required String password,
   }) async {
     try {
-      // Cria usuário no Firebase
       final credential = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -233,21 +244,15 @@ class FirebaseAuthService implements IAuthService {
 
       final user = credential.user;
       if (user != null) {
-        // Atualiza displayName se nome foi fornecido
-        if (name != null && name.isNotEmpty) {
+        if (name.isNotEmpty) {
           await user.updateDisplayName(name);
         }
 
-        // Obtém token e cria sessão
         final tokenStr = await user.getIdToken() ?? '';
         final tokenExp = DateTime.now().add(const Duration(hours: 1));
 
         final session = AuthSession(
-          user: User(
-            id: user.uid,
-            name: name ?? user.displayName ?? '',
-            email: user.email ?? '',
-          ),
+          user: User(id: user.uid, name: name, email: email),
           token: Token(value: tokenStr, expiresAt: tokenExp),
         );
 
@@ -261,7 +266,6 @@ class FirebaseAuthService implements IAuthService {
           provider: AuthProvider.firebase,
         );
 
-        // Salva sessão localmente
         await _localSession.setToken(sessionToken);
 
         return Success(session);
@@ -269,6 +273,13 @@ class FirebaseAuthService implements IAuthService {
 
       return Error(DefaultFailure('Falha ao criar usuário'));
     } catch (e) {
+      final errorStr = e.toString().toLowerCase();
+
+      // Mapeia o erro de e-mail duplicado para a Failure correta
+      if (errorStr.contains('email-already-in-use')) {
+        return Error(EmailAlreadyInUseFailure());
+      }
+
       return Error(DefaultFailure(e.toString()));
     }
   }

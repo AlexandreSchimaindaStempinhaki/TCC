@@ -71,7 +71,7 @@ class _AccountViewState extends State<AccountView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Minha Conta',
+                  'Configurações',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,

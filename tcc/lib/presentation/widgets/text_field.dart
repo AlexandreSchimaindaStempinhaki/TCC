@@ -36,7 +36,7 @@ class CustomTextField extends StatelessWidget {
             color: colorScheme.secondary,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         TextField(
           controller: controller,
           obscureText: obscureText,

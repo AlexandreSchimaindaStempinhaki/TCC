@@ -1,6 +1,8 @@
+import '../../../../core/failure/failure.dart';
+import '../../../../core/patterns/result.dart';
+
 import '../../../../core/typedefs/types_defs.dart';
 import 'package:signals_flutter/signals_flutter.dart';
-
 import '../../../../domain/models/authentication/auth_entities.dart';
 
 abstract interface class IAuthService {
@@ -9,24 +11,24 @@ abstract interface class IAuthService {
   Signal<AuthSession?> get currentSessionSignal;
 
   AuthSession? get currentSession => null;
-  
+
   /// Inicializa a sessão carregando token local
   Future<void> initSession();
-  
+
   /// Login com email e senha
   Future<AuthSessionResult> signIn(String email, String password);
-  
+
   /// Login com Google
   Future<AuthSessionResult> signInWithGoogle();
 
-  /// Registro com email e senha. Name é opcional.
-  Future<AuthSessionResult> signUp({
-    String? name,
+  Future<Result<void, Failure>> sendEmailVerificationCode(String email);
+
+  Future<AuthSessionResult> signUpWithVerifiedEmail({
+    required String name,
     required String email,
     required String password,
   });
 
   /// Logout do usuário atual
   Future<VoidResult> signOut();
-  
 }

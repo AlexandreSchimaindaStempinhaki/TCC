@@ -42,7 +42,9 @@ class AppRouter {
       final isAuthRoute = state.matchedLocation.startsWith('/welcome') ||
                           state.matchedLocation.startsWith('/login') ||
                           state.matchedLocation.startsWith('/signup') ||
-                          state.matchedLocation.startsWith('/password');
+                          state.matchedLocation.startsWith('/password') ||
+                          state.matchedLocation.startsWith('/signup-password') ||
+                          state.matchedLocation.startsWith('/email-verification');
 
       if (!isLoggedIn && !isAuthRoute) {
         return AuthPaths.login;

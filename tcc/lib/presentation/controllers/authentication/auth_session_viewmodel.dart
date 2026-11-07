@@ -1,4 +1,3 @@
-
 import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../data/repositories/authentication/i_auth_repository.dart';
@@ -44,7 +43,10 @@ class AuthViewModel {
       signInCommand: SignInCommand(facade),
       signInWithGoogleCommand: SignInWithGoogleCommand(facade),
       signOutCommand: SignOutCommand(facade),
-      signUpCommand: SignUpCommand(facade),
+      sendEmailVerificationCodeCommand: SendEmailVerificationCodeCommand(
+        facade,
+      ),
+      signUpWithVerifiedEmailCommand: SignUpWithVerifiedEmailCommand(facade),
     );
 
     // Signal para indicar operações em andamento (login, registro, logout)
@@ -56,5 +58,8 @@ class AuthViewModel {
   SignInWithGoogleCommand get signInWithGoogleCommand =>
       _commands.signInWithGoogleCommand;
   SignOutCommand get signOutCommand => commands.signOutCommand;
-  SignUpCommand get signUpCommand => commands.signUpCommand;
+  SendEmailVerificationCodeCommand get sendEmailVerificationCodeCommand =>
+      _commands.sendEmailVerificationCodeCommand;
+  SignUpWithVerifiedEmailCommand get signUpWithVerifiedEmailCommand =>
+      _commands.signUpWithVerifiedEmailCommand;
 }

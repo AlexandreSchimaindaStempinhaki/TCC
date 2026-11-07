@@ -1,6 +1,8 @@
 import '../../../../core/typedefs/types_defs.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
+import '../../../core/failure/failure.dart';
+import '../../../core/patterns/result.dart';
 import '../../../domain/models/authentication/auth_entities.dart';
 import '../../services/authentication/remote/i_auth_service.dart';
 import 'i_auth_repository.dart';
@@ -26,6 +28,7 @@ class AuthRepositoryImpl implements IAuthRepository {
   Future<AuthSessionResult> signIn(String email, String password) {
     return _authService.signIn(email, password);
   }
+
   /// Realiza login com Google
   @override
   Future<AuthSessionResult> signInWithGoogle() {
@@ -34,12 +37,21 @@ class AuthRepositoryImpl implements IAuthRepository {
 
   /// Registro de usuário com email e senha. Name é opcional
   @override
-  Future<AuthSessionResult> signUp({
-    String? name,
+  Future<Result<void, Failure>> sendEmailVerificationCode(String email) async {
+    return await _authService.sendEmailVerificationCode(email);
+  }
+
+  @override
+  Future<AuthSessionResult> signUpWithVerifiedEmail({
+    required String name,
     required String email,
     required String password,
-  }) {
-    return _authService.signUp(name: name, email: email, password: password);
+  }) async {
+    return await _authService.signUpWithVerifiedEmail(
+      name: name,
+      email: email,
+      password: password,
+    );
   }
 
   /// Logout do usuário atual

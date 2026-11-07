@@ -49,17 +49,32 @@ final class SignOutCommand extends ParameterizedCommand<void, Failure, NoParams>
   }
 }
 
-final class SignUpCommand extends ParameterizedCommand<AuthSession, Failure, SignUpParams> {
+final class SendEmailVerificationCodeCommand extends ParameterizedCommand<void, Failure, SendEmailVerificationCodeParams> {
   final IAuthUseCaseFacade _authUseCaseFacade;
 
-  SignUpCommand(this._authUseCaseFacade);
+  SendEmailVerificationCodeCommand(this._authUseCaseFacade);
+
+  @override
+  Future<Result<void, Failure>> execute() async {
+    if (parameter == null || parameter!.email.isEmpty) {
+      return Error(InvalidInputFailure('Parâmetros de envio de código inválidos.'));
+    }
+
+    return await _authUseCaseFacade.sendEmailVerificationCodeUseCase(parameter!);
+  }
+}
+
+final class SignUpWithVerifiedEmailCommand extends ParameterizedCommand<AuthSession, Failure, SignUpWithVerifiedEmailParams> {
+  final IAuthUseCaseFacade _authUseCaseFacade;
+
+  SignUpWithVerifiedEmailCommand(this._authUseCaseFacade);
 
   @override
   Future<AuthSessionResult> execute() async {
-    if (parameter == null || parameter!.email.isEmpty || parameter!.password.isEmpty) {
-      return Error(InvalidInputFailure('Parâmetros de registro inválidos.'));
+    if (parameter == null || parameter!.email.isEmpty || parameter!.password.isEmpty || parameter!.code.isEmpty) {
+      return Error(InvalidInputFailure('Parâmetros de registro com email verificado inválidos.'));
     }
 
-    return await _authUseCaseFacade.signUpUseCase(parameter!);
+    return await _authUseCaseFacade.signUpWithVerifiedEmailUseCase(parameter!);
   }
-} 
+}

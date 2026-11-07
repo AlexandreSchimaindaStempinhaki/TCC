@@ -4,6 +4,7 @@ import '../../../core/failure/failure.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../core/patterns/command.dart';
+import '../../../core/typedefs/types_defs.dart';
 import '../../../data/repositories/authentication/i_auth_repository.dart';
 import '../../../domain/models/authentication/auth_entities.dart';
 import '../../commands/authentication/auth_commands.dart';
@@ -14,10 +15,9 @@ class AuthSessionCommands {
   final SignInCommand _signInCommand;
   final SignInWithGoogleCommand _signInWithGoogleCommand;
   final SignOutCommand _signOutCommand;
-  final SignUpCommand _signUpCommand;
   final IAuthRepository _repository;
-
- 
+  final SendEmailVerificationCodeCommand _sendEmailVerificationCodeCommand;
+  final SignUpWithVerifiedEmailCommand _signUpWithVerifiedEmailCommand;
 
   AuthSessionCommands({
     required this.state,
@@ -25,61 +25,73 @@ class AuthSessionCommands {
     required SignInCommand signInCommand,
     required SignInWithGoogleCommand signInWithGoogleCommand,
     required SignOutCommand signOutCommand,
-    required SignUpCommand signUpCommand,
-  }) : _repository = repository,
-       _signInCommand = signInCommand,
-       _signInWithGoogleCommand = signInWithGoogleCommand,
-       _signOutCommand = signOutCommand,
-       _signUpCommand = signUpCommand {
+    required SendEmailVerificationCodeCommand sendEmailVerificationCodeCommand,
+    required SignUpWithVerifiedEmailCommand signUpWithVerifiedEmailCommand,
+  })  : _repository = repository,
+        _signInCommand = signInCommand,
+        _signInWithGoogleCommand = signInWithGoogleCommand,
+        _signOutCommand = signOutCommand,
+        _sendEmailVerificationCodeCommand = sendEmailVerificationCodeCommand,
+        _signUpWithVerifiedEmailCommand = signUpWithVerifiedEmailCommand {
     // Observadores que reagem automaticamente ao término dos comandos
     _observeSignIn();
     _observeSignInWithGoogle();
-    _observeSignUp();
-    _observeSignOut();
     _observeSession();
+    _observeSendVerificationCode();
+    _observeSignUpWithVerifiedEmail(); 
   }
 
   // ========================================================
   //   GETTERS PARA WIDGETS USAREM DIRETAMENTE OS COMANDOS
   // ========================================================
   SignInCommand get signInCommand => _signInCommand;
-  SignInWithGoogleCommand get signInWithGoogleCommand =>
-      _signInWithGoogleCommand;
+  SignInWithGoogleCommand get signInWithGoogleCommand => _signInWithGoogleCommand;
   SignOutCommand get signOutCommand => _signOutCommand;
-  SignUpCommand get signUpCommand => _signUpCommand;
+  SendEmailVerificationCodeCommand get sendEmailVerificationCodeCommand => _sendEmailVerificationCodeCommand;
+  SignUpWithVerifiedEmailCommand get signUpWithVerifiedEmailCommand => _signUpWithVerifiedEmailCommand;
 
   // ========================================================
   //   MÉTODOS PÚBLICOS (CHAMADOS PELOS WIDGETS)
-  //   que disparam os commands
   // ========================================================
   Future<void> signOut() async {
     state.clearMessage();
-    await _signOutCommand.executeWith(()); // dispara o comando
+    await _signOutCommand.executeWith(());
   }
 
   Future<void> signInWithGoogle() async {
     state.clearMessage();
-    await _signInWithGoogleCommand.executeWith(()); // dispara o comando
+    await _signInWithGoogleCommand.executeWith(());
   }
 
   Future<void> signIn(String email, String password) async {
     state.clearMessage();
-    // dispara o comando
-    await _signInCommand.executeWith((email: email, password: password)); 
+    await _signInCommand.executeWith((email: email, password: password));
   }
 
-  Future<void> signUp({
-    String? name,
+  // Envia o código de 6 dígitos para o e-mail
+  Future<void> sendEmailVerificationCode(String email) async {
+    state.clearMessage();
+    await _sendEmailVerificationCodeCommand.executeWith(
+      SendEmailVerificationCodeParams(email: email),
+    );
+  }
+
+  // Finaliza o cadastro após validar o código OTP
+  Future<void> signUpWithVerifiedEmail({
+    required String name,
     required String email,
     required String password,
+    required String code,
   }) async {
     state.clearMessage();
-    // dispara o comando
-    await _signUpCommand.executeWith((
-      name: name,
-      email: email,
-      password: password,
-    ));
+    await _signUpWithVerifiedEmailCommand.executeWith(
+      SignUpWithVerifiedEmailParams(
+        name: name,
+        email: email,
+        password: password,
+        code: code,
+      ),
+    );
   }
 
   // ========================================================
@@ -91,21 +103,18 @@ class AuthSessionCommands {
     void Function(Failure err)? onFailure,
   }) {
     effect(() {
-      // 1) Ignora enquanto está executando
       if (command.isExecuting.value) return;
 
-      // 2) Ignora até existir um resultado
       final result = command.result.value;
       if (result == null) return;
 
-      // 3) Sucesso ou falha
       result.fold(
         onSuccess: (data) {
-          state.clearMessage(); // sempre limpa erros em sucesso
-          onSuccess(data); // ação específica para esse comando
+          state.clearMessage();
+          onSuccess(data);
         },
         onFailure: (err) {
-          state.setMessage(err.msg); // registra o erro no estado
+          state.setMessage(err.msg);
           if (onFailure != null) onFailure(err);
         },
       );
@@ -115,17 +124,6 @@ class AuthSessionCommands {
   // ========================================================
   //   OBSERVERS ESPECÍFICOS
   // ========================================================
-  // Efetuar a sign-out
-  void _observeSignOut() {
-    _observeCommand<void>(
-      _signOutCommand,
-      onSuccess: (_) {
-        state.setUnauthenticated(msg: 'Sessão Encerrada');
-      },
-    );
-  }
-
-  // Efetuar a sign-in com google
   void _observeSignInWithGoogle() {
     _observeCommand<AuthSession>(
       _signInWithGoogleCommand,
@@ -138,7 +136,6 @@ class AuthSessionCommands {
     );
   }
 
-  // Efetuar a sign-in com login e senha
   void _observeSignIn() {
     _observeCommand<AuthSession>(
       _signInCommand,
@@ -151,10 +148,21 @@ class AuthSessionCommands {
     );
   }
 
-  // Registra um novo usuário
-  void _observeSignUp() {
+  void _observeSendVerificationCode() {
+    _observeCommand<void>(
+      _sendEmailVerificationCodeCommand,
+      onSuccess: (_) {
+        state.clearMessage();
+      },
+      onFailure: (err) {
+        state.setMessage(err.msg);
+      },
+    );
+  }
+
+  void _observeSignUpWithVerifiedEmail() {
     _observeCommand<AuthSession>(
-      _signUpCommand,
+      _signUpWithVerifiedEmailCommand,
       onSuccess: (authSession) {
         state.setAuthenticated(authSession);
       },
@@ -164,8 +172,6 @@ class AuthSessionCommands {
     );
   }
 
-  // Effect reativo que observa a sessão do atual
-  // Executa automaticamente sempre que o signal da sessão mudar
   void _observeSession() {
     effect(() {
       final authSession = _repository.sessionSignal.value;

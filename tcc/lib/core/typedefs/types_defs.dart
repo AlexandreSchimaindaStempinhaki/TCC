@@ -10,13 +10,30 @@ import '../patterns/result.dart';
 typedef VoidResult = Result<void, Failure>;
 typedef AuthSessionResult = Result<AuthSession, Failure>;
 
-
 // typedfs para parâmetros
 // tipos usadoos para modulo de autenticação
 typedef NoParams = ();
 typedef SignInParams = ({String email, String password});
-typedef SignUpParams =
-    ({String? name,String email, String password});
+typedef SignUpParams = ({String? name, String email, String password});
+
+class SendEmailVerificationCodeParams {
+  final String email;
+  const SendEmailVerificationCodeParams({required this.email});
+}
+
+class SignUpWithVerifiedEmailParams {
+  final String name;
+  final String email;
+  final String password;
+  final String code;
+
+  const SignUpWithVerifiedEmailParams({
+    required this.name,
+    required this.email,
+    required this.password,
+    required this.code,
+  });
+}
 
 // // typedefs para tipo Result
 // typedef AccountResult = Result<Account, Failure>;
