@@ -53,4 +53,17 @@ class InvalidPhone extends Failure {
 class InvalidInputFailure extends Failure {
   InvalidInputFailure([String? msg])
       : super('${AppMessages.error.invalidInput}: ${msg ?? ''}');
+      
+}
+
+class LoginFailure extends Failure {
+  LoginFailure([String? msg]) : super(msg ?? AppMessages.error.loginFailed);
+}
+
+class GoogleLoginCancelledFailure extends Failure {
+  GoogleLoginCancelledFailure([String? msg]) : super(msg ?? AppMessages.error.googleLoginCancelled);
+}
+
+class GoogleLoginFailedFailure extends Failure {
+  GoogleLoginFailedFailure([String? msg]) : super(msg ?? AppMessages.error.googleLoginFailed);
 }

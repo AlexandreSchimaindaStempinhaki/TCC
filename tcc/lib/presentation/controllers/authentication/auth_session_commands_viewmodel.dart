@@ -65,7 +65,7 @@ class AuthSessionCommands {
   Future<void> signIn(String email, String password) async {
     state.clearMessage();
     // dispara o comando
-    await _signInCommand.executeWith((email: email, password: password));
+    await _signInCommand.executeWith((email: email, password: password)); 
   }
 
   Future<void> signUp({

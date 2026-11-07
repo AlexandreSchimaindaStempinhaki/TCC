@@ -94,23 +94,20 @@ class FirebaseAuthService implements IAuthService {
 
   /// Login com email e senha
   /// Retorna AuthSessionResult: Success(AuthSession) ou Error(Failure)
+  /// Login com email e senha
   @override
   Future<AuthSessionResult> signIn(String email, String password) async {
     try {
-      // Tenta logar com o Firebase
       final credential = await _firebaseAuth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      
 
       final user = credential.user;
       if (user != null) {
-        // Se login bem-sucedido, obtém token e cria AuthSession
         final tokenStr = await user.getIdToken() ?? '';
         final tokenExp = DateTime.now().add(const Duration(hours: 1));
 
-        // Cria objeto AuthSession
         final session = AuthSession(
           user: User(
             id: user.uid,
@@ -120,7 +117,6 @@ class FirebaseAuthService implements IAuthService {
           token: Token(value: tokenStr, expiresAt: tokenExp),
         );
 
-        // Cria SessionToken para armazenamento local
         final sessionToken = SessionToken(
           uid: session.user.id,
           name: session.user.name,
@@ -131,17 +127,27 @@ class FirebaseAuthService implements IAuthService {
           provider: AuthProvider.firebase,
         );
 
-        // Salva sessão localmente
         await _localSession.setToken(sessionToken);
 
         return Success(session);
       }
 
-      // Caso algo dê errado e não retorne usuário
-      return Error(DefaultFailure('Usuário não encontrado'));
+      return Error(LoginFailure());
     } catch (e) {
-      // Captura qualquer exceção do Firebase e retorna como Failure
-      return Error(DefaultFailure(e.toString()));
+      final errorStr = e.toString().toLowerCase();
+
+      // Mapeia os erros comuns do Firebase Auth para a sua Failure do AppMessages
+      if (errorStr.contains('user-not-found') ||
+          errorStr.contains('wrong-password') ||
+          errorStr.contains('invalid-credential') ||
+          errorStr.contains('invalid-email') ||
+          errorStr.contains('user-mismatch')) {
+        return Error(
+          LoginFailure(),
+        ); // Poca a mensagem do AppMessages.error.loginFailed
+      }
+
+      return Error(DefaultFailure());
     }
   }
 
@@ -149,39 +155,31 @@ class FirebaseAuthService implements IAuthService {
   @override
   Future<AuthSessionResult> signInWithGoogle() async {
     try {
-      // Inicia o fluxo de autenticação do Google
-
-      // final googleUser = await GoogleSignIn().signIn();
-
-      // Obtém a instância global do GoogleSignIn
       final googleSignIn = GoogleSignIn.instance;
-      // Inicializa se necessário
-      await googleSignIn.initialize(serverClientId: '1059001276713-4tj00nq4qsatlk3brodrlusibg5r5oqk.apps.googleusercontent.com');
-      // Inicia o fluxo de login
+      await googleSignIn.initialize(
+        serverClientId:
+            '760419209227-sirv8httdekg0mh1m86hnfjutsiajpcu.apps.googleusercontent.com',
+      );
       final googleUser = await googleSignIn.authenticate();
 
       final googleAuth = googleUser.authentication;
 
-      // Cria a credencial para o Firebase
       final credential = fb.GoogleAuthProvider.credential(
         accessToken: googleAuth.idToken,
-        // accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // Autentica no Firebase com a credencial do Google
       final userCredential = await _firebaseAuth.signInWithCredential(
         credential,
       );
       final user = userCredential.user;
       if (user == null) {
-        return Error(DefaultFailure('Falha ao autenticar com o Google.'));
+        return Error(GoogleLoginFailedFailure());
       }
 
       final tokenStr = await user.getIdToken() ?? '';
       final tokenExp = DateTime.now().add(const Duration(hours: 1));
 
-      // Cria objeto AuthSession
       final session = AuthSession(
         user: User(
           id: user.uid,
@@ -191,7 +189,6 @@ class FirebaseAuthService implements IAuthService {
         token: Token(value: tokenStr, expiresAt: tokenExp),
       );
 
-      // Cria e salva sessão local
       final sessionToken = SessionToken(
         uid: session.user.id,
         name: session.user.name,
@@ -202,12 +199,21 @@ class FirebaseAuthService implements IAuthService {
         provider: AuthProvider.google,
       );
 
-      // Salva sessão localmente
       await _localSession.setToken(sessionToken);
 
       return Success(session);
     } catch (e) {
-      return Error(DefaultFailure(e.toString()));
+      final errorStr = e.toString().toLowerCase();
+
+      if (errorStr.contains('canceled')) {
+        return Error(
+          GoogleLoginCancelledFailure(),
+        ); // Pega a mensagem de cancelado
+      }
+
+      return Error(
+        GoogleLoginFailedFailure(),
+      ); // Pega a mensagem de falha do Google
     }
   }
 

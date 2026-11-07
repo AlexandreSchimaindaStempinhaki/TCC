@@ -32,4 +32,8 @@ class _Error {
 
   final String invalidInput =
       'Entrada inválida. Verifique os dados fornecidos.';
+
+  final String loginFailed = 'E-mail ou senha incorretos.';
+  final String googleLoginCancelled = 'Login com Google cancelado.';
+  final String googleLoginFailed = 'Não foi possível entrar com o Google.';
 }

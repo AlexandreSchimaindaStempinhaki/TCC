@@ -1,73 +1,45 @@
 {
   "project_info": {
-    "project_number": "1059001276713",
-    "project_id": "indigo-app-66d82",
-    "storage_bucket": "indigo-app-66d82.firebasestorage.app"
+    "project_number": "760419209227",
+    "project_id": "indigo-app-6819c",
+    "storage_bucket": "indigo-app-6819c.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1059001276713:android:5852b96286eb158572bf38",
+        "mobilesdk_app_id": "1:760419209227:android:9ef3fca021a3c52042f70e",
         "android_client_info": {
           "package_name": "com.example.tcc"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1059001276713-4tj00nq4qsatlk3brodrlusibg5r5oqk.apps.googleusercontent.com",
+          "client_id": "760419209227-npslric25q0k6ibu12t2uuceu8jhtlfa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.tcc",
+            "certificate_hash": "1b157fc3b668b2006f8145bf5589bfa8c4adb5ad"
+          }
+        },
+        {
+          "client_id": "760419209227-sirv8httdekg0mh1m86hnfjutsiajpcu.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBH2jipgISm3FvfOfVXHroISn4xPBU1_OU"
+          "current_key": "AIzaSyCt7N9a-XA_JTodY08Gd4oSSB8JLIuKSqA"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "1059001276713-4tj00nq4qsatlk3brodrlusibg5r5oqk.apps.googleusercontent.com",
+              "client_id": "760419209227-sirv8httdekg0mh1m86hnfjutsiajpcu.apps.googleusercontent.com",
               "client_type": 3
             },
             {
-              "client_id": "1059001276713-mup2nkrc8457qg2nfdg3o0eh3qvdjr0f.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.example.tcc"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:1059001276713:android:d6328f2794f6074472bf38",
-        "android_client_info": {
-          "package_name": "com.example.tcc"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "1059001276713-4tj00nq4qsatlk3brodrlusibg5r5oqk.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBH2jipgISm3FvfOfVXHroISn4xPBU1_OU"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "1059001276713-4tj00nq4qsatlk3brodrlusibg5r5oqk.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "1059001276713-mup2nkrc8457qg2nfdg3o0eh3qvdjr0f.apps.googleusercontent.com",
+              "client_id": "760419209227-c7hn1co0100plpkojb0pdqr1d01l77ud.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
                 "bundle_id": "com.example.tcc"

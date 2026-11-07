@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
+import '../../widgets/animated_three_dots.dart';
 import '../../widgets/header_background.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../core/routes/auth_routes.dart';
@@ -25,6 +26,8 @@ class _LoginPageState extends State<LoginPage> {
 
   final isLoadingButton = signal(false);
   final isLoadingGoogle = signal(false);
+
+  final loginError = signal<String?>(null);
 
   bool _obscurePassword = true;
 
@@ -76,6 +79,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 24),
 
+                  // --- CAMPO DE E-MAIL ---
                   CustomTextField(
                     label: 'Email',
                     hintText: 'demo@gmail.com',
@@ -103,6 +107,23 @@ class _LoginPageState extends State<LoginPage> {
                       },
                     ),
                   ),
+
+                  Watch(
+                    (context) => loginError.value != null
+                        ? Padding(
+                            padding: const EdgeInsets.only(top: 8.0, left: 4.0),
+                            child: Text(
+                              loginError.value!,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.redAccent,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+
                   const SizedBox(height: 16),
 
                   Align(
@@ -137,14 +158,17 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: isLoadingButton.value
                             ? null
                             : () async {
+                                loginError.value = null;
+
                                 if (_emailController.text.isEmpty ||
                                     _passwordController.text.isEmpty) {
-                                  _showSnack('Preencha todos os campos.');
+                                  loginError.value =
+                                      'Preencha todos os campos.';
                                   return;
                                 }
 
                                 try {
-                                  isLoadingButton.value = true; // Ativa o loading
+                                  isLoadingButton.value = true;
                                   final router = GoRouter.of(context);
 
                                   await authController.commands.signIn(
@@ -156,26 +180,26 @@ class _LoginPageState extends State<LoginPage> {
 
                                   if (authController.session.message.value !=
                                       null) {
-                                    _showSnack(
-                                      authController.session.message.value!,
-                                    );
+                                    loginError.value =
+                                        authController.session.message.value!;
                                     return;
                                   }
 
                                   final auth =
                                       authController.session.session.value;
                                   if (auth == null) {
-                                    _showSnack('Falha ao autenticar usuário.');
+                                    loginError.value =
+                                        'Falha ao autenticar usuário.';
                                   } else {
                                     router.goNamed(IndigoRouteNames.home);
                                   }
                                 } catch (e) {
                                   if (!context.mounted) return;
-                                  _showSnack('Erro ao fazer login: $e');
+                                  loginError.value =
+                                      'E-mail ou senha incorretos.';
                                 } finally {
                                   if (context.mounted) {
-                                    isLoadingButton.value =
-                                        false; // Desativa o loading no final
+                                    isLoadingButton.value = false;
                                   }
                                 }
                               },
@@ -187,14 +211,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         child: isLoadingButton.value
-                            ? const SizedBox(
-                                height: 24,
-                                width: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  color: Colors.white,
-                                ),
-                              )
+                            ? AnimatedThreeDots(color: colorScheme.onSurface)
                             : const Text(
                                 'Entrar',
                                 style: TextStyle(
@@ -239,8 +256,10 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: isLoadingGoogle.value
                             ? null
                             : () async {
+                                loginError.value = null;
+
                                 try {
-                                  isLoadingGoogle.value = true; // Ativa o loading
+                                  isLoadingGoogle.value = true;
                                   final router = GoRouter.of(context);
 
                                   await authController.commands
@@ -250,27 +269,24 @@ class _LoginPageState extends State<LoginPage> {
 
                                   if (authController.session.message.value !=
                                       null) {
-                                    _showSnack(
-                                      authController.session.message.value!,
-                                    );
+                                    loginError.value =
+                                        authController.session.message.value!;
                                     return;
                                   }
 
                                   final auth =
                                       authController.session.session.value;
                                   if (auth == null) {
-                                    _showSnack(
-                                      'Login com Google cancelado ou falhou.',
-                                    );
+                                    loginError.value =
+                                        'Login com Google cancelado ou falhou.';
                                     return;
                                   }
 
                                   router.goNamed(IndigoRouteNames.home);
                                 } catch (e) {
                                   if (!context.mounted) return;
-                                  _showSnack(
-                                    'Erro ao fazer login com o Google: $e',
-                                  );
+                                  loginError.value =
+                                      'Não foi possível entrar com o Google.';
                                 } finally {
                                   if (context.mounted) {
                                     isLoadingGoogle.value = false;
@@ -287,14 +303,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         child: isLoadingGoogle.value
-                            ? SizedBox(
-                                height: 24,
-                                width: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  color: colorScheme.onSurface,
-                                ),
-                              )
+                            ? AnimatedThreeDots(color: colorScheme.onSurface)
                             : Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [

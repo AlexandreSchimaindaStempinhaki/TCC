@@ -41,48 +41,46 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDD_hU68ct_jiCn8K3KEUs5ey85YxsGVGs',
-    appId: '1:1059001276713:web:b1afb4740945720b72bf38',
-    messagingSenderId: '1059001276713',
-    projectId: 'indigo-app-66d82',
-    authDomain: 'indigo-app-66d82.firebaseapp.com',
-    storageBucket: 'indigo-app-66d82.firebasestorage.app',
-    measurementId: 'G-HGT7GV6VS6',
+    apiKey: 'AIzaSyCZC8A5jK2dyR_WFEeH8Wc9_d1dAJus8lM',
+    appId: '1:760419209227:web:a9d5c3473103b7f542f70e',
+    messagingSenderId: '760419209227',
+    projectId: 'indigo-app-6819c',
+    authDomain: 'indigo-app-6819c.firebaseapp.com',
+    storageBucket: 'indigo-app-6819c.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBH2jipgISm3FvfOfVXHroISn4xPBU1_OU',
-    appId: '1:1059001276713:android:5852b96286eb158572bf38',
-    messagingSenderId: '1059001276713',
-    projectId: 'indigo-app-66d82',
-    storageBucket: 'indigo-app-66d82.firebasestorage.app',
+    apiKey: 'AIzaSyCt7N9a-XA_JTodY08Gd4oSSB8JLIuKSqA',
+    appId: '1:760419209227:android:9ef3fca021a3c52042f70e',
+    messagingSenderId: '760419209227',
+    projectId: 'indigo-app-6819c',
+    storageBucket: 'indigo-app-6819c.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyB3kUA4MiqLLDJrZ3FjQzZvrsUVxdW_2no',
-    appId: '1:1059001276713:ios:55daad8584d98c7d72bf38',
-    messagingSenderId: '1059001276713',
-    projectId: 'indigo-app-66d82',
-    storageBucket: 'indigo-app-66d82.firebasestorage.app',
+    apiKey: 'AIzaSyBvWF8zDPhCrfgweYSYWOsnSttwPQNatVo',
+    appId: '1:760419209227:ios:9e33e8c2b10016b142f70e',
+    messagingSenderId: '760419209227',
+    projectId: 'indigo-app-6819c',
+    storageBucket: 'indigo-app-6819c.firebasestorage.app',
+    iosClientId: '760419209227-c7hn1co0100plpkojb0pdqr1d01l77ud.apps.googleusercontent.com',
     iosBundleId: 'com.example.tcc',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyB3kUA4MiqLLDJrZ3FjQzZvrsUVxdW_2no',
-    appId: '1:1059001276713:ios:55daad8584d98c7d72bf38',
-    messagingSenderId: '1059001276713',
-    projectId: 'indigo-app-66d82',
-    storageBucket: 'indigo-app-66d82.firebasestorage.app',
+    apiKey: 'AIzaSyBvWF8zDPhCrfgweYSYWOsnSttwPQNatVo',
+    appId: '1:760419209227:ios:9e33e8c2b10016b142f70e',
+    messagingSenderId: '760419209227',
+    projectId: 'indigo-app-6819c',
+    storageBucket: 'indigo-app-6819c.firebasestorage.app',
+    iosClientId: '760419209227-c7hn1co0100plpkojb0pdqr1d01l77ud.apps.googleusercontent.com',
     iosBundleId: 'com.example.tcc',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDD_hU68ct_jiCn8K3KEUs5ey85YxsGVGs',
-    appId: '1:1059001276713:web:2ac18f64ad0f70ea72bf38',
-    messagingSenderId: '1059001276713',
-    projectId: 'indigo-app-66d82',
-    authDomain: 'indigo-app-66d82.firebaseapp.com',
-    storageBucket: 'indigo-app-66d82.firebasestorage.app',
-    measurementId: 'G-FKVF8R62VV',
+    apiKey: 'AIzaSyCZC8A5jK2dyR_WFEeH8Wc9_d1dAJus8lM',
+    appId: '1:760419209227:web:3b36327191212f9b42f70e',
+    messagingSenderId: '760419209227',
+    projectId: 'indigo-app-6819c',
+    authDomain: 'indigo-app-6819c.firebaseapp.com',
+    storageBucket: 'indigo-app-6819c.firebasestorage.app',
   );
 }
