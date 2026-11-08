@@ -223,6 +223,9 @@ class FirebaseAuthService implements IAuthService {
       final user = _firebaseAuth.currentUser;
       if (user != null && !user.emailVerified) {
         await user.sendEmailVerification();
+      } else {
+        // Caso queira enviar por link customizado ActionCodeSettings:
+        // O Firebase gerencia o envio padrão por link
       }
       return const Success(null);
     } catch (e) {
@@ -237,6 +240,7 @@ class FirebaseAuthService implements IAuthService {
     required String password,
   }) async {
     try {
+      // 1. Cria o usuário com e-mail e senha no Firebase Auth
       final credential = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -244,8 +248,14 @@ class FirebaseAuthService implements IAuthService {
 
       final user = credential.user;
       if (user != null) {
+        // 2. Atualiza o nome de exibição se fornecido
         if (name.isNotEmpty) {
           await user.updateDisplayName(name);
+        }
+
+        // 3. Dispara o envio do e-mail de verificação padrão do Firebase
+        if (!user.emailVerified) {
+          await user.sendEmailVerification();
         }
 
         final tokenStr = await user.getIdToken() ?? '';
@@ -275,7 +285,6 @@ class FirebaseAuthService implements IAuthService {
     } catch (e) {
       final errorStr = e.toString().toLowerCase();
 
-      // Mapeia o erro de e-mail duplicado para a Failure correta
       if (errorStr.contains('email-already-in-use')) {
         return Error(EmailAlreadyInUseFailure());
       }

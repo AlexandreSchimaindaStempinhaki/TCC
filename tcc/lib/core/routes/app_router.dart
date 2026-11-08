@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // <- Import do Firebase Auth
 import 'auth_routes.dart';
 import 'indigo_routes.dart';
 import '../di/dependency_injection.dart';
@@ -38,19 +39,28 @@ class AppRouter {
       final authController = injector.get<AuthViewModel>();
       
       final isLoggedIn = authController.session.session.value != null;
+      final firebaseUser = FirebaseAuth.instance.currentUser;
 
-      final isAuthRoute = state.matchedLocation.startsWith('/welcome') ||
-                          state.matchedLocation.startsWith('/login') ||
-                          state.matchedLocation.startsWith('/signup') ||
-                          state.matchedLocation.startsWith('/password') ||
-                          state.matchedLocation.startsWith('/signup-password') ||
-                          state.matchedLocation.startsWith('/email-verification');
+      final isPureAuthRoute = state.matchedLocation.startsWith('/welcome') ||
+                              state.matchedLocation.startsWith('/login') ||
+                              state.matchedLocation.startsWith('/signup') ||
+                              state.matchedLocation.startsWith('/password') ||
+                              state.matchedLocation.startsWith('/signup-password');
 
-      if (!isLoggedIn && !isAuthRoute) {
+      final isVerificationRoute = state.matchedLocation.startsWith('/email-verification');
+
+      if (!isLoggedIn && !isPureAuthRoute && !isVerificationRoute) {
         return AuthPaths.login;
       }
 
-      if (isLoggedIn && isAuthRoute) {
+      if (isLoggedIn && firebaseUser != null && !firebaseUser.emailVerified) {
+        if (!isVerificationRoute) {
+          return '/email-verification';
+        }
+        return null;
+      }
+
+      if (isLoggedIn && (isPureAuthRoute || isVerificationRoute)) {
         return IndigoPaths.home;
       }
 
