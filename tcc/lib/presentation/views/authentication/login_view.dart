@@ -313,8 +313,8 @@ class _LoginPageState extends State<LoginPage> {
                               },
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(
-                            color: theme.dividerColor,
-                            width: 1.5,
+                            color: theme.primaryColor,
+                            width: 0.75,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),

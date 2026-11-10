@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../widgets/circular_text_field.dart';
-import '../../../core/routes/indigo_routes.dart';
 
 class EditProfileView extends StatefulWidget {
   final dynamic user; // Recebe o objeto do usuário
