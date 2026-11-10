@@ -35,12 +35,13 @@ class AuthRepositoryImpl implements IAuthRepository {
     return _authService.signInWithGoogle();
   }
 
-  /// Registro de usuário com email e senha. Name é opcional
+  /// Reenvia o e-mail de verificação
   @override
-  Future<Result<void, Failure>> sendEmailVerificationCode(String email) async {
-    return await _authService.sendEmailVerificationCode(email);
+  Future<Result<void, Failure>> sendEmailVerificationLink(String email) async {
+    return await _authService.sendEmailVerificationLink(email);
   }
 
+  /// Registro de usuário com email e senha
   @override
   Future<AuthSessionResult> signUpWithVerifiedEmail({
     required String name,
@@ -52,6 +53,18 @@ class AuthRepositoryImpl implements IAuthRepository {
       email: email,
       password: password,
     );
+  }
+
+  /// Checa se o e-mail foi verificado
+  @override
+  Future<Result<bool, Failure>> checkEmailVerifiedStatus() async {
+    return await _authService.checkEmailVerifiedStatus();
+  }
+
+  /// Exclui a conta expirada após 30 minutos
+  @override
+  Future<Result<void, Failure>> deleteExpiredAccount() async {
+    return await _authService.deleteExpiredAccount();
   }
 
   /// Logout do usuário atual

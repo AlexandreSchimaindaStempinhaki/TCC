@@ -71,3 +71,20 @@ class GoogleLoginFailedFailure extends Failure {
 class EmailAlreadyInUseFailure extends Failure {
   EmailAlreadyInUseFailure([String? msg]) : super(msg ?? AppMessages.error.emailAlreadyInUse);
 }
+
+class UserNotFoundFailure extends Failure {
+  UserNotFoundFailure([String? msg]) : super(msg ?? AppMessages.error.userNotFound);
+}
+
+class NetworkFailure extends Failure {
+  NetworkFailure([String? msg]) : super(msg ?? AppMessages.error.network);
+}
+
+class TooManyRequestsFailure extends Failure {
+  TooManyRequestsFailure([String? msg]) : super(msg ?? AppMessages.error.tooManyRequests);
+}
+
+class RequiresRecentLoginFailure extends Failure {
+  RequiresRecentLoginFailure([String? msg])
+      : super(msg ?? AppMessages.error.requiresRecentLogin);
+}

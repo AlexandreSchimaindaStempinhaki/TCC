@@ -49,18 +49,18 @@ final class SignOutCommand extends ParameterizedCommand<void, Failure, NoParams>
   }
 }
 
-final class SendEmailVerificationCodeCommand extends ParameterizedCommand<void, Failure, SendEmailVerificationCodeParams> {
+final class SendEmailVerificationLinkCommand extends ParameterizedCommand<void, Failure, SendEmailVerificationLinkParams> {
   final IAuthUseCaseFacade _authUseCaseFacade;
 
-  SendEmailVerificationCodeCommand(this._authUseCaseFacade);
+  SendEmailVerificationLinkCommand(this._authUseCaseFacade);
 
   @override
   Future<Result<void, Failure>> execute() async {
     if (parameter == null || parameter!.email.isEmpty) {
-      return Error(InvalidInputFailure('Parâmetros de envio de código inválidos.'));
+      return Error(InvalidInputFailure('Parâmetros de envio do link de verificação inválidos.'));
     }
 
-    return await _authUseCaseFacade.sendEmailVerificationCodeUseCase(parameter!);
+    return await _authUseCaseFacade.sendEmailVerificationLinkUseCase(parameter!);
   }
 }
 
@@ -76,5 +76,35 @@ final class SignUpWithVerifiedEmailCommand extends ParameterizedCommand<AuthSess
     }
 
     return await _authUseCaseFacade.signUpWithVerifiedEmailUseCase(parameter!);
+  }
+}
+
+final class CheckEmailVerifiedStatusCommand extends ParameterizedCommand<bool, Failure, NoParams> {
+  final IAuthUseCaseFacade _authUseCaseFacade;
+
+  CheckEmailVerifiedStatusCommand(this._authUseCaseFacade);
+
+  @override
+  Future<Result<bool, Failure>> execute() async {
+    if (parameter == null) {
+      return Error(InvalidInputFailure('Parâmetros de verificação de e-mail inválidos.'));
+    }
+
+    return await _authUseCaseFacade.checkEmailVerifiedStatusUseCase(parameter!);
+  }
+}
+
+final class DeleteExpiredAccountCommand extends ParameterizedCommand<void, Failure, NoParams> {
+  final IAuthUseCaseFacade _authUseCaseFacade;
+
+  DeleteExpiredAccountCommand(this._authUseCaseFacade);
+
+  @override
+  Future<Result<void, Failure>> execute() async {
+    if (parameter == null) {
+      return Error(InvalidInputFailure('Parâmetros de exclusão de conta inválidos.'));
+    }
+
+    return await _authUseCaseFacade.deleteExpiredAccountUseCase(parameter!);
   }
 }

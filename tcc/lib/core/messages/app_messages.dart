@@ -38,4 +38,16 @@ class _Error {
   final String googleLoginFailed = 'Não foi possível entrar com o Google.';
 
   final String emailAlreadyInUse = 'Já existe uma conta cadastrada com este e-mail.';
+
+  final String userNotFound = 'Usuário não encontrado na sessão.';
+  final String networkError = 'Sem conexão com a internet. Verifique sua rede.';
+  final String userCreationFailed = 'Falha ao criar o usuário no Firebase.';
+  final String checkEmailStatusError = 'Erro ao consultar o status do e-mail.';
+  final String resendEmailError = 'Erro ao enviar e-mail de verificação.';
+  final String expiredAccountDeleteError = 'Erro ao remover conta expirada.';
+  final String emailNotVerifiedYet = 'O seu e-mail ainda não foi verificado. Abra a caixa de entrada ou spam e clique no link.';
+  final String verificationLinkSent = 'Novo link de verificação enviado com sucesso!';
+  final String tooManyRequests = 'Muitas tentativas em pouco tempo. Aguarde alguns minutos antes de solicitar um novo link.';
+  final String network = 'Sem conexão com a internet. Verifique sua rede.';
+  final String requiresRecentLogin = 'Esta ação é sensível e exige que você faça login novamente.';
 }

@@ -16,9 +16,9 @@ typedef NoParams = ();
 typedef SignInParams = ({String email, String password});
 typedef SignUpParams = ({String? name, String email, String password});
 
-class SendEmailVerificationCodeParams {
+class SendEmailVerificationLinkParams {
   final String email;
-  const SendEmailVerificationCodeParams({required this.email});
+  const SendEmailVerificationLinkParams({required this.email});
 }
 
 class SignUpWithVerifiedEmailParams {

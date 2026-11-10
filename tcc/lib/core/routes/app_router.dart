@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // <- Import do Firebase Auth
+import 'package:firebase_auth/firebase_auth.dart';
 import 'auth_routes.dart';
 import 'indigo_routes.dart';
 import '../di/dependency_injection.dart';
@@ -15,7 +15,6 @@ class RouterNotifier extends ChangeNotifier {
     
     _disposer = effect(() {
       authController.session.session.value;
-      
       notifyListeners();
     });
   }
@@ -32,14 +31,12 @@ class AppRouter {
 
   static final GoRouter router = GoRouter(
     initialLocation: AuthPaths.welcome,
-    
     refreshListenable: RouterNotifier(),
-
     redirect: (context, state) {
       final authController = injector.get<AuthViewModel>();
       
-      final isLoggedIn = authController.session.session.value != null;
       final firebaseUser = FirebaseAuth.instance.currentUser;
+      final isLoggedIn = authController.session.session.value != null || firebaseUser != null;
 
       final isPureAuthRoute = state.matchedLocation.startsWith('/welcome') ||
                               state.matchedLocation.startsWith('/login') ||
@@ -60,13 +57,12 @@ class AppRouter {
         return null;
       }
 
-      if (isLoggedIn && (isPureAuthRoute || isVerificationRoute)) {
+      if (isLoggedIn && firebaseUser != null && firebaseUser.emailVerified && (isPureAuthRoute || isVerificationRoute)) {
         return IndigoPaths.home;
       }
 
       return null;
     },
-
     routes: <RouteBase>[
       ...authRoutes,
       ...indigoRoutes,

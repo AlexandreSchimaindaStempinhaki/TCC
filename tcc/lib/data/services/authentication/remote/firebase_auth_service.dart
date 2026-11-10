@@ -13,7 +13,7 @@ import '../../../../core/patterns/result.dart';
 
 /// Serviço de autenticação que utiliza o FirebaseAuth.
 class FirebaseAuthService implements IAuthService {
-  /// Instância do FirebaseAuth (injetYável para testes)
+  /// Instância do FirebaseAuth (injetável para testes)
   final fb.FirebaseAuth _firebaseAuth;
 
   /// Gerenciador de sessão local
@@ -40,7 +40,7 @@ class FirebaseAuthService implements IAuthService {
       return;
     }
 
-    // Se já existe sessão ativa, NÃO recrie
+    // Se já existe sessão ativa, NÃO recrie
     if (_currentSessionSignal.value != null) {
       return;
     }
@@ -93,8 +93,6 @@ class FirebaseAuthService implements IAuthService {
   // -----------------------------
 
   /// Login com email e senha
-  /// Retorna AuthSessionResult: Success(AuthSession) ou Error(Failure)
-  /// Login com email e senha
   @override
   Future<AuthSessionResult> signIn(String email, String password) async {
     try {
@@ -144,7 +142,7 @@ class FirebaseAuthService implements IAuthService {
           errorStr.contains('user-mismatch')) {
         return Error(
           LoginFailure(),
-        ); // Poca a mensagem do AppMessages.error.loginFailed
+        ); // Pega a mensagem do AppMessages.error.loginFailed
       }
 
       return Error(DefaultFailure());
@@ -218,21 +216,25 @@ class FirebaseAuthService implements IAuthService {
   }
 
   @override
-  Future<Result<void, Failure>> sendEmailVerificationCode(String email) async {
+  Future<Result<void, Failure>> sendEmailVerificationLink(String email) async {
     try {
       final user = _firebaseAuth.currentUser;
       if (user != null && !user.emailVerified) {
         await user.sendEmailVerification();
-      } else {
-        // Caso queira enviar por link customizado ActionCodeSettings:
-        // O Firebase gerencia o envio padrão por link
       }
       return const Success(null);
     } catch (e) {
+      final errorStr = e.toString().toLowerCase();
+
+      if (errorStr.contains('too-many-requests')) {
+        return Error(TooManyRequestsFailure());
+      }
+
       return Error(DefaultFailure(e.toString()));
     }
   }
 
+  /// Cria a conta no Firebase, salva o nome, envia o e-mail e gera a sessão local
   @override
   Future<AuthSessionResult> signUpWithVerifiedEmail({
     required String name,
@@ -293,6 +295,52 @@ class FirebaseAuthService implements IAuthService {
     }
   }
 
+  /// Checa o status atual da verificação de e-mail do usuário no Firebase
+  @override
+  Future<Result<bool, Failure>> checkEmailVerifiedStatus() async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null) {
+        return Error(UserNotFoundFailure());
+      }
+
+      await user.reload();
+      final updatedUser = _firebaseAuth.currentUser;
+
+      return Success(updatedUser?.emailVerified ?? false);
+    } on fb.FirebaseAuthException catch (e) {
+      if (e.code == 'network-request-failed') {
+        return Error(NetworkFailure());
+      }
+      return Error(DefaultFailure(e.message ?? e.toString()));
+    } catch (e) {
+      return Error(DefaultFailure(e.toString()));
+    }
+  }
+
+  /// Apaga a conta pendente no Firebase Auth e limpa as sessões locais se o tempo limite expirar
+  @override
+  Future<Result<void, Failure>> deleteExpiredAccount() async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user != null) { 
+        await user.delete();
+      }
+      return const Success(null);
+    } on fb.FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        return Error(RequiresRecentLoginFailure());
+      }
+      return Error(DefaultFailure(e.message ?? 'Erro ao excluir conta.'));
+    } catch (e) {
+      final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains('requires-recent-login')) {
+        return Error(RequiresRecentLoginFailure());
+      }
+      return Error(DefaultFailure(e.toString()));
+    }
+  }
+
   /// Logout do usuário atual
   @override
   Future<VoidResult> signOut() async {
@@ -306,13 +354,8 @@ class FirebaseAuthService implements IAuthService {
   @override
   Future<void> initSession() async {
     final token = await _localSession.getValidToken();
-    // print('dadado do token na initSession: $token');
 
     if (token != null) {
-      // print(
-      //   'dados do token na initSession: ${token.value}, expira em ${token.expiresAt}',
-      // );
-      // Se existe um token válido, cria sessão temporária
       _currentSessionSignal.value = AuthSession(
         user: User(
           id: token.uid,

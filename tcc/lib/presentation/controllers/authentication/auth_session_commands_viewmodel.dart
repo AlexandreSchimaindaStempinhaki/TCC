@@ -16,8 +16,10 @@ class AuthSessionCommands {
   final SignInWithGoogleCommand _signInWithGoogleCommand;
   final SignOutCommand _signOutCommand;
   final IAuthRepository _repository;
-  final SendEmailVerificationCodeCommand _sendEmailVerificationCodeCommand;
+  final SendEmailVerificationLinkCommand _sendEmailVerificationLinkCommand;
   final SignUpWithVerifiedEmailCommand _signUpWithVerifiedEmailCommand;
+  final CheckEmailVerifiedStatusCommand _checkEmailVerifiedStatusCommand;
+  final DeleteExpiredAccountCommand _deleteExpiredAccountCommand;
 
   AuthSessionCommands({
     required this.state,
@@ -25,20 +27,26 @@ class AuthSessionCommands {
     required SignInCommand signInCommand,
     required SignInWithGoogleCommand signInWithGoogleCommand,
     required SignOutCommand signOutCommand,
-    required SendEmailVerificationCodeCommand sendEmailVerificationCodeCommand,
+    required SendEmailVerificationLinkCommand sendEmailVerificationLinkCommand,
     required SignUpWithVerifiedEmailCommand signUpWithVerifiedEmailCommand,
+    required CheckEmailVerifiedStatusCommand checkEmailVerifiedStatusCommand,
+    required DeleteExpiredAccountCommand deleteExpiredAccountCommand,
   })  : _repository = repository,
         _signInCommand = signInCommand,
         _signInWithGoogleCommand = signInWithGoogleCommand,
         _signOutCommand = signOutCommand,
-        _sendEmailVerificationCodeCommand = sendEmailVerificationCodeCommand,
-        _signUpWithVerifiedEmailCommand = signUpWithVerifiedEmailCommand {
+        _sendEmailVerificationLinkCommand = sendEmailVerificationLinkCommand,
+        _signUpWithVerifiedEmailCommand = signUpWithVerifiedEmailCommand,
+        _checkEmailVerifiedStatusCommand = checkEmailVerifiedStatusCommand,
+        _deleteExpiredAccountCommand = deleteExpiredAccountCommand {
     // Observadores que reagem automaticamente ao término dos comandos
     _observeSignIn();
     _observeSignInWithGoogle();
     _observeSession();
-    _observeSendVerificationCode();
-    _observeSignUpWithVerifiedEmail(); 
+    _observeSendVerificationLink();
+    _observeSignUpWithVerifiedEmail();
+    _observeCheckEmailVerifiedStatus();
+    _observeDeleteExpiredAccount();
   }
 
   // ========================================================
@@ -47,8 +55,10 @@ class AuthSessionCommands {
   SignInCommand get signInCommand => _signInCommand;
   SignInWithGoogleCommand get signInWithGoogleCommand => _signInWithGoogleCommand;
   SignOutCommand get signOutCommand => _signOutCommand;
-  SendEmailVerificationCodeCommand get sendEmailVerificationCodeCommand => _sendEmailVerificationCodeCommand;
+  SendEmailVerificationLinkCommand get sendEmailVerificationLinkCommand => _sendEmailVerificationLinkCommand;
   SignUpWithVerifiedEmailCommand get signUpWithVerifiedEmailCommand => _signUpWithVerifiedEmailCommand;
+  CheckEmailVerifiedStatusCommand get checkEmailVerifiedStatusCommand => _checkEmailVerifiedStatusCommand;
+  DeleteExpiredAccountCommand get deleteExpiredAccountCommand => _deleteExpiredAccountCommand;
 
   // ========================================================
   //   MÉTODOS PÚBLICOS (CHAMADOS PELOS WIDGETS)
@@ -71,8 +81,8 @@ class AuthSessionCommands {
   // Envia o código de 6 dígitos para o e-mail
   Future<void> sendEmailVerificationCode(String email) async {
     state.clearMessage();
-    await _sendEmailVerificationCodeCommand.executeWith(
-      SendEmailVerificationCodeParams(email: email),
+    await _sendEmailVerificationLinkCommand.executeWith(
+      SendEmailVerificationLinkParams(email: email),
     );
   }
 
@@ -92,6 +102,16 @@ class AuthSessionCommands {
         code: code,
       ),
     );
+  }
+
+  Future<void> checkEmailVerifiedStatus() async {
+    state.clearMessage();
+    await _checkEmailVerifiedStatusCommand.executeWith(());
+  }
+
+  Future<void> deleteExpiredAccount() async {
+    state.clearMessage();
+    await _deleteExpiredAccountCommand.executeWith(());
   }
 
   // ========================================================
@@ -148,9 +168,9 @@ class AuthSessionCommands {
     );
   }
 
-  void _observeSendVerificationCode() {
+  void _observeSendVerificationLink() {
     _observeCommand<void>(
-      _sendEmailVerificationCodeCommand,
+      _sendEmailVerificationLinkCommand,
       onSuccess: (_) {
         state.clearMessage();
       },
@@ -168,6 +188,30 @@ class AuthSessionCommands {
       },
       onFailure: (err) {
         state.setUnauthenticated(msg: err.msg);
+      },
+    );
+  }
+
+  void _observeCheckEmailVerifiedStatus() {
+    _observeCommand<bool>(
+      _checkEmailVerifiedStatusCommand,
+      onSuccess: (_) {
+        state.clearMessage();
+      },
+      onFailure: (err) {
+        state.setMessage(err.msg);
+      },
+    );
+  }
+
+  void _observeDeleteExpiredAccount() {
+    _observeCommand<void>(
+      _deleteExpiredAccountCommand,
+      onSuccess: (_) {
+        state.setUnauthenticated();
+      },
+      onFailure: (err) {
+        state.setMessage(err.msg);
       },
     );
   }

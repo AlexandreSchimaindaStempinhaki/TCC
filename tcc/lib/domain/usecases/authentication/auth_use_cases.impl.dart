@@ -47,19 +47,19 @@ final class SignOutUseCase implements ISignOutUseCase {
   }
 }
 
-final class SendEmailVerificationCodeUseCase
-    implements ISendEmailVerificationCodeUseCase {
+final class SendEmailVerificationLinkUseCase
+    implements ISendEmailVerificationLinkUseCase {
   final IAuthRepository _authRepository;
 
-  SendEmailVerificationCodeUseCase({required IAuthRepository authRepository})
+  SendEmailVerificationLinkUseCase({required IAuthRepository authRepository})
     : _authRepository = authRepository;
 
   @override
   Future<Result<void, Failure>> call(
-    SendEmailVerificationCodeParams params,
+    SendEmailVerificationLinkParams params,
   ) async {
     await Future.delayed(const Duration(seconds: 1));
-    return _authRepository.sendEmailVerificationCode(params.email);
+    return _authRepository.sendEmailVerificationLink(params.email);
   }
 }
 
@@ -85,5 +85,31 @@ final class SignUpWithVerifiedEmailUseCase
       email: params.email,
       password: params.password,
     );
+  }
+}
+
+final class CheckEmailVerifiedStatusUseCase
+    implements ICheckEmailVerifiedStatusUseCase {
+  final IAuthRepository _authRepository;
+
+  CheckEmailVerifiedStatusUseCase({required IAuthRepository authRepository})
+    : _authRepository = authRepository;
+
+  @override
+  Future<Result<bool, Failure>> call(NoParams params) async {
+    return _authRepository.checkEmailVerifiedStatus();
+  }
+}
+
+final class DeleteExpiredAccountUseCase
+    implements IDeleteExpiredAccountUseCase {
+  final IAuthRepository _authRepository;
+
+  DeleteExpiredAccountUseCase({required IAuthRepository authRepository})
+    : _authRepository = authRepository;
+
+  @override
+  Future<Result<void, Failure>> call(NoParams params) async {
+    return _authRepository.deleteExpiredAccount();
   }
 }

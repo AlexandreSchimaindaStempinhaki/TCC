@@ -35,6 +35,28 @@ class _LoginPageState extends State<LoginPage> {
   void initState() {
     super.initState();
     authController = injector.get<AuthViewModel>();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      final extraMessage = GoRouterState.of(context).extra as String?;
+      if (extraMessage != null && extraMessage.isNotEmpty) {
+        final colorScheme = Theme.of(context).colorScheme;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: colorScheme.error,
+            content: Text(
+              extraMessage,
+              style: TextStyle(
+                color: colorScheme.onError,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        );
+      }
+    });
   }
 
   @override
@@ -42,10 +64,6 @@ class _LoginPageState extends State<LoginPage> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  void _showSnack(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override

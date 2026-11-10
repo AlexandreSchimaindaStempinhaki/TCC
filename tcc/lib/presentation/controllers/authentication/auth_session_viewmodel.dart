@@ -43,10 +43,12 @@ class AuthViewModel {
       signInCommand: SignInCommand(facade),
       signInWithGoogleCommand: SignInWithGoogleCommand(facade),
       signOutCommand: SignOutCommand(facade),
-      sendEmailVerificationCodeCommand: SendEmailVerificationCodeCommand(
+      sendEmailVerificationLinkCommand: SendEmailVerificationLinkCommand(
         facade,
       ),
       signUpWithVerifiedEmailCommand: SignUpWithVerifiedEmailCommand(facade),
+      checkEmailVerifiedStatusCommand: CheckEmailVerifiedStatusCommand(facade),
+      deleteExpiredAccountCommand: DeleteExpiredAccountCommand(facade),
     );
 
     // Signal para indicar operações em andamento (login, registro, logout)
@@ -58,8 +60,12 @@ class AuthViewModel {
   SignInWithGoogleCommand get signInWithGoogleCommand =>
       _commands.signInWithGoogleCommand;
   SignOutCommand get signOutCommand => commands.signOutCommand;
-  SendEmailVerificationCodeCommand get sendEmailVerificationCodeCommand =>
-      _commands.sendEmailVerificationCodeCommand;
+  SendEmailVerificationLinkCommand get sendEmailVerificationLinkCommand =>
+      _commands.sendEmailVerificationLinkCommand;
   SignUpWithVerifiedEmailCommand get signUpWithVerifiedEmailCommand =>
       _commands.signUpWithVerifiedEmailCommand;
+  CheckEmailVerifiedStatusCommand get checkEmailVerifiedStatusCommand =>
+      _commands.checkEmailVerifiedStatusCommand;
+  DeleteExpiredAccountCommand get deleteExpiredAccountCommand =>
+      _commands.deleteExpiredAccountCommand;
 }

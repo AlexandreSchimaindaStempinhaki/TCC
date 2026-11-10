@@ -21,13 +21,21 @@ abstract interface class IAuthService {
   /// Login com Google
   Future<AuthSessionResult> signInWithGoogle();
 
-  Future<Result<void, Failure>> sendEmailVerificationCode(String email);
+  /// Reenvia o e-mail de verificação para o usuário atual
+  Future<Result<void, Failure>> sendEmailVerificationLink(String email);
 
+  /// Cria o usuário com nome, e-mail e senha no Firebase
   Future<AuthSessionResult> signUpWithVerifiedEmail({
     required String name,
     required String email,
     required String password,
   });
+
+  /// Checa se o e-mail do usuário atual já foi verificado
+  Future<Result<bool, Failure>> checkEmailVerifiedStatus();
+
+  /// Apaga a conta pendente caso ultrapasse o limite de 30 minutos
+  Future<Result<void, Failure>> deleteExpiredAccount();
 
   /// Logout do usuário atual
   Future<VoidResult> signOut();

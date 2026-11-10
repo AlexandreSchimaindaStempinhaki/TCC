@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/di/dependency_injection.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../core/routes/auth_routes.dart';
+import '../../../core/typedefs/types_defs.dart';
 import '../../controllers/authentication/auth_session_viewmodel.dart';
 import '../../widgets/animated_three_dots.dart';
 import '../../widgets/header_background.dart';
@@ -13,10 +14,7 @@ import '../../widgets/text_field.dart';
 class SignupPasswordPage extends StatefulWidget {
   final Map<String, dynamic>? userData;
 
-  const SignupPasswordPage({
-    super.key,
-    required this.userData,
-  });
+  const SignupPasswordPage({super.key, required this.userData});
 
   @override
   State<SignupPasswordPage> createState() => _SignupPasswordPageState();
@@ -41,7 +39,6 @@ class _SignupPasswordPageState extends State<SignupPasswordPage> {
   void initState() {
     super.initState();
     authController = injector.get<AuthViewModel>();
-    // Limpa mensagens residuais anteriores
     authController.session.clearMessage();
 
     _passwordController.addListener(() {
@@ -58,6 +55,8 @@ class _SignupPasswordPageState extends State<SignupPasswordPage> {
     _confirmPasswordController.dispose();
     _passwordSignal.dispose();
     _confirmPasswordSignal.dispose();
+    isLoadingButton.dispose();
+    passwordError.dispose();
     super.dispose();
   }
 
@@ -76,7 +75,12 @@ class _SignupPasswordPageState extends State<SignupPasswordPage> {
     final hasSymbol = pwd.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
     final passwordsMatch = pwd.isNotEmpty && pwd == confirmPwd;
 
-    final isFormValid = hasMinLength && hasUppercase && hasNumber && hasSymbol && passwordsMatch;
+    final isFormValid =
+        hasMinLength &&
+        hasUppercase &&
+        hasNumber &&
+        hasSymbol &&
+        passwordsMatch;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -185,11 +189,18 @@ class _SignupPasswordPageState extends State<SignupPasswordPage> {
                   ),
 
                   Watch(
-                    (context) => passwordError.value != null || authController.session.message.value != null
+                    (context) =>
+                        passwordError.value != null ||
+                            authController.session.message.value != null
                         ? Padding(
-                            padding: const EdgeInsets.only(top: 12.0, left: 4.0),
+                            padding: const EdgeInsets.only(
+                              top: 12.0,
+                              left: 4.0,
+                            ),
                             child: Text(
-                              passwordError.value ?? authController.session.message.value ?? '',
+                              passwordError.value ??
+                                  authController.session.message.value ??
+                                  '',
                               style: const TextStyle(
                                 fontSize: 13,
                                 color: Colors.redAccent,
@@ -217,35 +228,44 @@ class _SignupPasswordPageState extends State<SignupPasswordPage> {
                                 final name = widget.userData?['name'] ?? '';
 
                                 if (email.isEmpty) {
-                                  passwordError.value = 'E-mail não encontrado. Reinicie o cadastro.';
+                                  passwordError.value =
+                                      'E-mail não encontrado. Reinicie o cadastro.';
                                   return;
                                 }
 
                                 try {
                                   isLoadingButton.value = true;
 
-                                  // Dispara o envio do código e aguarda o término
-                                  await authController.commands.sendEmailVerificationCode(email);
+                                  // Cria o usuário no Firebase Auth e envia o e-mail de verificação
+                                  final result = await authController
+                                      .commands
+                                      .signUpWithVerifiedEmailCommand
+                                      .executeWith(
+                                        SignUpWithVerifiedEmailParams(
+                                          name: name,
+                                          email: email,
+                                          password: pwd,
+                                          code: '000000',
+                                        ),
+                                      );
 
                                   if (!context.mounted) return;
 
-                                  // Se houver erro retornado pelo state, exibe na tela e interrompe
-                                  if (authController.session.message.value != null) {
-                                    passwordError.value = authController.session.message.value;
-                                    return;
-                                  }
-
-                                  router.pushNamed(
-                                    AuthRouteNames.emailVerification,
-                                    extra: {
-                                      'name': name,
-                                      'email': email,
-                                      'password': pwd,
+                                  result.fold(
+                                    onSuccess: (session) {
+                                      router.pushNamed(
+                                        AuthRouteNames.emailVerification,
+                                        extra: {'name': name, 'email': email},
+                                      );
+                                    },
+                                    onFailure: (failure) {
+                                      passwordError.value = failure.msg;
                                     },
                                   );
                                 } catch (e) {
                                   if (!context.mounted) return;
-                                  passwordError.value = 'Não foi possível enviar o código de verificação.';
+                                  passwordError.value =
+                                      'Erro ao realizar o cadastro. Tente novamente.';
                                 } finally {
                                   if (context.mounted) {
                                     isLoadingButton.value = false;

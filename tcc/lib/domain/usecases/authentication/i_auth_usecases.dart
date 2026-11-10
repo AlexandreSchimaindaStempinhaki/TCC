@@ -14,10 +14,18 @@ abstract interface class ISignInWithGoogleUseCase
 abstract interface class ISignOutUseCase
     implements IUseCase<VoidResult, NoParams> {}
 
-abstract interface class ISendEmailVerificationCodeUseCase {
-  Future<Result<void, Failure>> call(SendEmailVerificationCodeParams params);
+abstract interface class ISendEmailVerificationLinkUseCase {
+  Future<Result<void, Failure>> call(SendEmailVerificationLinkParams params);
 }
 
 abstract interface class ISignUpWithVerifiedEmailUseCase {
   Future<AuthSessionResult> call(SignUpWithVerifiedEmailParams params);
+}
+
+abstract interface class ICheckEmailVerifiedStatusUseCase {
+  Future<Result<bool, Failure>> call(NoParams params);
+}
+
+abstract interface class IDeleteExpiredAccountUseCase {
+  Future<Result<void, Failure>> call(NoParams params);
 }

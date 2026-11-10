@@ -16,17 +16,24 @@ abstract class IAuthRepository {
   /// Login com email e senha
   Future<AuthSessionResult> signIn(String email, String password);
 
-  /// login com Google
+  /// Login com Google
   Future<AuthSessionResult> signInWithGoogle();
 
-  Future<Result<void, Failure>> sendEmailVerificationCode(String email);
+  /// Reenvia o e-mail de verificação
+  Future<Result<void, Failure>> sendEmailVerificationLink(String email);
 
-  /// Cria o usuário de fato após a validação do e-mail
+  /// Cria o usuário de fato no Firebase
   Future<AuthSessionResult> signUpWithVerifiedEmail({
     required String name,
     required String email,
     required String password,
   });
+
+  /// Checa se o e-mail do usuário atual já foi verificado
+  Future<Result<bool, Failure>> checkEmailVerifiedStatus();
+
+  /// Apaga a conta pendente caso ultrapasse o tempo limite de 30 minutos
+  Future<Result<void, Failure>> deleteExpiredAccount();
 
   /// Logout do usuário atual
   Future<VoidResult> signOut();

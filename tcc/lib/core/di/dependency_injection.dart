@@ -26,8 +26,10 @@ void setupDependencyInjection() {
   injector.addSingleton<IAuthRepository>(AuthRepositoryImpl.new);
 
   // use cases
-  injector.addSingleton<ISendEmailVerificationCodeUseCase>(SendEmailVerificationCodeUseCase.new);
+  injector.addSingleton<ISendEmailVerificationLinkUseCase>(SendEmailVerificationLinkUseCase.new);
   injector.addSingleton<ISignUpWithVerifiedEmailUseCase>(SignUpWithVerifiedEmailUseCase.new);
+  injector.addSingleton<ICheckEmailVerifiedStatusUseCase>(CheckEmailVerifiedStatusUseCase.new);
+  injector.addSingleton<IDeleteExpiredAccountUseCase>(DeleteExpiredAccountUseCase.new);
   injector.addSingleton<ISignInUseCase>(SignInUseCase.new);
   injector.addSingleton<ISignInWithGoogleUseCase>(SignInWithGoogleUseCase.new);
   injector.addSingleton<ISignOutUseCase>(SignOutUseCase.new);

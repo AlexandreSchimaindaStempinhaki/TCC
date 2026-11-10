@@ -9,20 +9,26 @@ class AuthUseCaseFacadeImpl implements IAuthUseCaseFacade {
   final ISignInUseCase _signInUseCase;
   final ISignInWithGoogleUseCase _signInWithGoogleUseCase;
   final ISignOutUseCase _signOutUseCase;
-  final ISendEmailVerificationCodeUseCase _sendEmailVerificationCodeUseCase;
+  final ISendEmailVerificationLinkUseCase _sendEmailVerificationLinkUseCase;
   final ISignUpWithVerifiedEmailUseCase _signUpWithVerifiedEmailUseCase;
+  final ICheckEmailVerifiedStatusUseCase _checkEmailVerifiedStatusUseCase;
+  final IDeleteExpiredAccountUseCase _deleteExpiredAccountUseCase;
 
   AuthUseCaseFacadeImpl({
     required ISignInUseCase signInUseCase,
     required ISignInWithGoogleUseCase signInWithGoogleUseCase,
     required ISignOutUseCase signOutUseCase,
-    required ISendEmailVerificationCodeUseCase sendEmailVerificationCodeUseCase,
+    required ISendEmailVerificationLinkUseCase sendEmailVerificationLinkUseCase,
     required ISignUpWithVerifiedEmailUseCase signUpWithVerifiedEmailUseCase,
+    required ICheckEmailVerifiedStatusUseCase checkEmailVerifiedStatusUseCase,
+    required IDeleteExpiredAccountUseCase deleteExpiredAccountUseCase,
   }) : _signInUseCase = signInUseCase,
        _signInWithGoogleUseCase = signInWithGoogleUseCase,
        _signOutUseCase = signOutUseCase,
-       _sendEmailVerificationCodeUseCase = sendEmailVerificationCodeUseCase,
-       _signUpWithVerifiedEmailUseCase = signUpWithVerifiedEmailUseCase;
+       _sendEmailVerificationLinkUseCase = sendEmailVerificationLinkUseCase,
+       _signUpWithVerifiedEmailUseCase = signUpWithVerifiedEmailUseCase,
+       _checkEmailVerifiedStatusUseCase = checkEmailVerifiedStatusUseCase,
+       _deleteExpiredAccountUseCase = deleteExpiredAccountUseCase;
 
   @override
   Future<AuthSessionResult> signInUseCase(SignInParams params) {
@@ -40,10 +46,10 @@ class AuthUseCaseFacadeImpl implements IAuthUseCaseFacade {
   }
 
   @override
-  Future<Result<void, Failure>> sendEmailVerificationCodeUseCase(
-    SendEmailVerificationCodeParams params,
+  Future<Result<void, Failure>> sendEmailVerificationLinkUseCase(
+    SendEmailVerificationLinkParams params,
   ) {
-    return _sendEmailVerificationCodeUseCase(params);
+    return _sendEmailVerificationLinkUseCase(params);
   }
 
   @override
@@ -51,5 +57,19 @@ class AuthUseCaseFacadeImpl implements IAuthUseCaseFacade {
     SignUpWithVerifiedEmailParams params,
   ) {
     return _signUpWithVerifiedEmailUseCase(params);
+  }
+
+  @override
+  Future<Result<bool, Failure>> checkEmailVerifiedStatusUseCase(
+    NoParams params,
+  ) {
+    return _checkEmailVerifiedStatusUseCase(params);
+  }
+
+  @override
+  Future<Result<void, Failure>> deleteExpiredAccountUseCase(
+    NoParams params,
+  ) {
+    return _deleteExpiredAccountUseCase(params);
   }
 }
