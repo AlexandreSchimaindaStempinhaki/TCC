@@ -1,5 +1,4 @@
 import 'package:go_router/go_router.dart';
-
 import '../../presentation/views/application/home_view.dart';
 import '../../presentation/views/application/saved_view.dart';
 import '../../presentation/views/application/my_routes_view.dart';
@@ -101,8 +100,7 @@ final List<RouteBase> indigoRoutes = [
     path: IndigoPaths.editProfile,
     name: IndigoRouteNames.editProfile,
     builder: (context, state) {
-      final userData = state.extra as Map<String, dynamic>;
-      return EditProfileView(user: userData);
+      return const EditProfileView();
     },
   ),
   GoRoute(

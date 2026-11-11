@@ -1,13 +1,17 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../../../core/failure/failure.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../core/patterns/command.dart';
 import '../../../core/typedefs/types_defs.dart';
+import '../../../core/di/dependency_injection.dart';
 import '../../../data/repositories/authentication/i_auth_repository.dart';
 import '../../../domain/models/authentication/auth_entities.dart';
 import '../../commands/authentication/auth_commands.dart';
+import '../../controllers/user_viewmodel.dart';
 import 'auth_session_state_viewmodel.dart';
 
 class AuthSessionCommands {
@@ -31,15 +35,14 @@ class AuthSessionCommands {
     required SignUpWithVerifiedEmailCommand signUpWithVerifiedEmailCommand,
     required CheckEmailVerifiedStatusCommand checkEmailVerifiedStatusCommand,
     required DeleteExpiredAccountCommand deleteExpiredAccountCommand,
-  })  : _repository = repository,
-        _signInCommand = signInCommand,
-        _signInWithGoogleCommand = signInWithGoogleCommand,
-        _signOutCommand = signOutCommand,
-        _sendEmailVerificationLinkCommand = sendEmailVerificationLinkCommand,
-        _signUpWithVerifiedEmailCommand = signUpWithVerifiedEmailCommand,
-        _checkEmailVerifiedStatusCommand = checkEmailVerifiedStatusCommand,
-        _deleteExpiredAccountCommand = deleteExpiredAccountCommand {
-    // Observadores que reagem automaticamente ao término dos comandos
+  }) : _repository = repository,
+       _signInCommand = signInCommand,
+       _signInWithGoogleCommand = signInWithGoogleCommand,
+       _signOutCommand = signOutCommand,
+       _sendEmailVerificationLinkCommand = sendEmailVerificationLinkCommand,
+       _signUpWithVerifiedEmailCommand = signUpWithVerifiedEmailCommand,
+       _checkEmailVerifiedStatusCommand = checkEmailVerifiedStatusCommand,
+       _deleteExpiredAccountCommand = deleteExpiredAccountCommand {
     _observeSignIn();
     _observeSignInWithGoogle();
     _observeSession();
@@ -53,12 +56,17 @@ class AuthSessionCommands {
   //   GETTERS PARA WIDGETS USAREM DIRETAMENTE OS COMANDOS
   // ========================================================
   SignInCommand get signInCommand => _signInCommand;
-  SignInWithGoogleCommand get signInWithGoogleCommand => _signInWithGoogleCommand;
+  SignInWithGoogleCommand get signInWithGoogleCommand =>
+      _signInWithGoogleCommand;
   SignOutCommand get signOutCommand => _signOutCommand;
-  SendEmailVerificationLinkCommand get sendEmailVerificationLinkCommand => _sendEmailVerificationLinkCommand;
-  SignUpWithVerifiedEmailCommand get signUpWithVerifiedEmailCommand => _signUpWithVerifiedEmailCommand;
-  CheckEmailVerifiedStatusCommand get checkEmailVerifiedStatusCommand => _checkEmailVerifiedStatusCommand;
-  DeleteExpiredAccountCommand get deleteExpiredAccountCommand => _deleteExpiredAccountCommand;
+  SendEmailVerificationLinkCommand get sendEmailVerificationLinkCommand =>
+      _sendEmailVerificationLinkCommand;
+  SignUpWithVerifiedEmailCommand get signUpWithVerifiedEmailCommand =>
+      _signUpWithVerifiedEmailCommand;
+  CheckEmailVerifiedStatusCommand get checkEmailVerifiedStatusCommand =>
+      _checkEmailVerifiedStatusCommand;
+  DeleteExpiredAccountCommand get deleteExpiredAccountCommand =>
+      _deleteExpiredAccountCommand;
 
   // ========================================================
   //   MÉTODOS PÚBLICOS (CHAMADOS PELOS WIDGETS)
@@ -66,6 +74,11 @@ class AuthSessionCommands {
   Future<void> signOut() async {
     state.clearMessage();
     await _signOutCommand.executeWith(());
+
+    // LIMPA OS DADOS DO USUÁRIO DA MEMÓRIA IMEDIATAMENTE AO SAIR
+    try {
+      injector.get<UserViewModel>().state.user.value = null;
+    } catch (_) {}
   }
 
   Future<void> signInWithGoogle() async {
@@ -78,7 +91,6 @@ class AuthSessionCommands {
     await _signInCommand.executeWith((email: email, password: password));
   }
 
-  // Envia o código de 6 dígitos para o e-mail
   Future<void> sendEmailVerificationCode(String email) async {
     state.clearMessage();
     await _sendEmailVerificationLinkCommand.executeWith(
@@ -86,7 +98,6 @@ class AuthSessionCommands {
     );
   }
 
-  // Finaliza o cadastro após validar o código OTP
   Future<void> signUpWithVerifiedEmail({
     required String name,
     required String email,
@@ -112,6 +123,25 @@ class AuthSessionCommands {
   Future<void> deleteExpiredAccount() async {
     state.clearMessage();
     await _deleteExpiredAccountCommand.executeWith(());
+  }
+
+  Future<void> _fetchUserAfterAuthentication() async {
+    try {
+      final firebaseAuth = FirebaseAuth.instance;
+
+      // Aguarda o Firebase disponibilizar o usuário autenticado.
+      if (firebaseAuth.currentUser == null) {
+        await firebaseAuth
+            .authStateChanges()
+            .firstWhere((user) => user != null)
+            .timeout(const Duration(seconds: 10));
+      }
+
+      // Só busca os dados depois de confirmar a autenticação.
+      await injector.get<UserViewModel>().commands.fetchUser();
+    } catch (e) {
+      state.setMessage('Não foi possível carregar os dados do usuário: $e');
+    }
   }
 
   // ========================================================
@@ -142,13 +172,15 @@ class AuthSessionCommands {
   }
 
   // ========================================================
-  //   OBSERVERS ESPECÍFICOS
+  //   OBSERVERS ESPECÍFICOS (COM ATUALIZAÇÃO DE USUÁRIO)
   // ========================================================
   void _observeSignInWithGoogle() {
     _observeCommand<AuthSession>(
       _signInWithGoogleCommand,
       onSuccess: (authSession) {
         state.setAuthenticated(authSession);
+
+        unawaited(_fetchUserAfterAuthentication());
       },
       onFailure: (err) {
         state.setUnauthenticated(msg: err.msg);
@@ -161,6 +193,8 @@ class AuthSessionCommands {
       _signInCommand,
       onSuccess: (authSession) {
         state.setAuthenticated(authSession);
+
+        unawaited(_fetchUserAfterAuthentication());
       },
       onFailure: (err) {
         state.setUnauthenticated(msg: err.msg);
@@ -185,6 +219,8 @@ class AuthSessionCommands {
       _signUpWithVerifiedEmailCommand,
       onSuccess: (authSession) {
         state.setAuthenticated(authSession);
+
+        unawaited(_fetchUserAfterAuthentication());
       },
       onFailure: (err) {
         state.setUnauthenticated(msg: err.msg);
@@ -209,6 +245,9 @@ class AuthSessionCommands {
       _deleteExpiredAccountCommand,
       onSuccess: (_) {
         state.setUnauthenticated();
+        try {
+          injector.get<UserViewModel>().state.user.value = null;
+        } catch (_) {}
       },
       onFailure: (err) {
         state.setMessage(err.msg);
@@ -225,6 +264,9 @@ class AuthSessionCommands {
       } else if (authSession.token.isExpired) {
         state.setExpired(msg: 'Sessão expirada');
         unawaited(_repository.signOut());
+        try {
+          injector.get<UserViewModel>().state.user.value = null;
+        } catch (_) {}
       } else {
         state.setAuthenticated(authSession);
       }

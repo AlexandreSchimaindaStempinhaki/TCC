@@ -1,8 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/typedefs/types_defs.dart';
-
 import '../../../core/failure/failure.dart' show Failure, DefaultFailure;
 import '../../../core/patterns/result.dart';
 import '../../../data/repositories/authentication/i_auth_repository.dart';
+import '../../../data/repositories/i_user_repositoy.dart';
+import '../../models/user_entity.dart';
 import 'i_auth_usecases.dart';
 
 final class SignInUseCase implements ISignInUseCase {
@@ -13,7 +15,6 @@ final class SignInUseCase implements ISignInUseCase {
 
   @override
   Future<AuthSessionResult> call(SignInParams params) async {
-    // Simula uma chamada de rede com atraso
     await Future.delayed(const Duration(seconds: 2));
     return _authRepository.signIn(params.email, params.password);
   }
@@ -21,15 +22,38 @@ final class SignInUseCase implements ISignInUseCase {
 
 final class SignInWithGoogleUseCase implements ISignInWithGoogleUseCase {
   final IAuthRepository _authRepository;
+  final IUserRepository _userRepository;
 
-  SignInWithGoogleUseCase({required IAuthRepository authRepository})
-    : _authRepository = authRepository;
+  SignInWithGoogleUseCase({
+    required IAuthRepository authRepository,
+    required IUserRepository userRepository,
+  })  : _authRepository = authRepository,
+        _userRepository = userRepository;
 
   @override
   Future<AuthSessionResult> call(NoParams params) async {
-    // Simula uma chamada de rede com atraso
     await Future.delayed(const Duration(seconds: 1));
-    return _authRepository.signInWithGoogle();
+
+    final authResult = await _authRepository.signInWithGoogle();
+
+    return await authResult.fold(
+      onSuccess: (authSession) async {
+        final firebaseUser = FirebaseAuth.instance.currentUser;
+        if (firebaseUser != null) {
+          final googleUser = UserModel(
+            uid: firebaseUser.uid,
+            email: firebaseUser.email ?? '',
+            name: firebaseUser.displayName ?? 'Usuário Google',
+            photoUrl: firebaseUser.photoURL,
+          );
+
+          await _userRepository.saveUser(googleUser);
+        }
+
+        return Success(authSession);
+      },
+      onFailure: (failure) => Error(failure),
+    );
   }
 }
 
@@ -41,7 +65,6 @@ final class SignOutUseCase implements ISignOutUseCase {
 
   @override
   Future<VoidResult> call(NoParams params) async {
-    // Simula uma chamada de rede com atraso
     await Future.delayed(const Duration(seconds: 3));
     return _authRepository.signOut();
   }
@@ -66,24 +89,59 @@ final class SendEmailVerificationLinkUseCase
 final class SignUpWithVerifiedEmailUseCase
     implements ISignUpWithVerifiedEmailUseCase {
   final IAuthRepository _authRepository;
+  final IUserRepository _userRepository;
 
-  SignUpWithVerifiedEmailUseCase({required IAuthRepository authRepository})
-    : _authRepository = authRepository;
+  SignUpWithVerifiedEmailUseCase({
+    required IAuthRepository authRepository,
+    required IUserRepository userRepository,
+  })  : _authRepository = authRepository,
+        _userRepository = userRepository;
 
   @override
   Future<AuthSessionResult> call(SignUpWithVerifiedEmailParams params) async {
-    // Validação estrita do código OTP de 6 dígitos antes de prosseguir
     if (params.code.length != 6) {
       return Error(
         DefaultFailure('O código de verificação deve conter 6 dígitos.'),
       );
     }
 
-    await Future.delayed(const Duration(seconds: 2));
-    return _authRepository.signUpWithVerifiedEmail(
+    // PASSO 1: Cria a conta no Firebase Auth
+    final authResult = await _authRepository.signUpWithVerifiedEmail(
       name: params.name,
       email: params.email,
       password: params.password,
+    );
+
+    return await authResult.fold(
+      onSuccess: (authSession) async {
+        final firebaseUser = FirebaseAuth.instance.currentUser;
+
+        if (firebaseUser == null) {
+          return Error(
+            DefaultFailure('Conta criada no Auth, mas o usuário ativo não foi encontrado.'),
+          );
+        }
+
+        // PASSO 2: Cria o esqueleto do UserModel no Firestore
+        final initialUser = UserModel(
+          uid: firebaseUser.uid,
+          email: params.email,
+          name: params.name,
+          // Adicione valores padrão caso seu UserModel exija outros campos obrigatórios
+        );
+
+        final saveResult = await _userRepository.saveUser(initialUser);
+
+        return saveResult.fold(
+          onSuccess: (_) => Success(authSession),
+          onFailure: (failure) => Error(
+            DefaultFailure('Conta criada, mas falhou ao salvar perfil: ${failure.msg}'),
+          ),
+        );
+      },
+      onFailure: (failure) {
+        return Error(failure);
+      },
     );
   }
 }

@@ -1,5 +1,14 @@
 import 'package:auto_injector/auto_injector.dart';
+import '../../domain/facades/i_user_use_case_facade.dart';
 
+import '../../data/repositories/i_user_repositoy.dart';
+import '../../data/repositories/user_repository_impl.dart';
+import '../../data/services/firebase/i_user_remote_service.dart';
+import '../../data/services/firebase/user_remote_service_impl.dart';
+import '../../domain/facades/user_use_case_facade.dart';
+import '../../domain/usecases/i_user_usecases.dart';
+import '../../domain/usecases/user_use_casesimpl.dart';
+import '../../presentation/controllers/user_viewmodel.dart';
 import '../theme/theme_controller.dart';
 import '../../data/repositories/authentication/auth_repository_impl.dart';
 import '../../data/repositories/authentication/i_auth_repository.dart';
@@ -19,13 +28,29 @@ final injector = AutoInjector();
 void setupDependencyInjection() {
   injector.addSingleton<ThemeController>(() => ThemeController());
 
-  // modulo de autenticação
+  // ==========================================
+  // MÓDULO DE USUÁRIO (Remote Service, Repository, Use Cases & Facade)
+  // ==========================================
+  injector.addSingleton<IUserRemoteService>(UserRemoteServiceImpl.new);
+  injector.addSingleton<IUserRepository>(UserRepositoryImpl.new);
+
+  // Use cases de Usuário
+  injector.addSingleton<IGetUserUseCase>(GetUserUseCase.new);
+  injector.addSingleton<ISaveUserDataUseCase>(SaveUserDataUseCase.new);
+  injector.addSingleton<IUpdateProfilePictureUseCase>(UpdateProfilePictureUseCase.new);
+  injector.addSingleton<IDeleteUserAccountUseCase>(DeleteUserAccountUseCase.new);
+
+  // ➔ ADICIONE ESTA LINHA AQUI (O Facade de Usuário)
+  injector.addSingleton<IUserUseCaseFacade>(UserUseCaseFacadeImpl.new);
+
+  // ==========================================
+  // MÓDULO DE AUTENTICAÇÃO E USE CASES
+  // ==========================================
   injector.addSingleton<ILocalSessionStore>(SharedPrefLocalSessionService.new);
   injector.addSingleton<AuthLocalSessionManager>(AuthLocalSessionManager.new);
   injector.addSingleton<IAuthService>(FirebaseAuthService.new);
   injector.addSingleton<IAuthRepository>(AuthRepositoryImpl.new);
 
-  // use cases
   injector.addSingleton<ISendEmailVerificationLinkUseCase>(SendEmailVerificationLinkUseCase.new);
   injector.addSingleton<ISignUpWithVerifiedEmailUseCase>(SignUpWithVerifiedEmailUseCase.new);
   injector.addSingleton<ICheckEmailVerifiedStatusUseCase>(CheckEmailVerifiedStatusUseCase.new);
@@ -33,10 +58,12 @@ void setupDependencyInjection() {
   injector.addSingleton<ISignInUseCase>(SignInUseCase.new);
   injector.addSingleton<ISignInWithGoogleUseCase>(SignInWithGoogleUseCase.new);
   injector.addSingleton<ISignOutUseCase>(SignOutUseCase.new);
+
   injector.addSingleton<IAuthUseCaseFacade>(AuthUseCaseFacadeImpl.new);
 
-  // viewmodels (gerais)
+  // Viewmodels
   injector.addSingleton<AuthViewModel>(AuthViewModel.new);
+  injector.addSingleton<UserViewModel>(UserViewModel.new);
 
   injector.commit();
 }

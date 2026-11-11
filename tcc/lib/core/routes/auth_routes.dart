@@ -1,6 +1,6 @@
 import 'package:go_router/go_router.dart';
-import '../../presentation/views/authentication/welcome_view.dart';
 import '../../presentation/views/authentication/login_view.dart';
+import '../../presentation/views/authentication/welcome_view.dart';
 import '../../presentation/views/authentication/signup_view.dart';
 import '../../presentation/views/authentication/password_view.dart';
 import '../../presentation/views/authentication/signup_view_password.dart';
