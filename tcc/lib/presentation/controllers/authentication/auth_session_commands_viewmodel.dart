@@ -127,17 +127,6 @@ class AuthSessionCommands {
 
   Future<void> _fetchUserAfterAuthentication() async {
     try {
-      final firebaseAuth = FirebaseAuth.instance;
-
-      // Aguarda o Firebase disponibilizar o usuário autenticado.
-      if (firebaseAuth.currentUser == null) {
-        await firebaseAuth
-            .authStateChanges()
-            .firstWhere((user) => user != null)
-            .timeout(const Duration(seconds: 10));
-      }
-
-      // Só busca os dados depois de confirmar a autenticação.
       await injector.get<UserViewModel>().commands.fetchUser();
     } catch (e) {
       state.setMessage('Não foi possível carregar os dados do usuário: $e');
@@ -179,7 +168,6 @@ class AuthSessionCommands {
       _signInWithGoogleCommand,
       onSuccess: (authSession) {
         state.setAuthenticated(authSession);
-
         unawaited(_fetchUserAfterAuthentication());
       },
       onFailure: (err) {
