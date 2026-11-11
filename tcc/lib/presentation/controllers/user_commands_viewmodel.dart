@@ -68,7 +68,7 @@ class UserCommands {
 
   Future<void> deleteUserAccount() async {
     state.clearMessage();
-    await _deleteUserAccountCommand.execute();
+    await _deleteUserAccountCommand.executeWith(());
   }
 
   // ========================================================

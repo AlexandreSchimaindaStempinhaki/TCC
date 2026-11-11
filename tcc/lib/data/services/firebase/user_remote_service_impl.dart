@@ -57,12 +57,40 @@ final class UserRemoteServiceImpl implements IUserRemoteService {
   @override
   Future<void> deleteUserAccountData() async {
     final uid = _currentUid;
+    final currentUser = FirebaseAuth.instance.currentUser;
 
-    await _firestore.collection('users').doc(uid).delete();
+    // 1. Validação de Segurança Básica
+    if (currentUser == null) {
+      throw Exception('Nenhum usuário autenticado para excluir.');
+    }
 
+    // 2. Apaga Firestore
     try {
-      final ref = _storage.ref().child('profile_images').child('$uid.jpg');
-      await ref.delete();
-    } catch (_) {}
+      await _firestore.collection('users').doc(uid).delete();
+    } catch (e) {
+      throw Exception('Erro ao excluir dados do banco: $e');
+    }
+
+    // 3. Apaga Storage
+    try {
+      await _storage.ref().child('profile_images').child('$uid.jpg').delete();
+    } catch (_) {
+      // Ignora silenciosamente, pois o usuário pode não ter foto salva
+    }
+
+    // 4. APAGA O AUTH (Com tratamento do bloqueio do Firebase)
+    try {
+      await currentUser.delete(); 
+    } on FirebaseAuthException catch (e) {
+      // A trava de segurança mais chata (e importante) do Firebase
+      if (e.code == 'requires-recent-login') {
+        throw Exception(
+          'Por segurança, você precisa sair do aplicativo, fazer login novamente e tentar excluir a conta.',
+        );
+      }
+      throw Exception('Erro na exclusão do Auth: ${e.message}');
+    } catch (e) {
+      throw Exception('Erro inesperado ao excluir conta: $e');
+    }
   }
 }
