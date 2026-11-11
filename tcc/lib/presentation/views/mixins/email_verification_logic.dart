@@ -273,7 +273,6 @@ mixin EmailVerificationLogic on State<EmailVerificationPage> {
           confirmText: 'Sim, cancelar',
           onConfirm: () async {
             try {
-              // Exclui a conta pendente no Firebase
               await authController.commands.deleteExpiredAccountCommand
                   .executeWith(());
             } catch (e) {

@@ -99,13 +99,6 @@ final class SignUpWithVerifiedEmailUseCase
 
   @override
   Future<AuthSessionResult> call(SignUpWithVerifiedEmailParams params) async {
-    if (params.code.length != 6) {
-      return Error(
-        DefaultFailure('O código de verificação deve conter 6 dígitos.'),
-      );
-    }
-
-    // PASSO 1: Cria a conta no Firebase Auth
     final authResult = await _authRepository.signUpWithVerifiedEmail(
       name: params.name,
       email: params.email,
@@ -122,12 +115,10 @@ final class SignUpWithVerifiedEmailUseCase
           );
         }
 
-        // PASSO 2: Cria o esqueleto do UserModel no Firestore
         final initialUser = UserModel(
           uid: firebaseUser.uid,
           email: params.email,
           name: params.name,
-          // Adicione valores padrão caso seu UserModel exija outros campos obrigatórios
         );
 
         final saveResult = await _userRepository.saveUser(initialUser);
@@ -150,7 +141,7 @@ final class CheckEmailVerifiedStatusUseCase
     implements ICheckEmailVerifiedStatusUseCase {
   final IAuthRepository _authRepository;
 
-  CheckEmailVerifiedStatusUseCase({required IAuthRepository authRepository})
+  CheckEmailVerifiedStatusUseCase({required IAuthRepository authRepository,})
     : _authRepository = authRepository;
 
   @override
@@ -162,12 +153,14 @@ final class CheckEmailVerifiedStatusUseCase
 final class DeleteExpiredAccountUseCase
     implements IDeleteExpiredAccountUseCase {
   final IAuthRepository _authRepository;
+  final IUserRepository _userRepository;
 
-  DeleteExpiredAccountUseCase({required IAuthRepository authRepository})
-    : _authRepository = authRepository;
+  DeleteExpiredAccountUseCase({required IAuthRepository authRepository, required IUserRepository userRepository})
+    : _authRepository = authRepository, _userRepository = userRepository;
 
   @override
   Future<Result<void, Failure>> call(NoParams params) async {
+    await _userRepository.deleteAccount();
     return _authRepository.deleteExpiredAccount();
   }
 }
