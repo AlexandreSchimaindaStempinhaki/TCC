@@ -31,7 +31,7 @@ class _EditProfileViewState extends State<EditProfileView> {
 
   Widget? _buildMissingIndicator(dynamic value) {
     final bool isEmpty = value == null || value.toString().trim().isEmpty;
-    
+
     if (isEmpty) {
       return const Icon(
         Icons.error_outline_rounded,
@@ -39,11 +39,15 @@ class _EditProfileViewState extends State<EditProfileView> {
         size: 22,
       );
     }
-    
-    return null; 
+
+    return null;
   }
 
-  Widget _buildSectionTitle(BuildContext context, String title, {double topPadding = 24}) {
+  Widget _buildSectionTitle(
+    BuildContext context,
+    String title, {
+    double topPadding = 24,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: EdgeInsets.fromLTRB(16, topPadding, 20, 8),
@@ -81,12 +85,19 @@ class _EditProfileViewState extends State<EditProfileView> {
             backgroundColor: theme.scaffoldBackgroundColor,
             elevation: 0,
             leading: IconButton(
-              icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
+              icon: Icon(
+                Icons.arrow_back_rounded,
+                color: colorScheme.onSurface,
+              ),
               onPressed: () => context.pop(),
             ),
             title: Text(
               'Editar Conta',
-              style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 18),
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
             ),
             centerTitle: true,
           ),
@@ -95,8 +106,15 @@ class _EditProfileViewState extends State<EditProfileView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ProfileHeaderCard(name: nameText, email: emailText, photoUrl: photoUrl),
-                const SizedBox(height: 24),
+                ProfileHeaderCard(
+                  name: nameText,
+                  email: emailText,
+                  photoUrl: photoUrl,
+                  onTap: () {
+                    context.pushNamed(IndigoRouteNames.profile);
+                  },
+                ),
+                const SizedBox(height: 16),
 
                 Container(
                   clipBehavior: Clip.antiAlias,
@@ -105,21 +123,31 @@ class _EditProfileViewState extends State<EditProfileView> {
                     color: theme.cardColor,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4)),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
                     ],
                   ),
                   child: Column(
                     children: [
-                      _buildSectionTitle(context, 'Dados Pessoais', topPadding: 16),
-                      
+                      _buildSectionTitle(
+                        context,
+                        'Dados Pessoais',
+                        topPadding: 16,
+                      ),
+
                       AccountOption(
                         icon: Icons.camera_alt_outlined,
                         title: 'Foto de Perfil',
                         trailing: _buildMissingIndicator(currentUser?.photoUrl),
-                        onTap: () => context.pushNamed(IndigoRouteNames.editProfilePhoto),
+                        onTap: () => context.pushNamed(
+                          IndigoRouteNames.editProfilePhoto,
+                        ),
                       ),
                       const SizedBox(height: 8),
-                      
+
                       AccountOption(
                         icon: Icons.person_outline_rounded,
                         title: 'Nome Completo',
@@ -133,8 +161,12 @@ class _EditProfileViewState extends State<EditProfileView> {
                               'keyboardType': TextInputType.name,
                               'inputFormatters': [AppFormatters.nameLimit(50)],
                               'onSave': (String newValue) async {
-                                final updated = currentUser!.copyWith(name: newValue);
-                                await _userViewModel.commands.saveUserData(updated);
+                                final updated = currentUser!.copyWith(
+                                  name: newValue,
+                                );
+                                await _userViewModel.commands.saveUserData(
+                                  updated,
+                                );
                               },
                             },
                           );
@@ -155,8 +187,12 @@ class _EditProfileViewState extends State<EditProfileView> {
                               'keyboardType': TextInputType.phone,
                               'inputFormatters': [AppFormatters.phone],
                               'onSave': (String newValue) async {
-                                final updated = currentUser!.copyWith(phone: newValue);
-                                await _userViewModel.commands.saveUserData(updated);
+                                final updated = currentUser!.copyWith(
+                                  phone: newValue,
+                                );
+                                await _userViewModel.commands.saveUserData(
+                                  updated,
+                                );
                               },
                             },
                           );
@@ -177,8 +213,12 @@ class _EditProfileViewState extends State<EditProfileView> {
                               'keyboardType': TextInputType.number,
                               'inputFormatters': [AppFormatters.cpf],
                               'onSave': (String newValue) async {
-                                final updated = currentUser!.copyWith(cpf: newValue);
-                                await _userViewModel.commands.saveUserData(updated);
+                                final updated = currentUser!.copyWith(
+                                  cpf: newValue,
+                                );
+                                await _userViewModel.commands.saveUserData(
+                                  updated,
+                                );
                               },
                             },
                           );
@@ -189,8 +229,11 @@ class _EditProfileViewState extends State<EditProfileView> {
                       AccountOption(
                         icon: Icons.cake_outlined,
                         title: 'Data de Nascimento',
-                        trailing: _buildMissingIndicator(currentUser?.birthDate?.toString()),
-                        onTap: () => context.pushNamed(IndigoRouteNames.editProfileDate),
+                        trailing: _buildMissingIndicator(
+                          currentUser?.birthDate?.toString(),
+                        ),
+                        onTap: () =>
+                            context.pushNamed(IndigoRouteNames.editProfileDate),
                       ),
                       const SizedBox(height: 8),
 
@@ -207,8 +250,12 @@ class _EditProfileViewState extends State<EditProfileView> {
                               'keyboardType': TextInputType.number,
                               'inputFormatters': [AppFormatters.cnhLimit()],
                               'onSave': (String newValue) async {
-                                final updated = currentUser!.copyWith(driverLicense: newValue);
-                                await _userViewModel.commands.saveUserData(updated);
+                                final updated = currentUser!.copyWith(
+                                  driverLicense: newValue,
+                                );
+                                await _userViewModel.commands.saveUserData(
+                                  updated,
+                                );
                               },
                             },
                           );
@@ -217,7 +264,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                       const SizedBox(height: 8),
 
                       _buildSectionTitle(context, 'Segurança'),
-                      
+
                       AccountOption(
                         icon: Icons.lock_outline_rounded,
                         title: 'Mudar Senha',
@@ -233,15 +280,23 @@ class _EditProfileViewState extends State<EditProfileView> {
                         title: 'Excluir Conta',
                         iconColor: Colors.redAccent,
                         textColor: Colors.redAccent,
-                        trailing: _isDeletingAccount ? const AnimatedThreeDots(color: Colors.redAccent) : null,
+                        trailing: _isDeletingAccount
+                            ? const AnimatedThreeDots(color: Colors.redAccent)
+                            : null,
                         onTap: () async {
                           final confirm = await showDialog<bool>(
                             context: context,
                             builder: (context) => AlertDialog(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
                               title: const Row(
                                 children: [
-                                  Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 28),
+                                  Icon(
+                                    Icons.warning_amber_rounded,
+                                    color: Colors.redAccent,
+                                    size: 28,
+                                  ),
                                   SizedBox(width: 8),
                                   Text('Excluir Conta?'),
                                 ],
@@ -253,7 +308,12 @@ class _EditProfileViewState extends State<EditProfileView> {
                               actions: [
                                 TextButton(
                                   onPressed: () => context.pop(false),
-                                  child: Text('Cancelar', style: TextStyle(color: colorScheme.onSurface)),
+                                  child: Text(
+                                    'Cancelar',
+                                    style: TextStyle(
+                                      color: colorScheme.onSurface,
+                                    ),
+                                  ),
                                 ),
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
@@ -271,17 +331,22 @@ class _EditProfileViewState extends State<EditProfileView> {
                           if (confirm == true) {
                             setState(() => _isDeletingAccount = true);
 
-                            final success = await _userViewModel.commands.deleteUserAccount();
+                            final success = await _userViewModel.commands
+                                .deleteUserAccount();
 
                             if (!context.mounted) return;
 
                             if (success) {
-                              GoRouter.of(context).goNamed(AuthRouteNames.welcome);
+                              GoRouter.of(
+                                context,
+                              ).goNamed(AuthRouteNames.welcome);
                             } else {
                               setState(() => _isDeletingAccount = false);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Por segurança, saia do app, faça login novamente e tente excluir.'),
+                                  content: Text(
+                                    'Por segurança, saia do app, faça login novamente e tente excluir.',
+                                  ),
                                   backgroundColor: Colors.redAccent,
                                 ),
                               );

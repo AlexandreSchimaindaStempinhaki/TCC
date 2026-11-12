@@ -1,5 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import '../../domain/models/user_entity.dart';
+import '../../presentation/controllers/user_viewmodel.dart';
 import '../../presentation/views/application/home_view.dart';
 import '../../presentation/views/application/saved_view.dart';
 import '../../presentation/views/application/my_routes_view.dart';
@@ -14,6 +16,8 @@ import '../../presentation/views/application/manage_adress_view.dart';
 import '../../presentation/views/application/edit_profile_filed_view.dart';
 import '../../presentation/views/application/edit_profile_date_view.dart';
 import '../../presentation/views/application/edit_profile_photo_view.dart';
+import '../../presentation/views/application/profile_view.dart';
+import '../di/dependency_injection.dart';
 
 class IndigoRouteNames {
   static const home = 'home';
@@ -31,6 +35,7 @@ class IndigoRouteNames {
   static const editProfileField = 'edit_profile_field';
   static const editProfileDate = 'edit_profile_date';
   static const editProfilePhoto = 'edit_profile_photo';
+  static const profile = 'profile';
 }
 
 class IndigoPaths {
@@ -49,6 +54,7 @@ class IndigoPaths {
   static const editProfileField = '/edit-profile-field';
   static const editProfileDate = '/edit-profile-date';
   static const editProfilePhoto = '/edit-profile-photo';
+  static const profile = '/profile';
 }
 
 final List<RouteBase> indigoRoutes = [
@@ -156,6 +162,17 @@ final List<RouteBase> indigoRoutes = [
     path: '/edit-profile-photo',
     builder: (context, state) {
       return const EditProfilePhotoView();
+    },
+  ),
+  GoRoute(
+    path: '/profile',
+    name: IndigoRouteNames.profile,
+    builder: (context, state) {
+      final targetUser = state.extra as UserModel?;
+      return ProfileView(
+        userViewModel: injector.get<UserViewModel>(),
+        user: targetUser,
+      );
     },
   ),
 ];
