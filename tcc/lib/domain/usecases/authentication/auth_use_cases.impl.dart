@@ -9,14 +9,53 @@ import 'i_auth_usecases.dart';
 
 final class SignInUseCase implements ISignInUseCase {
   final IAuthRepository _authRepository;
+  final IUserRepository _userRepository;
 
-  SignInUseCase({required IAuthRepository authRepository})
-    : _authRepository = authRepository;
+  SignInUseCase({
+    required IAuthRepository authRepository,
+    required IUserRepository userRepository,
+  }) : _authRepository = authRepository,
+       _userRepository = userRepository;
 
   @override
   Future<AuthSessionResult> call(SignInParams params) async {
     await Future.delayed(const Duration(seconds: 2));
-    return _authRepository.signIn(params.email, params.password);
+    final authResult = await _authRepository.signIn(params.email, params.password);
+
+    return await authResult.fold(
+      onSuccess: (authSession) async {
+        final firebaseUser = FirebaseAuth.instance.currentUser;
+        if (firebaseUser != null) {
+          final existingUserResult = await _userRepository.getUser();
+          
+          await existingUserResult.fold(
+            onSuccess: (user) async {
+              if (user == null) {
+                final initialUser = UserModel(
+                  uid: firebaseUser.uid,
+                  email: firebaseUser.email ?? params.email,
+                  name: firebaseUser.displayName ?? '',
+                  photoUrl: firebaseUser.photoURL,
+                );
+                await _userRepository.saveUser(initialUser);
+              }
+            },
+            onFailure: (_) async {
+              final initialUser = UserModel(
+                uid: firebaseUser.uid,
+                email: firebaseUser.email ?? params.email,
+                name: firebaseUser.displayName ?? '',
+                photoUrl: firebaseUser.photoURL,
+              );
+              await _userRepository.saveUser(initialUser);
+            },
+          );
+        }
+
+        return Success(authSession);
+      },
+      onFailure: (failure) => Error(failure),
+    );
   }
 }
 
@@ -40,14 +79,30 @@ final class SignInWithGoogleUseCase implements ISignInWithGoogleUseCase {
       onSuccess: (authSession) async {
         final firebaseUser = FirebaseAuth.instance.currentUser;
         if (firebaseUser != null) {
-          final googleUser = UserModel(
-            uid: firebaseUser.uid,
-            email: firebaseUser.email ?? '',
-            name: firebaseUser.displayName ?? 'Usuário Google',
-            photoUrl: firebaseUser.photoURL,
+          final existingUserResult = await _userRepository.getUser();
+          
+          await existingUserResult.fold(
+            onSuccess: (user) async {
+              if (user == null) {
+                final googleUser = UserModel(
+                  uid: firebaseUser.uid,
+                  email: firebaseUser.email ?? '',
+                  name: firebaseUser.displayName ?? 'Usuário Google',
+                  photoUrl: firebaseUser.photoURL,
+                );
+                await _userRepository.saveUser(googleUser);
+              }
+            },
+            onFailure: (_) async {
+              final googleUser = UserModel(
+                uid: firebaseUser.uid,
+                email: firebaseUser.email ?? '',
+                name: firebaseUser.displayName ?? 'Usuário Google',
+                photoUrl: firebaseUser.photoURL,
+              );
+              await _userRepository.saveUser(googleUser);
+            },
           );
-
-          await _userRepository.saveUser(googleUser);
         }
 
         return Success(authSession);
