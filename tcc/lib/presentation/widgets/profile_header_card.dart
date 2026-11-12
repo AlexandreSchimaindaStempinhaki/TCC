@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+
 // import 'package:go_router/go_router.dart';
 
 class ProfileHeaderCard extends StatelessWidget {
@@ -36,7 +37,9 @@ class ProfileHeaderCard extends StatelessWidget {
     // e elementos com contraste invertido para destacar bem.
     return Container(
       decoration: BoxDecoration(
-        color: isDarkMode ? colorScheme.surfaceContainerHighest : colorScheme.surface,
+        color: isDarkMode
+            ? colorScheme.surfaceContainerHighest
+            : colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -51,9 +54,11 @@ class ProfileHeaderCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
-          onTap: onTap ?? () {
-            // context.push('/profile');
-          },
+          onTap:
+              onTap ??
+              () {
+                // context.push('/profile');
+              },
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
@@ -65,9 +70,11 @@ class ProfileHeaderCard extends StatelessWidget {
                   backgroundImage: localImage != null
                       ? FileImage(localImage!)
                       : (photoUrl != null && photoUrl!.isNotEmpty
-                          ? NetworkImage(photoUrl!) as ImageProvider
-                          : null),
-                  child: (localImage == null && (photoUrl == null || photoUrl!.isEmpty))
+                            ? NetworkImage(photoUrl!) as ImageProvider
+                            : null),
+                  child:
+                      (localImage == null &&
+                          (photoUrl == null || photoUrl!.isEmpty))
                       ? Text(
                           _getInitials(name),
                           style: TextStyle(
@@ -79,7 +86,6 @@ class ProfileHeaderCard extends StatelessWidget {
                       : null,
                 ),
                 const SizedBox(width: 16),
-                // Informações do usuário
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,14 +104,18 @@ class ProfileHeaderCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        email.isEmpty ? 'Nenhum e-mail cadastrado' : email,
-                        style: TextStyle(
-                          color: colorScheme.onSurfaceVariant,
-                          fontSize: 13,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          email.isEmpty ? 'Nenhum e-mail cadastrado' : email,
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 13,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),

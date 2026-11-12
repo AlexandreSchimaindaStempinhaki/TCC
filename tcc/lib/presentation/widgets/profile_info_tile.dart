@@ -7,6 +7,7 @@ class ProfileInfoTile extends StatelessWidget {
   final bool canEdit;
   final bool isRequired;
   final bool reserveTrailingSpace;
+  final int? maxLines;
   final VoidCallback? onTap;
 
   const ProfileInfoTile({
@@ -17,6 +18,7 @@ class ProfileInfoTile extends StatelessWidget {
     this.canEdit = false,
     this.isRequired = false,
     this.reserveTrailingSpace = false,
+    this.maxLines,
     this.onTap,
   });
 
@@ -58,8 +60,11 @@ class ProfileInfoTile extends StatelessWidget {
               child: Text(
                 displayValue,
                 textAlign: TextAlign.end,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                softWrap: true,
+                maxLines: maxLines,
+                overflow: maxLines != null
+                    ? TextOverflow.ellipsis
+                    : TextOverflow.visible,
                 style: TextStyle(
                   color: showMissingAlert
                       ? Colors.redAccent
@@ -79,7 +84,6 @@ class ProfileInfoTile extends StatelessWidget {
                 size: 16,
               ),
             ] else if (reserveTrailingSpace) ...[
-              // Mantém o mesmo afastamento da borda direita (10px + 16px do ícone)
               const SizedBox(width: 26),
             ],
           ],

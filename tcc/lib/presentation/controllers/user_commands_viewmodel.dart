@@ -91,31 +91,6 @@ class UserCommands {
     return targetUser.email == loggedUser.email;
   }
 
-  // Nos commands da UserViewModel:
-  Future<void> updateName(String newValue) async {
-    final current = state.user.value;
-    if (current == null) return;
-    await saveUserData(current.copyWith(name: newValue));
-  }
-
-  Future<void> updatePhone(String newValue) async {
-    final current = state.user.value;
-    if (current == null) return;
-    await saveUserData(current.copyWith(phone: newValue));
-  }
-
-  Future<void> updateCpf(String newValue) async {
-    final current = state.user.value;
-    if (current == null) return;
-    await saveUserData(current.copyWith(cpf: newValue));
-  }
-
-  Future<void> updateDriverLicense(String newValue) async {
-    final current = state.user.value;
-    if (current == null) return;
-    await saveUserData(current.copyWith(driverLicense: newValue));
-  }
-
   // ========================================================
   //   MÉTODO GENÉRICO DE OBSERVAÇÃO DE COMANDOS
   // ========================================================

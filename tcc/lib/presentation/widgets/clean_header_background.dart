@@ -20,7 +20,7 @@ class _CleanHeaderBackgroundState extends State<CleanHeaderBackground>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 8), // Mesma duração suave[cite: 4]
+      duration: const Duration(seconds: 8),
     )..repeat();
   }
 
@@ -33,8 +33,8 @@ class _CleanHeaderBackgroundState extends State<CleanHeaderBackground>
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    // Usa a altura fornecida ou 30% da tela como padrão
-    final effectiveHeight = widget.height ?? MediaQuery.of(context).size.height * 0.3;
+    final effectiveHeight =
+        widget.height ?? MediaQuery.of(context).size.height * 0.3;
 
     return SizedBox(
       height: effectiveHeight,
@@ -54,8 +54,7 @@ class _CleanHeaderBackgroundState extends State<CleanHeaderBackground>
               );
             },
           ),
-          if (widget.child != null) 
-            widget.child!,
+          if (widget.child != null) widget.child!,
         ],
       ),
     );
@@ -72,8 +71,8 @@ class SingleFluidWaveClipper extends CustomClipper<Path> {
     final path = Path();
     final double phase = animValue * 2 * pi;
 
-    final double baseY = size.height * 0.9;
-    final double amplitude = size.height * 0.05;
+    final double baseY = size.height * 0.84;
+    final double amplitude = size.height * 0.12;
 
     path.moveTo(0, 0);
 

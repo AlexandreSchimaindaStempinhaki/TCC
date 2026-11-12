@@ -4,8 +4,8 @@ import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../core/routes/indigo_routes.dart';
 import '../../../core/utils/app_formatters.dart';
-import '../../controllers/user_viewmodel.dart';
 import '../../../domain/models/user_entity.dart';
+import '../../controllers/user_viewmodel.dart';
 import '../../widgets/clean_header_background.dart';
 import '../../widgets/profile_info_tile.dart';
 
@@ -13,11 +13,7 @@ class ProfileView extends StatefulWidget {
   final UserViewModel userViewModel;
   final UserModel? user;
 
-  const ProfileView({
-    super.key,
-    required this.userViewModel,
-    this.user,
-  });
+  const ProfileView({super.key, required this.userViewModel, this.user});
 
   @override
   State<ProfileView> createState() => _ProfileViewState();
@@ -43,9 +39,9 @@ class _ProfileViewState extends State<ProfileView> {
       final nameText = targetUser?.name ?? 'Usuário';
       final initials = nameText.isNotEmpty ? nameText[0].toUpperCase() : 'U';
 
-      const double headerHeight = 250;
       const double avatarRadius = 120;
-      const double avatarTopOffset = headerHeight - avatarRadius - 16;
+      const double avatarTop = 80;
+      const double headerHeight = 265;
 
       return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
@@ -56,24 +52,35 @@ class _ProfileViewState extends State<ProfileView> {
               Stack(
                 alignment: Alignment.topCenter,
                 children: [
-                  const CleanHeaderBackground(height: headerHeight),
+                  const Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: CleanHeaderBackground(height: headerHeight),
+                  ),
                   SafeArea(
                     child: Align(
                       alignment: Alignment.topLeft,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 8, top: 4),
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.arrow_back_rounded,
-                            color: colorScheme.onPrimary,
+                        padding: const EdgeInsets.only(left: 12, top: 8),
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            color: Colors.black,
+                            shape: BoxShape.circle,
                           ),
-                          onPressed: () => context.pop(),
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.arrow_back_rounded,
+                              color: Colors.white,
+                            ),
+                            onPressed: () => context.pop(),
+                          ),
                         ),
                       ),
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(top: avatarTopOffset),
+                    padding: const EdgeInsets.only(top: avatarTop),
                     child: Column(
                       children: [
                         Stack(
@@ -96,11 +103,13 @@ class _ProfileViewState extends State<ProfileView> {
                               child: CircleAvatar(
                                 radius: avatarRadius,
                                 backgroundColor: colorScheme.primary,
-                                backgroundImage: targetUser?.photoUrl != null &&
+                                backgroundImage:
+                                    targetUser?.photoUrl != null &&
                                         targetUser!.photoUrl!.isNotEmpty
                                     ? NetworkImage(targetUser.photoUrl!)
                                     : null,
-                                child: (targetUser?.photoUrl == null ||
+                                child:
+                                    (targetUser?.photoUrl == null ||
                                         targetUser!.photoUrl!.isEmpty)
                                     ? Text(
                                         initials,
@@ -148,7 +157,6 @@ class _ProfileViewState extends State<ProfileView> {
                           ],
                         ),
                         const SizedBox(height: 16),
-
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: GestureDetector(
@@ -163,8 +171,13 @@ class _ProfileViewState extends State<ProfileView> {
                                         'inputFormatters': [
                                           AppFormatters.nameLimit(50),
                                         ],
-                                        'onSave': widget
-                                            .userViewModel.commands.updateName,
+                                        'onSave': (String newValue) async {
+                                          final updated = targetUser!.copyWith(
+                                            name: newValue,
+                                          );
+                                          await widget.userViewModel.commands
+                                              .saveUserData(updated);
+                                        },
                                       },
                                     );
                                   }
@@ -203,10 +216,7 @@ class _ProfileViewState extends State<ProfileView> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 28),
-
-              // CARD COM OS DADOS DO USUÁRIO
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 20),
                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -244,8 +254,14 @@ class _ProfileViewState extends State<ProfileView> {
                             'currentValue': targetUser?.phone ?? '',
                             'keyboardType': TextInputType.phone,
                             'inputFormatters': [AppFormatters.phone],
-                            'onSave':
-                                widget.userViewModel.commands.updatePhone,
+                            'onSave': (String newValue) async {
+                              final updated = targetUser!.copyWith(
+                                phone: newValue,
+                              );
+                              await widget.userViewModel.commands.saveUserData(
+                                updated,
+                              );
+                            },
                           },
                         );
                       },
@@ -264,13 +280,20 @@ class _ProfileViewState extends State<ProfileView> {
                             'currentValue': targetUser?.cpf ?? '',
                             'keyboardType': TextInputType.number,
                             'inputFormatters': [AppFormatters.cpf],
-                            'onSave': widget.userViewModel.commands.updateCpf,
+                            'onSave': (String newValue) async {
+                              final updated = targetUser!.copyWith(
+                                cpf: newValue,
+                              );
+                              await widget.userViewModel.commands.saveUserData(
+                                updated,
+                              );
+                            },
                           },
                         );
                       },
                     ),
                     ProfileInfoTile(
-                      icon: Icons.cake_outlined,
+                      icon: Icons.calendar_today_outlined,
                       title: 'Nascimento',
                       value: AppFormatters.formatDate(targetUser?.birthDate),
                       canEdit: isOwner,
@@ -292,8 +315,14 @@ class _ProfileViewState extends State<ProfileView> {
                             'currentValue': targetUser?.driverLicense ?? '',
                             'keyboardType': TextInputType.number,
                             'inputFormatters': [AppFormatters.cnhLimit()],
-                            'onSave': widget
-                                .userViewModel.commands.updateDriverLicense,
+                            'onSave': (String newValue) async {
+                              final updated = targetUser!.copyWith(
+                                driverLicense: newValue,
+                              );
+                              await widget.userViewModel.commands.saveUserData(
+                                updated,
+                              );
+                            },
                           },
                         );
                       },

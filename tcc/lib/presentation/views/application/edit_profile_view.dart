@@ -227,7 +227,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                       const SizedBox(height: 8),
 
                       AccountOption(
-                        icon: Icons.cake_outlined,
+                        icon: Icons.calendar_today_outlined,
                         title: 'Data de Nascimento',
                         trailing: _buildMissingIndicator(
                           currentUser?.birthDate?.toString(),
