@@ -41,3 +41,7 @@ abstract interface class IDeleteAccountUseCase {
 abstract interface class ISendPasswordResetEmailUseCase {
   Future<Result<void, Failure>> call(SendPasswordResetEmailParams params);
 }
+
+abstract interface class IReauthenticateUseCase {
+  Future<Result<void, Failure>> call(String password);
+}

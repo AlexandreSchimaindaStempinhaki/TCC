@@ -20,14 +20,17 @@ final class SignInUseCase implements ISignInUseCase {
   @override
   Future<AuthSessionResult> call(SignInParams params) async {
     await Future.delayed(const Duration(seconds: 2));
-    final authResult = await _authRepository.signIn(params.email, params.password);
+    final authResult = await _authRepository.signIn(
+      params.email,
+      params.password,
+    );
 
     return await authResult.fold(
       onSuccess: (authSession) async {
         final firebaseUser = FirebaseAuth.instance.currentUser;
         if (firebaseUser != null) {
           final existingUserResult = await _userRepository.getUser();
-          
+
           await existingUserResult.fold(
             onSuccess: (user) async {
               if (user == null) {
@@ -66,8 +69,8 @@ final class SignInWithGoogleUseCase implements ISignInWithGoogleUseCase {
   SignInWithGoogleUseCase({
     required IAuthRepository authRepository,
     required IUserRepository userRepository,
-  })  : _authRepository = authRepository,
-        _userRepository = userRepository;
+  }) : _authRepository = authRepository,
+       _userRepository = userRepository;
 
   @override
   Future<AuthSessionResult> call(NoParams params) async {
@@ -80,7 +83,7 @@ final class SignInWithGoogleUseCase implements ISignInWithGoogleUseCase {
         final firebaseUser = FirebaseAuth.instance.currentUser;
         if (firebaseUser != null) {
           final existingUserResult = await _userRepository.getUser();
-          
+
           await existingUserResult.fold(
             onSuccess: (user) async {
               if (user == null) {
@@ -149,8 +152,8 @@ final class SignUpWithVerifiedEmailUseCase
   SignUpWithVerifiedEmailUseCase({
     required IAuthRepository authRepository,
     required IUserRepository userRepository,
-  })  : _authRepository = authRepository,
-        _userRepository = userRepository;
+  }) : _authRepository = authRepository,
+       _userRepository = userRepository;
 
   @override
   Future<AuthSessionResult> call(SignUpWithVerifiedEmailParams params) async {
@@ -166,7 +169,9 @@ final class SignUpWithVerifiedEmailUseCase
 
         if (firebaseUser == null) {
           return Error(
-            DefaultFailure('Conta criada no Auth, mas o usuário ativo não foi encontrado.'),
+            DefaultFailure(
+              'Conta criada no Auth, mas o usuário ativo não foi encontrado.',
+            ),
           );
         }
 
@@ -181,7 +186,9 @@ final class SignUpWithVerifiedEmailUseCase
         return saveResult.fold(
           onSuccess: (_) => Success(authSession),
           onFailure: (failure) => Error(
-            DefaultFailure('Conta criada, mas falhou ao salvar perfil: ${failure.msg}'),
+            DefaultFailure(
+              'Conta criada, mas falhou ao salvar perfil: ${failure.msg}',
+            ),
           ),
         );
       },
@@ -196,7 +203,7 @@ final class CheckEmailVerifiedStatusUseCase
     implements ICheckEmailVerifiedStatusUseCase {
   final IAuthRepository _authRepository;
 
-  CheckEmailVerifiedStatusUseCase({required IAuthRepository authRepository,})
+  CheckEmailVerifiedStatusUseCase({required IAuthRepository authRepository})
     : _authRepository = authRepository;
 
   @override
@@ -210,8 +217,11 @@ final class DeleteExpiredAccountUseCase
   final IAuthRepository _authRepository;
   final IUserRepository _userRepository;
 
-  DeleteExpiredAccountUseCase({required IAuthRepository authRepository, required IUserRepository userRepository})
-    : _authRepository = authRepository, _userRepository = userRepository;
+  DeleteExpiredAccountUseCase({
+    required IAuthRepository authRepository,
+    required IUserRepository userRepository,
+  }) : _authRepository = authRepository,
+       _userRepository = userRepository;
 
   @override
   Future<Result<void, Failure>> call(NoParams params) async {
@@ -224,7 +234,7 @@ final class ChangePasswordUseCase implements IChangePasswordUseCase {
   final IAuthRepository _authRepository;
 
   ChangePasswordUseCase({required IAuthRepository authRepository})
-      : _authRepository = authRepository;
+    : _authRepository = authRepository;
 
   @override
   Future<Result<void, Failure>> call(ChangePasswordParams params) async {
@@ -239,7 +249,7 @@ final class DeleteAccountUseCase implements IDeleteAccountUseCase {
   final IAuthRepository _authRepository;
 
   DeleteAccountUseCase({required IAuthRepository authRepository})
-      : _authRepository = authRepository;
+    : _authRepository = authRepository;
 
   @override
   Future<Result<void, Failure>> call(DeleteAccountParams params) async {
@@ -247,14 +257,29 @@ final class DeleteAccountUseCase implements IDeleteAccountUseCase {
   }
 }
 
-final class SendPasswordResetEmailUseCase implements ISendPasswordResetEmailUseCase {
+final class SendPasswordResetEmailUseCase
+    implements ISendPasswordResetEmailUseCase {
   final IAuthRepository _authRepository;
 
   SendPasswordResetEmailUseCase({required IAuthRepository authRepository})
-      : _authRepository = authRepository;
+    : _authRepository = authRepository;
 
   @override
-  Future<Result<void, Failure>> call(SendPasswordResetEmailParams params) async {
+  Future<Result<void, Failure>> call(
+    SendPasswordResetEmailParams params,
+  ) async {
     return _authRepository.sendPasswordResetEmail(params.email);
+  }
+}
+
+final class ReauthenticateUseCase implements IReauthenticateUseCase {
+  final IAuthRepository _authRepository;
+
+  ReauthenticateUseCase({required IAuthRepository authRepository})
+    : _authRepository = authRepository;
+
+  @override
+  Future<Result<void, Failure>> call(String password) async {
+    return _authRepository.reauthenticateWithPassword(password);
   }
 }

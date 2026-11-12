@@ -88,3 +88,8 @@ class RequiresRecentLoginFailure extends Failure {
   RequiresRecentLoginFailure([String? msg])
       : super(msg ?? AppMessages.error.requiresRecentLogin);
 }
+
+class PasswordConfirmationFailure extends Failure {
+  PasswordConfirmationFailure([String? msg])
+      : super(msg ?? AppMessages.error.invalidPassword);
+}

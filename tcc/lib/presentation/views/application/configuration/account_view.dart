@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
-import '../../../core/di/dependency_injection.dart';
-import '../../../core/theme/theme_controller.dart';
+import '../../../../core/di/dependency_injection.dart';
+import '../../../../core/theme/theme_controller.dart';
 import 'package:tcc/presentation/widgets/nav_bar.dart';
 import 'package:tcc/presentation/widgets/account_option.dart'; 
 import 'package:tcc/presentation/widgets/logout_confirmation.dart'; 
 import 'package:tcc/presentation/widgets/animated_three_dots.dart'; 
-import '../../../core/routes/auth_routes.dart';
-import '../../../core/routes/indigo_routes.dart';
-import '../../controllers/authentication/auth_session_viewmodel.dart';
+import '../../../../core/routes/auth_routes.dart';
+import '../../../../core/routes/indigo_routes.dart';
+import '../../../controllers/authentication/auth_session_viewmodel.dart';
 
 class AccountView extends StatefulWidget {
   const AccountView({super.key});

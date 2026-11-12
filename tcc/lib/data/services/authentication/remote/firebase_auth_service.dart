@@ -352,7 +352,7 @@ class FirebaseAuthService implements IAuthService {
       return const Success(null);
     } on fb.FirebaseAuthException catch (e) {
       if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
-        return Error(LoginFailure());
+        return Error(PasswordConfirmationFailure());
       }
       if (e.code == 'too-many-requests') {
         return Error(TooManyRequestsFailure());

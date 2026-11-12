@@ -1,96 +1,59 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
-import '../../../core/extensions/context_extensions.dart';
-import '../../widgets/header_background.dart';
-import '../../widgets/text_field.dart';
-import '../../widgets/animated_three_dots.dart';
+import '../../../../core/extensions/context_extensions.dart';
+import '../../../widgets/header_background.dart';
+import '../../../widgets/text_field.dart';
+import '../../../widgets/animated_three_dots.dart';
 
-class EditProfileFieldView extends StatefulWidget {
+class ConfirmPasswordView extends StatefulWidget {
   final String title;
-  final String currentValue;
-  final TextInputType keyboardType;
-  final String? hintText;
-  final List<TextInputFormatter>? inputFormatters;
-  final Future<void> Function(String newValue) onSave;
+  final String subtitle;
+  final String buttonText;
+  final bool isDestructive;
+  
+  // Executa a ação e retorna a mensagem de erro em caso de falha, ou null em caso de sucesso.
+  final Future<String?> Function(String password) onConfirm;
 
-  const EditProfileFieldView({
+  const ConfirmPasswordView({
     super.key,
     required this.title,
-    required this.currentValue,
-    required this.keyboardType,
-    required this.onSave,
-    this.hintText,
-    this.inputFormatters,
+    required this.subtitle,
+    required this.onConfirm,
+    this.buttonText = 'Confirmar',
+    this.isDestructive = false,
   });
 
   @override
-  State<EditProfileFieldView> createState() => _EditProfileFieldViewState();
+  State<ConfirmPasswordView> createState() => _ConfirmPasswordViewState();
 }
 
-class _EditProfileFieldViewState extends State<EditProfileFieldView> {
+class _ConfirmPasswordViewState extends State<ConfirmPasswordView> {
   late final TextEditingController _controller;
   
   final isLoading = signal(false);
   final errorMessage = signal<String?>(null);
+  bool _obscurePassword = true;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.currentValue);
+    _controller = TextEditingController();
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    isLoading.dispose();
+    errorMessage.dispose();
     super.dispose();
-  }
-
-  bool _validateField(String value) {
-    final cleanValue = value.trim();
-    final lowerTitle = widget.title.toLowerCase();
-
-    if (cleanValue.isEmpty) {
-      errorMessage.value = 'O campo não pode estar vazio.';
-      return false;
-    }
-
-    if (lowerTitle.contains('nome')) {
-      if (cleanValue.length < 3) {
-        errorMessage.value = 'O nome deve ter pelo menos 3 caracteres.';
-        return false;
-      }
-    } else if (lowerTitle.contains('telefone') || lowerTitle.contains('celular') || lowerTitle.contains('whatsapp')) {
-      final digits = cleanValue.replaceAll(RegExp(r'[^0-9]'), '');
-      if (digits.length != 11) {
-        errorMessage.value = 'O telefone deve conter DDD + número (11 dígitos).';
-        return false;
-      }
-    } else if (lowerTitle.contains('cpf')) {
-      final digits = cleanValue.replaceAll(RegExp(r'[^0-9]'), '');
-      if (digits.length != 11) {
-        errorMessage.value = 'O CPF deve conter exatamente 11 dígitos.';
-        return false;
-      }
-    } else if (lowerTitle.contains('cnh')) {
-      final digits = cleanValue.replaceAll(RegExp(r'[^0-9]'), '');
-      if (digits.length < 9) {
-        errorMessage.value = 'Número de CNH inválido ou incompleto.';
-        return false;
-      }
-    }
-
-    errorMessage.value = null;
-    return true;
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final router = GoRouter.of(context);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -133,7 +96,7 @@ class _EditProfileFieldViewState extends State<EditProfileFieldView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Editar ${widget.title}',
+                    widget.title,
                     style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,
@@ -141,14 +104,35 @@ class _EditProfileFieldViewState extends State<EditProfileFieldView> {
                       letterSpacing: -0.5,
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  Text(
+                    widget.subtitle,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: colorScheme.secondary,
+                      height: 1.4,
+                    ),
+                  ),
                   const SizedBox(height: 24),
 
                   CustomTextField(
-                    label: widget.title,
-                    hintText: widget.hintText ?? 'Insira o novo dado',
+                    label: 'Senha Atual',
+                    hintText: '••••••••',
                     controller: _controller,
-                    keyboardType: widget.keyboardType,
-                    inputFormatters: widget.inputFormatters,
+                    obscureText: _obscurePassword,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: colorScheme.secondary,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
                   ),
 
                   Watch((context) {
@@ -178,20 +162,26 @@ class _EditProfileFieldViewState extends State<EditProfileFieldView> {
                         onPressed: isLoading.value
                             ? null
                             : () async {
-                                final newValue = _controller.text;
+                                final password = _controller.text.trim();
 
-                                if (!_validateField(newValue)) {
+                                if (password.isEmpty) {
+                                  errorMessage.value = 'Por favor, digite sua senha.';
                                   return;
                                 }
 
                                 try {
                                   isLoading.value = true;
-                                  await widget.onSave(newValue.trim());
+                                  errorMessage.value = null;
+
+                                  final error = await widget.onConfirm(password);
                                   
                                   if (!context.mounted) return;
-                                  router.pop();
+
+                                  if (error != null) {
+                                    errorMessage.value = error;
+                                  }
                                 } catch (e) {
-                                  errorMessage.value = 'Erro ao salvar. Tente novamente: $e';
+                                  errorMessage.value = 'Erro ao processar. Tente novamente.';
                                 } finally {
                                   if (context.mounted) {
                                     isLoading.value = false;
@@ -199,17 +189,23 @@ class _EditProfileFieldViewState extends State<EditProfileFieldView> {
                                 }
                               },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: colorScheme.primary,
+                          backgroundColor: widget.isDestructive 
+                              ? Colors.redAccent 
+                              : colorScheme.primary,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         child: isLoading.value
-                            ? AnimatedThreeDots(color: colorScheme.onSurface)
-                            : const Text(
-                                'Salvar',
-                                style: TextStyle(
+                            ? AnimatedThreeDots(
+                                color: widget.isDestructive 
+                                    ? Colors.white 
+                                    : colorScheme.onPrimary,
+                              )
+                            : Text(
+                                widget.buttonText,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,

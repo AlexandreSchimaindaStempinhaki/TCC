@@ -16,6 +16,7 @@ class AuthUseCaseFacadeImpl implements IAuthUseCaseFacade {
   final IChangePasswordUseCase _changePasswordUseCase;
   final IDeleteAccountUseCase _deleteAccountUseCase;
   final ISendPasswordResetEmailUseCase _sendPasswordResetEmailUseCase;
+  final IReauthenticateUseCase _reauthenticateUseCase;
 
   AuthUseCaseFacadeImpl({
     required ISignInUseCase signInUseCase,
@@ -28,6 +29,7 @@ class AuthUseCaseFacadeImpl implements IAuthUseCaseFacade {
     required IChangePasswordUseCase changePasswordUseCase,
     required IDeleteAccountUseCase deleteAccountUseCase,
     required ISendPasswordResetEmailUseCase sendPasswordResetEmailUseCase,
+    required IReauthenticateUseCase reauthenticateUseCase,
   }) : _signInUseCase = signInUseCase,
        _signInWithGoogleUseCase = signInWithGoogleUseCase,
        _signOutUseCase = signOutUseCase,
@@ -37,7 +39,8 @@ class AuthUseCaseFacadeImpl implements IAuthUseCaseFacade {
        _deleteExpiredAccountUseCase = deleteExpiredAccountUseCase,
        _changePasswordUseCase = changePasswordUseCase,
        _deleteAccountUseCase = deleteAccountUseCase,
-       _sendPasswordResetEmailUseCase = sendPasswordResetEmailUseCase;
+       _sendPasswordResetEmailUseCase = sendPasswordResetEmailUseCase,
+       _reauthenticateUseCase = reauthenticateUseCase;
 
   @override
   Future<AuthSessionResult> signInUseCase(SignInParams params) {
@@ -76,9 +79,7 @@ class AuthUseCaseFacadeImpl implements IAuthUseCaseFacade {
   }
 
   @override
-  Future<Result<void, Failure>> deleteExpiredAccountUseCase(
-    NoParams params,
-  ) {
+  Future<Result<void, Failure>> deleteExpiredAccountUseCase(NoParams params) {
     return _deleteExpiredAccountUseCase(params);
   }
 
@@ -101,5 +102,10 @@ class AuthUseCaseFacadeImpl implements IAuthUseCaseFacade {
     SendPasswordResetEmailParams params,
   ) {
     return _sendPasswordResetEmailUseCase(params);
+  }
+
+  @override
+  Future<Result<void, Failure>> reauthenticateUseCase(String password) {
+    return _reauthenticateUseCase(password);
   }
 }

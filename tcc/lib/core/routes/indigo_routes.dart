@@ -5,18 +5,20 @@ import '../../presentation/controllers/user_viewmodel.dart';
 import '../../presentation/views/application/home_view.dart';
 import '../../presentation/views/application/saved_view.dart';
 import '../../presentation/views/application/my_routes_view.dart';
-import '../../presentation/views/application/account_view.dart';
+import '../../presentation/views/application/configuration/account_view.dart';
 import '../../presentation/views/application/route_details_view.dart';
 import '../../presentation/views/application/route_map_view.dart';
 import '../../presentation/views/application/company_profile_view.dart';
 import '../../presentation/views/application/joined_route_detail_view.dart';
-import '../../presentation/views/application/edit_profile_view.dart';
+import '../../presentation/views/application/configuration/edit_profile_view.dart';
 import '../../presentation/views/application/location_picker_view.dart';
-import '../../presentation/views/application/manage_adress_view.dart';
-import '../../presentation/views/application/edit_profile_filed_view.dart';
-import '../../presentation/views/application/edit_profile_date_view.dart';
-import '../../presentation/views/application/edit_profile_photo_view.dart';
-import '../../presentation/views/application/profile_view.dart';
+import '../../presentation/views/application/configuration/manage_adress_view.dart';
+import '../../presentation/views/application/configuration/edit_profile_filed_view.dart';
+import '../../presentation/views/application/configuration/edit_profile_date_view.dart';
+import '../../presentation/views/application/configuration/edit_profile_photo_view.dart';
+import '../../presentation/views/application/configuration/profile_view.dart';
+import '../../presentation/views/application/configuration/change_password_view.dart';
+import '../../presentation/views/application/configuration/confirm_password_view.dart';
 import '../di/dependency_injection.dart';
 
 class IndigoRouteNames {
@@ -36,6 +38,8 @@ class IndigoRouteNames {
   static const editProfileDate = 'edit_profile_date';
   static const editProfilePhoto = 'edit_profile_photo';
   static const profile = 'profile';
+  static const confirmPassword = 'confirm_password';
+  static const changePassword = 'change_password';
 }
 
 class IndigoPaths {
@@ -55,6 +59,8 @@ class IndigoPaths {
   static const editProfileDate = '/edit-profile-date';
   static const editProfilePhoto = '/edit-profile-photo';
   static const profile = '/profile';
+  static const confirmPassword = '/confirm-password';
+  static const changePassword = '/change-password';
 }
 
 final List<RouteBase> indigoRoutes = [
@@ -135,7 +141,7 @@ final List<RouteBase> indigoRoutes = [
   ),
   GoRoute(
     name: IndigoRouteNames.editProfileField,
-    path: '/edit-profile-view-field',
+    path: IndigoPaths.editProfileField,
     builder: (context, state) {
       final args = state.extra as Map<String, dynamic>;
 
@@ -151,7 +157,7 @@ final List<RouteBase> indigoRoutes = [
   ),
   GoRoute(
     name: IndigoRouteNames.editProfileDate,
-    path: '/edit-profile-date',
+    path: IndigoPaths.editProfileDate,
     builder: (context, state) {
       return const EditProfileDateView();
     },
@@ -159,20 +165,43 @@ final List<RouteBase> indigoRoutes = [
 
   GoRoute(
     name: IndigoRouteNames.editProfilePhoto,
-    path: '/edit-profile-photo',
+    path: IndigoPaths.editProfilePhoto,
     builder: (context, state) {
       return const EditProfilePhotoView();
     },
   ),
   GoRoute(
-    path: '/profile',
     name: IndigoRouteNames.profile,
+    path: IndigoPaths.profile,
     builder: (context, state) {
       final targetUser = state.extra as UserModel?;
       return ProfileView(
         userViewModel: injector.get<UserViewModel>(),
         user: targetUser,
       );
+    },
+  ),
+  GoRoute(
+    name: IndigoRouteNames.confirmPassword,
+    path: IndigoPaths.confirmPassword,
+    builder: (context, state) {
+      final extra = state.extra as Map<String, dynamic>? ?? {};
+      return ConfirmPasswordView(
+        title: extra['title'] as String? ?? 'Confirmar',
+        subtitle: extra['subtitle'] as String? ?? 'Digite sua senha:',
+        buttonText: extra['buttonText'] as String? ?? 'Confirmar',
+        isDestructive: extra['isDestructive'] as bool? ?? false,
+        onConfirm: extra['onConfirm'] as Future<String?> Function(String),
+      );
+    },
+  ),
+
+  GoRoute(
+    name: IndigoRouteNames.changePassword,
+    path: IndigoPaths.changePassword,
+    builder: (context, state) {
+      final extra = state.extra as Map<String, dynamic>?;
+      return ChangePasswordView(extra: extra);
     },
   ),
 ];

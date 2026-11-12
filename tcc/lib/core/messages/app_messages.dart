@@ -50,4 +50,5 @@ class _Error {
   final String tooManyRequests = 'Muitas tentativas em pouco tempo. Aguarde alguns minutos antes de solicitar um novo link.';
   final String network = 'Sem conexão com a internet. Verifique sua rede.';
   final String requiresRecentLogin = 'Esta ação é sensível e exige que você faça login novamente.';
+  final String invalidPassword = 'Senha incorreta';
 }

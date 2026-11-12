@@ -8,6 +8,7 @@ import '../../data/services/firebase/user_remote_service_impl.dart';
 import '../../domain/facades/user_use_case_facade.dart';
 import '../../domain/usecases/i_user_usecases.dart';
 import '../../domain/usecases/user_use_casesimpl.dart';
+import '../../presentation/commands/authentication/auth_commands.dart';
 import '../../presentation/controllers/user_viewmodel.dart';
 import '../theme/theme_controller.dart';
 import '../../data/repositories/authentication/auth_repository_impl.dart';
@@ -61,6 +62,8 @@ void setupDependencyInjection() {
   injector.addSingleton<IChangePasswordUseCase>(ChangePasswordUseCase.new);
   injector.addSingleton<IDeleteAccountUseCase>(DeleteAccountUseCase.new);
   injector.addSingleton<ISendPasswordResetEmailUseCase>(SendPasswordResetEmailUseCase.new);
+  injector.addSingleton<IReauthenticateUseCase>(ReauthenticateUseCase.new);
+  injector.addSingleton<ReauthenticateCommand>(ReauthenticateCommand.new);
 
   injector.addSingleton<IAuthUseCaseFacade>(AuthUseCaseFacadeImpl.new);
 

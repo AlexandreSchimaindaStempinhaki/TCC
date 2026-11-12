@@ -27,6 +27,7 @@ class AuthSessionCommands {
   final ChangePasswordCommand _changePasswordCommand;
   final DeleteAccountCommand _deleteAccountCommand;
   final SendPasswordResetEmailCommand _sendPasswordResetEmailCommand;
+  final ReauthenticateCommand _reauthenticateCommand; // <--- ADICIONADO AQUI
 
   AuthSessionCommands({
     required this.state,
@@ -41,6 +42,7 @@ class AuthSessionCommands {
     required ChangePasswordCommand changePasswordCommand,
     required DeleteAccountCommand deleteAccountCommand,
     required SendPasswordResetEmailCommand sendPasswordResetEmailCommand,
+    required ReauthenticateCommand reauthenticateCommand, // <--- ADICIONADO AQUI
   }) : _repository = repository,
        _signInCommand = signInCommand,
        _signInWithGoogleCommand = signInWithGoogleCommand,
@@ -51,7 +53,8 @@ class AuthSessionCommands {
        _deleteExpiredAccountCommand = deleteExpiredAccountCommand,
        _changePasswordCommand = changePasswordCommand,
        _deleteAccountCommand = deleteAccountCommand,
-       _sendPasswordResetEmailCommand = sendPasswordResetEmailCommand {
+       _sendPasswordResetEmailCommand = sendPasswordResetEmailCommand,
+       _reauthenticateCommand = reauthenticateCommand {
     _observeSignIn();
     _observeSignInWithGoogle();
     _observeSession();
@@ -62,27 +65,23 @@ class AuthSessionCommands {
     _observeChangePassword();
     _observeDeleteAccount();
     _observeSendPasswordResetEmail();
+    _observeReauthenticate(); // <--- ADICIONADO AQUI
   }
 
   // ========================================================
   //   GETTERS PARA WIDGETS USAREM DIRETAMENTE OS COMANDOS
   // ========================================================
   SignInCommand get signInCommand => _signInCommand;
-  SignInWithGoogleCommand get signInWithGoogleCommand =>
-      _signInWithGoogleCommand;
+  SignInWithGoogleCommand get signInWithGoogleCommand => _signInWithGoogleCommand;
   SignOutCommand get signOutCommand => _signOutCommand;
-  SendEmailVerificationLinkCommand get sendEmailVerificationLinkCommand =>
-      _sendEmailVerificationLinkCommand;
-  SignUpWithVerifiedEmailCommand get signUpWithVerifiedEmailCommand =>
-      _signUpWithVerifiedEmailCommand;
-  CheckEmailVerifiedStatusCommand get checkEmailVerifiedStatusCommand =>
-      _checkEmailVerifiedStatusCommand;
-  DeleteExpiredAccountCommand get deleteExpiredAccountCommand =>
-      _deleteExpiredAccountCommand;
+  SendEmailVerificationLinkCommand get sendEmailVerificationLinkCommand => _sendEmailVerificationLinkCommand;
+  SignUpWithVerifiedEmailCommand get signUpWithVerifiedEmailCommand => _signUpWithVerifiedEmailCommand;
+  CheckEmailVerifiedStatusCommand get checkEmailVerifiedStatusCommand => _checkEmailVerifiedStatusCommand;
+  DeleteExpiredAccountCommand get deleteExpiredAccountCommand => _deleteExpiredAccountCommand;
   ChangePasswordCommand get changePasswordCommand => _changePasswordCommand;
   DeleteAccountCommand get deleteAccountCommand => _deleteAccountCommand;
-  SendPasswordResetEmailCommand get sendPasswordResetEmailCommand =>
-      _sendPasswordResetEmailCommand;
+  SendPasswordResetEmailCommand get sendPasswordResetEmailCommand => _sendPasswordResetEmailCommand;
+  ReauthenticateCommand get reauthenticateCommand => _reauthenticateCommand; // <--- ADICIONADO AQUI
 
   // ========================================================
   //   MÉTODOS PÚBLICOS (CHAMADOS PELOS WIDGETS)
@@ -164,6 +163,12 @@ class AuthSessionCommands {
     );
   }
 
+  // <--- ADICIONADO AQUI
+  Future<void> reauthenticate(String password) async {
+    state.clearMessage();
+    await _reauthenticateCommand.executeWith(password);
+  }
+
   Future<void> _fetchUserAfterAuthentication() async {
     try {
       await injector.get<UserViewModel>().commands.fetchUser();
@@ -220,7 +225,6 @@ class AuthSessionCommands {
       _signInCommand,
       onSuccess: (authSession) {
         state.setAuthenticated(authSession);
-
         unawaited(_fetchUserAfterAuthentication());
       },
       onFailure: (err) {
@@ -232,12 +236,8 @@ class AuthSessionCommands {
   void _observeSendVerificationLink() {
     _observeCommand<void>(
       _sendEmailVerificationLinkCommand,
-      onSuccess: (_) {
-        state.clearMessage();
-      },
-      onFailure: (err) {
-        state.setMessage(err.msg);
-      },
+      onSuccess: (_) => state.clearMessage(),
+      onFailure: (err) => state.setMessage(err.msg),
     );
   }
 
@@ -246,7 +246,6 @@ class AuthSessionCommands {
       _signUpWithVerifiedEmailCommand,
       onSuccess: (authSession) {
         state.setAuthenticated(authSession);
-
         unawaited(_fetchUserAfterAuthentication());
       },
       onFailure: (err) {
@@ -258,12 +257,8 @@ class AuthSessionCommands {
   void _observeCheckEmailVerifiedStatus() {
     _observeCommand<bool>(
       _checkEmailVerifiedStatusCommand,
-      onSuccess: (_) {
-        state.clearMessage();
-      },
-      onFailure: (err) {
-        state.setMessage(err.msg);
-      },
+      onSuccess: (_) => state.clearMessage(),
+      onFailure: (err) => state.setMessage(err.msg),
     );
   }
 
@@ -276,21 +271,15 @@ class AuthSessionCommands {
           injector.get<UserViewModel>().state.user.value = null;
         } catch (_) {}
       },
-      onFailure: (err) {
-        state.setMessage(err.msg);
-      },
+      onFailure: (err) => state.setMessage(err.msg),
     );
   }
 
   void _observeChangePassword() {
     _observeCommand<void>(
       _changePasswordCommand,
-      onSuccess: (_) {
-        state.clearMessage();
-      },
-      onFailure: (err) {
-        state.setMessage(err.msg);
-      },
+      onSuccess: (_) => state.clearMessage(),
+      onFailure: (err) => state.setMessage(err.msg),
     );
   }
 
@@ -303,21 +292,24 @@ class AuthSessionCommands {
           injector.get<UserViewModel>().state.user.value = null;
         } catch (_) {}
       },
-      onFailure: (err) {
-        state.setMessage(err.msg);
-      },
+      onFailure: (err) => state.setMessage(err.msg),
     );
   }
 
   void _observeSendPasswordResetEmail() {
     _observeCommand<void>(
       _sendPasswordResetEmailCommand,
-      onSuccess: (_) {
-        state.clearMessage();
-      },
-      onFailure: (err) {
-        state.setMessage(err.msg);
-      },
+      onSuccess: (_) => state.clearMessage(),
+      onFailure: (err) => state.setMessage(err.msg),
+    );
+  }
+
+  // <--- ADICIONADO AQUI
+  void _observeReauthenticate() {
+    _observeCommand<void>(
+      _reauthenticateCommand,
+      onSuccess: (_) => state.clearMessage(),
+      onFailure: (err) => state.setMessage(err.msg),
     );
   }
 

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
-import '../../../core/routes/indigo_routes.dart';
-import '../../../core/utils/app_formatters.dart';
-import '../../../domain/models/user_entity.dart';
-import '../../controllers/user_viewmodel.dart';
-import '../../widgets/clean_header_background.dart';
-import '../../widgets/profile_info_tile.dart';
+import '../../../../core/routes/indigo_routes.dart';
+import '../../../../core/utils/app_formatters.dart';
+import '../../../../domain/models/user_entity.dart';
+import '../../../controllers/user_viewmodel.dart';
+import '../../../widgets/clean_header_background.dart';
+import '../../../widgets/profile_info_tile.dart';
 
 class ProfileView extends StatefulWidget {
   final UserViewModel userViewModel;

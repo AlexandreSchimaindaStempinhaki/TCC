@@ -1,15 +1,17 @@
+import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
-import '../../../core/di/dependency_injection.dart';
-import '../../../core/routes/auth_routes.dart';
-import '../../../core/routes/indigo_routes.dart';
-import '../../../core/utils/app_formatters.dart';
-import '../../controllers/user_viewmodel.dart';
-import '../../widgets/account_option.dart';
-import '../../widgets/profile_header_card.dart';
-import '../../widgets/animated_three_dots.dart';
+import '../../../../core/di/dependency_injection.dart';
+import '../../../../core/routes/auth_routes.dart';
+import '../../../../core/routes/indigo_routes.dart';
+import '../../../../core/utils/app_formatters.dart';
+import '../../../controllers/user_viewmodel.dart';
+import '../../../widgets/account_option.dart';
+import '../../../widgets/profile_header_card.dart';
+import '../../../widgets/animated_three_dots.dart';
+import '../../../controllers/authentication/auth_session_viewmodel.dart';
 
 class EditProfileView extends StatefulWidget {
   const EditProfileView({super.key});
@@ -41,6 +43,16 @@ class _EditProfileViewState extends State<EditProfileView> {
     }
 
     return null;
+  }
+
+  bool _hasPasswordProvider() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return false;
+
+    // Verifica se existe algum provedor do tipo 'password' vinculado à conta
+    return user.providerData.any(
+      (userInfo) => userInfo.providerId == 'password',
+    );
   }
 
   Widget _buildSectionTitle(
@@ -240,7 +252,6 @@ class _EditProfileViewState extends State<EditProfileView> {
                       AccountOption(
                         icon: Icons.directions_car_rounded,
                         title: 'CNH',
-                        // CNH propositalmente sem o indicador de obrigatoriedade
                         onTap: () {
                           context.pushNamed(
                             IndigoRouteNames.editProfileField,
@@ -265,16 +276,53 @@ class _EditProfileViewState extends State<EditProfileView> {
 
                       _buildSectionTitle(context, 'Segurança'),
 
-                      AccountOption(
-                        icon: Icons.lock_outline_rounded,
-                        title: 'Mudar Senha',
-                        onTap: () {
-                          // TODO: Substitua pelo nome da sua rota de recuperar/mudar senha
-                          // context.pushNamed(AuthRouteNames.forgotPassword);
-                        },
-                      ),
-                      const SizedBox(height: 8),
+                      // 1. Só exibe o "Mudar Senha" se ele logou com email/senha
+                      if (_hasPasswordProvider()) ...[
+                        AccountOption(
+                          icon: Icons.lock_outline_rounded,
+                          title: 'Mudar Senha',
+                          onTap: () {
+                            context.pushNamed(
+                              IndigoRouteNames.confirmPassword,
+                              extra: {
+                                'title': 'Alterar Senha',
+                                'subtitle':
+                                    'Para sua segurança, confirme sua senha atual antes de cadastrar uma nova.',
+                                'buttonText': 'Avançar',
+                                'isDestructive': false,
+                                'onConfirm': (String currentPassword) async {
+                                  final authViewModel = injector
+                                      .get<AuthViewModel>();
+                                  await authViewModel.commands.reauthenticate(
+                                    currentPassword,
+                                  );
+                                  final error =
+                                      authViewModel.session.message.value;
 
+                                  if (error == null) {
+                                    authViewModel.session.clearMessage();
+                                    if (context.mounted) {
+                                      context.pushNamed(
+                                        IndigoRouteNames.changePassword,
+                                        extra: {
+                                          'currentPassword': currentPassword,
+                                        },
+                                      );
+                                    }
+                                    return null;
+                                  } else {
+                                    authViewModel.session.clearMessage();
+                                    return error;
+                                  }
+                                },
+                              },
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+
+                      // 2. Adapta o botão de excluir conta
                       AccountOption(
                         icon: Icons.delete_outline_rounded,
                         title: 'Excluir Conta',
@@ -283,74 +331,112 @@ class _EditProfileViewState extends State<EditProfileView> {
                         trailing: _isDeletingAccount
                             ? const AnimatedThreeDots(color: Colors.redAccent)
                             : null,
-                        onTap: () async {
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              title: const Row(
-                                children: [
-                                  Icon(
-                                    Icons.warning_amber_rounded,
-                                    color: Colors.redAccent,
-                                    size: 28,
-                                  ),
-                                  SizedBox(width: 8),
-                                  Text('Excluir Conta?'),
-                                ],
-                              ),
-                              content: const Text(
-                                'Esta ação é irreversível. Todos os seus dados serão apagados permanentemente. Deseja continuar?',
-                                style: TextStyle(fontSize: 15),
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => context.pop(false),
-                                  child: Text(
-                                    'Cancelar',
-                                    style: TextStyle(
-                                      color: colorScheme.onSurface,
+                        onTap: () {
+                          if (_hasPasswordProvider()) {
+                            // Fluxo normal com senha (usuário de Email/Senha)
+                            context.pushNamed(
+                              IndigoRouteNames.confirmPassword,
+                              extra: {
+                                'title': 'Excluir Conta',
+                                'subtitle':
+                                    'Esta ação é irreversível. Digite sua senha atual para confirmar a exclusão permanente dos seus dados.',
+                                'buttonText': 'Excluir Definitivamente',
+                                'isDestructive': true,
+                                'onConfirm': (String password) async {
+                                  final authViewModel = injector
+                                      .get<AuthViewModel>();
+                                  await authViewModel.commands.deleteAccount(
+                                    password,
+                                  );
+                                  final error =
+                                      authViewModel.session.message.value;
+
+                                  if (error == null) {
+                                    if (context.mounted) {
+                                      context.goNamed(AuthRouteNames.welcome);
+                                    }
+                                    return null;
+                                  } else {
+                                    authViewModel.session.clearMessage();
+                                    return error;
+                                  }
+                                },
+                              },
+                            );
+                          } else {
+                            // Fluxo para usuários do Google (não pede senha, apenas exibe um alerta de confirmação e manda reautenticar)
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                title: const Row(
+                                  children: [
+                                    Icon(
+                                      Icons.warning_amber_rounded,
+                                      color: Colors.redAccent,
+                                      size: 28,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text('Excluir Conta?'),
+                                  ],
+                                ),
+                                content: const Text(
+                                  'Esta ação é irreversível. Como você logou com o Google, talvez seja necessário reabrir o app e fazer login novamente antes de excluir sua conta. Deseja tentar excluir agora?',
+                                  style: TextStyle(fontSize: 15),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => context.pop(),
+                                    child: Text(
+                                      'Cancelar',
+                                      style: TextStyle(
+                                        color: colorScheme.onSurface,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.redAccent,
-                                    foregroundColor: Colors.white,
-                                    elevation: 0,
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.redAccent,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                    ),
+                                    onPressed: () async {
+                                      context.pop();
+                                      setState(() => _isDeletingAccount = true);
+
+                                      // Dispara exclusão direta. Se o Firebase exigir reautenticação recente,
+                                      // ele vai dar erro (RequiresRecentLogin) e você deve pedir para ele deslogar e relogar.
+                                      final success = await _userViewModel
+                                          .commands
+                                          .deleteUserAccount();
+
+                                      if (!mounted) return;
+
+                                      if (success) {
+                                        context.goNamed(AuthRouteNames.welcome);
+                                      } else {
+                                        setState(
+                                          () => _isDeletingAccount = false,
+                                        );
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Sua sessão expirou por segurança. Saia, faça login com o Google novamente e repita a ação.',
+                                            ),
+                                            backgroundColor: Colors.redAccent,
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    child: const Text('Sim, Excluir'),
                                   ),
-                                  onPressed: () => context.pop(true),
-                                  child: const Text('Sim, Excluir'),
-                                ),
-                              ],
-                            ),
-                          );
-
-                          if (confirm == true) {
-                            setState(() => _isDeletingAccount = true);
-
-                            final success = await _userViewModel.commands
-                                .deleteUserAccount();
-
-                            if (!context.mounted) return;
-
-                            if (success) {
-                              GoRouter.of(
-                                context,
-                              ).goNamed(AuthRouteNames.welcome);
-                            } else {
-                              setState(() => _isDeletingAccount = false);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Por segurança, saia do app, faça login novamente e tente excluir.',
-                                  ),
-                                  backgroundColor: Colors.redAccent,
-                                ),
-                              );
-                            }
+                                ],
+                              ),
+                            );
                           }
                         },
                       ),

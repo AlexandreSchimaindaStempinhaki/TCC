@@ -3,11 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
-import '../../../core/extensions/context_extensions.dart';
-import '../../../core/di/dependency_injection.dart';
-import '../../controllers/user_viewmodel.dart';
-import '../../widgets/header_background.dart';
-import '../../widgets/animated_three_dots.dart';
+import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/di/dependency_injection.dart';
+import '../../../controllers/user_viewmodel.dart';
+import '../../../widgets/header_background.dart';
+import '../../../widgets/animated_three_dots.dart';
 
 class EditProfileDateView extends StatefulWidget {
   const EditProfileDateView({super.key});
