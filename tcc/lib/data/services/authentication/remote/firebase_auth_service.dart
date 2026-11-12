@@ -9,46 +9,37 @@ import 'i_auth_service.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/patterns/result.dart';
 
-/// Serviço de autenticação que utiliza o FirebaseAuth.
 class FirebaseAuthService implements IAuthService {
-  /// Instância do FirebaseAuth (injetável para testes)
   final fb.FirebaseAuth _firebaseAuth;
-
-  /// Gerenciador de sessão local
+  final FirebaseFirestore _firestore;
   final AuthLocalSessionManager _localSession;
 
-  /// Signal reativo que mantém a sessão atual do usuário
   final Signal<AuthSession?> _currentSessionSignal = Signal<AuthSession?>(null);
 
-  /// Construtor
-  /// Se não for fornecido, usa a instância padrão do FirebaseAuth
   FirebaseAuthService({
     fb.FirebaseAuth? firebaseAuth,
+    FirebaseFirestore? firestore,
     required AuthLocalSessionManager localSession,
   }) : _firebaseAuth = firebaseAuth ?? fb.FirebaseAuth.instance,
+       _firestore = firestore ?? FirebaseFirestore.instance,
        _localSession = localSession {
     _firebaseAuth.authStateChanges().listen(_onAuthStateChanged);
   }
 
-  /// Método interno chamado sempre que o Firebase detecta mudança no usuário
-  /// (login, logout, token renovado, etc)
   void _onAuthStateChanged(fb.User? user) async {
     if (user == null) {
       _currentSessionSignal.value = null;
       return;
     }
 
-    // Se já existe sessão ativa, NÃO recrie
     if (_currentSessionSignal.value != null) {
       return;
     }
 
-    // Aqui significa: usuário logou AGORA pela primeira vez
     final tokenStr = await user.getIdToken() ?? '';
-
-    // expiração manual fixa (1h)
     final tokenExp = DateTime.now().add(const Duration(hours: 1));
 
     final session = AuthSession(
@@ -60,7 +51,6 @@ class FirebaseAuthService implements IAuthService {
       token: Token(value: tokenStr, expiresAt: tokenExp),
     );
 
-    // salva sessão local
     final sessionToken = SessionToken(
       uid: session.user.id,
       name: session.user.name,
@@ -76,23 +66,12 @@ class FirebaseAuthService implements IAuthService {
     _currentSessionSignal.value = session;
   }
 
-  // -----------------------------
-  // Getters públicos
-  // -----------------------------
-
-  /// Retorna o Signal reativo da sessão
   @override
   Signal<AuthSession?> get currentSessionSignal => _currentSessionSignal;
 
-  /// Retorna a sessão atual ou null se não houver usuário logado
   @override
   AuthSession? get currentSession => _currentSessionSignal.value;
 
-  // -----------------------------
-  // Métodos de autenticação
-  // -----------------------------
-
-  /// Login com email e senha
   @override
   Future<AuthSessionResult> signIn(String email, String password) async {
     try {
@@ -134,7 +113,6 @@ class FirebaseAuthService implements IAuthService {
     } catch (e) {
       final errorStr = e.toString().toLowerCase();
 
-      // Mapeia os erros comuns do Firebase Auth para a sua Failure do AppMessages
       if (errorStr.contains('user-not-found') ||
           errorStr.contains('wrong-password') ||
           errorStr.contains('invalid-credential') ||
@@ -142,14 +120,13 @@ class FirebaseAuthService implements IAuthService {
           errorStr.contains('user-mismatch')) {
         return Error(
           LoginFailure(),
-        ); // Pega a mensagem do AppMessages.error.loginFailed
+        ); 
       }
 
       return Error(DefaultFailure());
     }
   }
 
-  /// Login com conta do Google
   @override
   Future<AuthSessionResult> signInWithGoogle() async {
     try {
@@ -160,7 +137,7 @@ class FirebaseAuthService implements IAuthService {
       );
       final googleUser = await googleSignIn.authenticate();
 
-      final googleAuth = googleUser.authentication;
+      final googleAuth = await googleUser.authentication;
 
       final credential = fb.GoogleAuthProvider.credential(
         accessToken: googleAuth.idToken,
@@ -206,12 +183,12 @@ class FirebaseAuthService implements IAuthService {
       if (errorStr.contains('canceled')) {
         return Error(
           GoogleLoginCancelledFailure(),
-        ); // Pega a mensagem de cancelado
+        );
       }
 
       return Error(
         GoogleLoginFailedFailure(),
-      ); // Pega a mensagem de falha do Google
+      ); 
     }
   }
 
@@ -234,7 +211,6 @@ class FirebaseAuthService implements IAuthService {
     }
   }
 
-  /// Cria a conta no Firebase, salva o nome, envia o e-mail e gera a sessão local
   @override
   Future<AuthSessionResult> signUpWithVerifiedEmail({
     required String name,
@@ -242,7 +218,6 @@ class FirebaseAuthService implements IAuthService {
     required String password,
   }) async {
     try {
-      // 1. Cria o usuário com e-mail e senha no Firebase Auth
       final credential = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -250,12 +225,10 @@ class FirebaseAuthService implements IAuthService {
 
       final user = credential.user;
       if (user != null) {
-        // 2. Atualiza o nome de exibição se fornecido
         if (name.isNotEmpty) {
           await user.updateDisplayName(name);
         }
 
-        // 3. Dispara o envio do e-mail de verificação padrão do Firebase
         if (!user.emailVerified) {
           await user.sendEmailVerification();
         }
@@ -295,7 +268,6 @@ class FirebaseAuthService implements IAuthService {
     }
   }
 
-  /// Checa o status atual da verificação de e-mail do usuário no Firebase
   @override
   Future<Result<bool, Failure>> checkEmailVerifiedStatus() async {
     try {
@@ -318,7 +290,6 @@ class FirebaseAuthService implements IAuthService {
     }
   }
 
-  /// Apaga a conta pendente no Firebase Auth e limpa as sessões locais se o tempo limite expirar
   @override
   Future<Result<void, Failure>> deleteExpiredAccount() async {
     try {
@@ -341,16 +312,13 @@ class FirebaseAuthService implements IAuthService {
     }
   }
 
-  /// Logout do usuário atual
   @override
   Future<VoidResult> signOut() async {
     await _localSession.clear();
     await _firebaseAuth.signOut();
-    return Success(null);
+    return const Success(null);
   }
 
-  /// Inicializa a sessão ao carregar o app
-  /// Lê a sessão local primeiro e atualiza o Signal
   @override
   Future<void> initSession() async {
     final token = await _localSession.getValidToken();
@@ -364,6 +332,100 @@ class FirebaseAuthService implements IAuthService {
         ),
         token: Token(value: token.value, expiresAt: token.expiresAt),
       );
+    }
+  }
+
+  @override
+  Future<Result<void, Failure>> reauthenticateWithPassword(String password) async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null || user.email == null) {
+        return Error(UserNotFoundFailure());
+      }
+
+      final credential = fb.EmailAuthProvider.credential(
+        email: user.email!,
+        password: password,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+      return const Success(null);
+    } on fb.FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        return Error(LoginFailure());
+      }
+      if (e.code == 'too-many-requests') {
+        return Error(TooManyRequestsFailure());
+      }
+      return Error(DefaultFailure(e.message ?? 'Não foi possível validar sua senha.'));
+    } catch (e) {
+      return Error(DefaultFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<void, Failure>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final reauthResult = await reauthenticateWithPassword(currentPassword);
+      if (reauthResult is Error) {
+        return reauthResult;
+      }
+
+      final user = _firebaseAuth.currentUser;
+      if (user == null) {
+         return Error(UserNotFoundFailure());
+      }
+
+      await user.updatePassword(newPassword);
+      return const Success(null);
+    } on fb.FirebaseAuthException catch (e) {
+      return Error(DefaultFailure('Erro ao atualizar a senha: ${e.message}'));
+    } catch (e) {
+      return Error(DefaultFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<void, Failure>> deleteAccount(String currentPassword) async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null) {
+        return Error(UserNotFoundFailure());
+      }
+
+      final reauthResult = await reauthenticateWithPassword(currentPassword);
+      if (reauthResult is Error) {
+        return reauthResult;
+      }
+
+      await _firestore.collection('users').doc(user.uid).delete();
+      
+      await user.delete();
+      
+      await _localSession.clear();
+      _currentSessionSignal.value = null;
+      
+      return const Success(null);
+    } catch (e) {
+      return Error(DefaultFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<void, Failure>> sendPasswordResetEmail(String email) async {
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: email);
+      return const Success(null);
+    } on fb.FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+         return Error(UserNotFoundFailure());
+      }
+      return Error(DefaultFailure(e.message ?? 'Erro ao enviar e-mail de redefinição.'));
+    } catch (e) {
+      return Error(DefaultFailure(e.toString()));
     }
   }
 }

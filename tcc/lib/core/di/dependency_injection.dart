@@ -58,6 +58,9 @@ void setupDependencyInjection() {
   injector.addSingleton<ISignInUseCase>(SignInUseCase.new);
   injector.addSingleton<ISignInWithGoogleUseCase>(SignInWithGoogleUseCase.new);
   injector.addSingleton<ISignOutUseCase>(SignOutUseCase.new);
+  injector.addSingleton<IChangePasswordUseCase>(ChangePasswordUseCase.new);
+  injector.addSingleton<IDeleteAccountUseCase>(DeleteAccountUseCase.new);
+  injector.addSingleton<ISendPasswordResetEmailUseCase>(SendPasswordResetEmailUseCase.new);
 
   injector.addSingleton<IAuthUseCaseFacade>(AuthUseCaseFacadeImpl.new);
 

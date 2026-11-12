@@ -13,6 +13,9 @@ class AuthUseCaseFacadeImpl implements IAuthUseCaseFacade {
   final ISignUpWithVerifiedEmailUseCase _signUpWithVerifiedEmailUseCase;
   final ICheckEmailVerifiedStatusUseCase _checkEmailVerifiedStatusUseCase;
   final IDeleteExpiredAccountUseCase _deleteExpiredAccountUseCase;
+  final IChangePasswordUseCase _changePasswordUseCase;
+  final IDeleteAccountUseCase _deleteAccountUseCase;
+  final ISendPasswordResetEmailUseCase _sendPasswordResetEmailUseCase;
 
   AuthUseCaseFacadeImpl({
     required ISignInUseCase signInUseCase,
@@ -22,13 +25,19 @@ class AuthUseCaseFacadeImpl implements IAuthUseCaseFacade {
     required ISignUpWithVerifiedEmailUseCase signUpWithVerifiedEmailUseCase,
     required ICheckEmailVerifiedStatusUseCase checkEmailVerifiedStatusUseCase,
     required IDeleteExpiredAccountUseCase deleteExpiredAccountUseCase,
+    required IChangePasswordUseCase changePasswordUseCase,
+    required IDeleteAccountUseCase deleteAccountUseCase,
+    required ISendPasswordResetEmailUseCase sendPasswordResetEmailUseCase,
   }) : _signInUseCase = signInUseCase,
        _signInWithGoogleUseCase = signInWithGoogleUseCase,
        _signOutUseCase = signOutUseCase,
        _sendEmailVerificationLinkUseCase = sendEmailVerificationLinkUseCase,
        _signUpWithVerifiedEmailUseCase = signUpWithVerifiedEmailUseCase,
        _checkEmailVerifiedStatusUseCase = checkEmailVerifiedStatusUseCase,
-       _deleteExpiredAccountUseCase = deleteExpiredAccountUseCase;
+       _deleteExpiredAccountUseCase = deleteExpiredAccountUseCase,
+       _changePasswordUseCase = changePasswordUseCase,
+       _deleteAccountUseCase = deleteAccountUseCase,
+       _sendPasswordResetEmailUseCase = sendPasswordResetEmailUseCase;
 
   @override
   Future<AuthSessionResult> signInUseCase(SignInParams params) {
@@ -71,5 +80,26 @@ class AuthUseCaseFacadeImpl implements IAuthUseCaseFacade {
     NoParams params,
   ) {
     return _deleteExpiredAccountUseCase(params);
+  }
+
+  @override
+  Future<Result<void, Failure>> changePasswordUseCase(
+    ChangePasswordParams params,
+  ) {
+    return _changePasswordUseCase(params);
+  }
+
+  @override
+  Future<Result<void, Failure>> deleteAccountUseCase(
+    DeleteAccountParams params,
+  ) {
+    return _deleteAccountUseCase(params);
+  }
+
+  @override
+  Future<Result<void, Failure>> sendPasswordResetEmailUseCase(
+    SendPasswordResetEmailParams params,
+  ) {
+    return _sendPasswordResetEmailUseCase(params);
   }
 }

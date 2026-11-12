@@ -29,3 +29,15 @@ abstract interface class ICheckEmailVerifiedStatusUseCase {
 abstract interface class IDeleteExpiredAccountUseCase {
   Future<Result<void, Failure>> call(NoParams params);
 }
+
+abstract interface class IChangePasswordUseCase {
+  Future<Result<void, Failure>> call(ChangePasswordParams params);
+}
+
+abstract interface class IDeleteAccountUseCase {
+  Future<Result<void, Failure>> call(DeleteAccountParams params);
+}
+
+abstract interface class ISendPasswordResetEmailUseCase {
+  Future<Result<void, Failure>> call(SendPasswordResetEmailParams params);
+}

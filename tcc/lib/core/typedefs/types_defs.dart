@@ -35,6 +35,28 @@ class SignUpWithVerifiedEmailParams {
   });
 }
 
+class ChangePasswordParams {
+  final String currentPassword;
+  final String newPassword;
+
+  ChangePasswordParams({
+    required this.currentPassword,
+    required this.newPassword,
+  });
+}
+
+class DeleteAccountParams {
+  final String currentPassword;
+
+  DeleteAccountParams({required this.currentPassword});
+}
+
+class SendPasswordResetEmailParams {
+  final String email;
+
+  SendPasswordResetEmailParams({required this.email});
+}
+
 // // typedefs para tipo Result
 // typedef AccountResult = Result<Account, Failure>;
 // typedef CharacterResult = Result<Character,Failure>;

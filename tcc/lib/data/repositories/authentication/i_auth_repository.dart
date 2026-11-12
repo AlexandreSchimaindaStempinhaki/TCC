@@ -37,4 +37,15 @@ abstract class IAuthRepository {
 
   /// Logout do usuário atual
   Future<VoidResult> signOut();
+
+  Future<Result<void, Failure>> reauthenticateWithPassword(String password);
+
+  Future<Result<void, Failure>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
+
+  Future<Result<void, Failure>> deleteAccount(String currentPassword);
+
+  Future<Result<void, Failure>> sendPasswordResetEmail(String email);
 }

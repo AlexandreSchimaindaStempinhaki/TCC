@@ -19,6 +19,15 @@ abstract interface class IAuthUseCaseFacade {
   Future<Result<void, Failure>> deleteExpiredAccountUseCase(
     NoParams params,
   );
+  Future<Result<void, Failure>> changePasswordUseCase(
+    ChangePasswordParams params,
+  );
+  Future<Result<void, Failure>> deleteAccountUseCase(
+    DeleteAccountParams params,
+  );
+  Future<Result<void, Failure>> sendPasswordResetEmailUseCase(
+    SendPasswordResetEmailParams params,
+  );
   // Dados mock para fallback
   // CurrencyResult getMockCurrency();
   // CurrencyListResult getMockCurrencies();

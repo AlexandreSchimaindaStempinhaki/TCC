@@ -24,6 +24,9 @@ class AuthSessionCommands {
   final SignUpWithVerifiedEmailCommand _signUpWithVerifiedEmailCommand;
   final CheckEmailVerifiedStatusCommand _checkEmailVerifiedStatusCommand;
   final DeleteExpiredAccountCommand _deleteExpiredAccountCommand;
+  final ChangePasswordCommand _changePasswordCommand;
+  final DeleteAccountCommand _deleteAccountCommand;
+  final SendPasswordResetEmailCommand _sendPasswordResetEmailCommand;
 
   AuthSessionCommands({
     required this.state,
@@ -35,6 +38,9 @@ class AuthSessionCommands {
     required SignUpWithVerifiedEmailCommand signUpWithVerifiedEmailCommand,
     required CheckEmailVerifiedStatusCommand checkEmailVerifiedStatusCommand,
     required DeleteExpiredAccountCommand deleteExpiredAccountCommand,
+    required ChangePasswordCommand changePasswordCommand,
+    required DeleteAccountCommand deleteAccountCommand,
+    required SendPasswordResetEmailCommand sendPasswordResetEmailCommand,
   }) : _repository = repository,
        _signInCommand = signInCommand,
        _signInWithGoogleCommand = signInWithGoogleCommand,
@@ -42,7 +48,10 @@ class AuthSessionCommands {
        _sendEmailVerificationLinkCommand = sendEmailVerificationLinkCommand,
        _signUpWithVerifiedEmailCommand = signUpWithVerifiedEmailCommand,
        _checkEmailVerifiedStatusCommand = checkEmailVerifiedStatusCommand,
-       _deleteExpiredAccountCommand = deleteExpiredAccountCommand {
+       _deleteExpiredAccountCommand = deleteExpiredAccountCommand,
+       _changePasswordCommand = changePasswordCommand,
+       _deleteAccountCommand = deleteAccountCommand,
+       _sendPasswordResetEmailCommand = sendPasswordResetEmailCommand {
     _observeSignIn();
     _observeSignInWithGoogle();
     _observeSession();
@@ -50,6 +59,9 @@ class AuthSessionCommands {
     _observeSignUpWithVerifiedEmail();
     _observeCheckEmailVerifiedStatus();
     _observeDeleteExpiredAccount();
+    _observeChangePassword();
+    _observeDeleteAccount();
+    _observeSendPasswordResetEmail();
   }
 
   // ========================================================
@@ -67,6 +79,10 @@ class AuthSessionCommands {
       _checkEmailVerifiedStatusCommand;
   DeleteExpiredAccountCommand get deleteExpiredAccountCommand =>
       _deleteExpiredAccountCommand;
+  ChangePasswordCommand get changePasswordCommand => _changePasswordCommand;
+  DeleteAccountCommand get deleteAccountCommand => _deleteAccountCommand;
+  SendPasswordResetEmailCommand get sendPasswordResetEmailCommand =>
+      _sendPasswordResetEmailCommand;
 
   // ========================================================
   //   MÉTODOS PÚBLICOS (CHAMADOS PELOS WIDGETS)
@@ -75,7 +91,6 @@ class AuthSessionCommands {
     state.clearMessage();
     await _signOutCommand.executeWith(());
 
-    // LIMPA OS DADOS DO USUÁRIO DA MEMÓRIA IMEDIATAMENTE AO SAIR
     try {
       injector.get<UserViewModel>().state.user.value = null;
     } catch (_) {}
@@ -123,6 +138,30 @@ class AuthSessionCommands {
   Future<void> deleteExpiredAccount() async {
     state.clearMessage();
     await _deleteExpiredAccountCommand.executeWith(());
+  }
+
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    state.clearMessage();
+    await _changePasswordCommand.executeWith(
+      ChangePasswordParams(
+        currentPassword: currentPassword, 
+        newPassword: newPassword,
+      ),
+    );
+  }
+
+  Future<void> deleteAccount(String currentPassword) async {
+    state.clearMessage();
+    await _deleteAccountCommand.executeWith(
+      DeleteAccountParams(currentPassword: currentPassword),
+    );
+  }
+
+  Future<void> sendPasswordResetEmail(String email) async {
+    state.clearMessage();
+    await _sendPasswordResetEmailCommand.executeWith(
+      SendPasswordResetEmailParams(email: email),
+    );
   }
 
   Future<void> _fetchUserAfterAuthentication() async {
@@ -236,6 +275,45 @@ class AuthSessionCommands {
         try {
           injector.get<UserViewModel>().state.user.value = null;
         } catch (_) {}
+      },
+      onFailure: (err) {
+        state.setMessage(err.msg);
+      },
+    );
+  }
+
+  void _observeChangePassword() {
+    _observeCommand<void>(
+      _changePasswordCommand,
+      onSuccess: (_) {
+        state.clearMessage();
+      },
+      onFailure: (err) {
+        state.setMessage(err.msg);
+      },
+    );
+  }
+
+  void _observeDeleteAccount() {
+    _observeCommand<void>(
+      _deleteAccountCommand,
+      onSuccess: (_) {
+        state.setUnauthenticated();
+        try {
+          injector.get<UserViewModel>().state.user.value = null;
+        } catch (_) {}
+      },
+      onFailure: (err) {
+        state.setMessage(err.msg);
+      },
+    );
+  }
+
+  void _observeSendPasswordResetEmail() {
+    _observeCommand<void>(
+      _sendPasswordResetEmailCommand,
+      onSuccess: (_) {
+        state.clearMessage();
       },
       onFailure: (err) {
         state.setMessage(err.msg);

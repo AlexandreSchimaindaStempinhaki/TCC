@@ -72,4 +72,30 @@ class AuthRepositoryImpl implements IAuthRepository {
   Future<VoidResult> signOut() {
     return _authService.signOut();
   }
+
+  @override
+  Future<Result<void, Failure>> reauthenticateWithPassword(String password) async {
+    return await _authService.reauthenticateWithPassword(password);
+  }
+
+  @override
+  Future<Result<void, Failure>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    return await _authService.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
+  }
+
+  @override
+  Future<Result<void, Failure>> deleteAccount(String currentPassword) async {
+    return await _authService.deleteAccount(currentPassword);
+  }
+
+  @override
+  Future<Result<void, Failure>> sendPasswordResetEmail(String email) async {
+    return await _authService.sendPasswordResetEmail(email);
+  }
 }

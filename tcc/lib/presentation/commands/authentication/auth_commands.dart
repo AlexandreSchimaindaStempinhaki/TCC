@@ -108,3 +108,48 @@ final class DeleteExpiredAccountCommand extends ParameterizedCommand<void, Failu
     return await _authUseCaseFacade.deleteExpiredAccountUseCase(parameter!);
   }
 }
+
+final class ChangePasswordCommand extends ParameterizedCommand<void, Failure, ChangePasswordParams> {
+  final IAuthUseCaseFacade _authUseCaseFacade;
+
+  ChangePasswordCommand(this._authUseCaseFacade);
+
+  @override
+  Future<Result<void, Failure>> execute() async {
+    if (parameter == null || parameter!.currentPassword.isEmpty || parameter!.newPassword.isEmpty) {
+      return Error(InvalidInputFailure('Parâmetros de alteração de senha inválidos.'));
+    }
+
+    return await _authUseCaseFacade.changePasswordUseCase(parameter!);
+  }
+}
+
+final class DeleteAccountCommand extends ParameterizedCommand<void, Failure, DeleteAccountParams> {
+  final IAuthUseCaseFacade _authUseCaseFacade;
+
+  DeleteAccountCommand(this._authUseCaseFacade);
+
+  @override
+  Future<Result<void, Failure>> execute() async {
+    if (parameter == null || parameter!.currentPassword.isEmpty) {
+      return Error(InvalidInputFailure('Parâmetros de exclusão de conta inválidos.'));
+    }
+
+    return await _authUseCaseFacade.deleteAccountUseCase(parameter!);
+  }
+}
+
+final class SendPasswordResetEmailCommand extends ParameterizedCommand<void, Failure, SendPasswordResetEmailParams> {
+  final IAuthUseCaseFacade _authUseCaseFacade;
+
+  SendPasswordResetEmailCommand(this._authUseCaseFacade);
+
+  @override
+  Future<Result<void, Failure>> execute() async {
+    if (parameter == null || parameter!.email.isEmpty) {
+      return Error(InvalidInputFailure('Parâmetros de recuperação de senha inválidos.'));
+    }
+
+    return await _authUseCaseFacade.sendPasswordResetEmailUseCase(parameter!);
+  }
+}

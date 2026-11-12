@@ -164,3 +164,42 @@ final class DeleteExpiredAccountUseCase
     return _authRepository.deleteExpiredAccount();
   }
 }
+
+final class ChangePasswordUseCase implements IChangePasswordUseCase {
+  final IAuthRepository _authRepository;
+
+  ChangePasswordUseCase({required IAuthRepository authRepository})
+      : _authRepository = authRepository;
+
+  @override
+  Future<Result<void, Failure>> call(ChangePasswordParams params) async {
+    return _authRepository.changePassword(
+      currentPassword: params.currentPassword,
+      newPassword: params.newPassword,
+    );
+  }
+}
+
+final class DeleteAccountUseCase implements IDeleteAccountUseCase {
+  final IAuthRepository _authRepository;
+
+  DeleteAccountUseCase({required IAuthRepository authRepository})
+      : _authRepository = authRepository;
+
+  @override
+  Future<Result<void, Failure>> call(DeleteAccountParams params) async {
+    return _authRepository.deleteAccount(params.currentPassword);
+  }
+}
+
+final class SendPasswordResetEmailUseCase implements ISendPasswordResetEmailUseCase {
+  final IAuthRepository _authRepository;
+
+  SendPasswordResetEmailUseCase({required IAuthRepository authRepository})
+      : _authRepository = authRepository;
+
+  @override
+  Future<Result<void, Failure>> call(SendPasswordResetEmailParams params) async {
+    return _authRepository.sendPasswordResetEmail(params.email);
+  }
+}
