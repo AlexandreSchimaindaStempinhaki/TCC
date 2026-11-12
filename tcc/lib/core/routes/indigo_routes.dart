@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/models/user_entity.dart';
 import '../../presentation/controllers/user_viewmodel.dart';
+import '../../presentation/views/application/configuration/edit_address_view.dart';
 import '../../presentation/views/application/home_view.dart';
 import '../../presentation/views/application/saved_view.dart';
 import '../../presentation/views/application/my_routes_view.dart';
@@ -12,7 +13,7 @@ import '../../presentation/views/application/company_profile_view.dart';
 import '../../presentation/views/application/joined_route_detail_view.dart';
 import '../../presentation/views/application/configuration/edit_profile_view.dart';
 import '../../presentation/views/application/location_picker_view.dart';
-import '../../presentation/views/application/configuration/manage_adress_view.dart';
+import '../../presentation/views/application/configuration/manage_address_view.dart';
 import '../../presentation/views/application/configuration/edit_profile_filed_view.dart';
 import '../../presentation/views/application/configuration/edit_profile_date_view.dart';
 import '../../presentation/views/application/configuration/edit_profile_photo_view.dart';
@@ -40,6 +41,7 @@ class IndigoRouteNames {
   static const profile = 'profile';
   static const confirmPassword = 'confirm_password';
   static const changePassword = 'change_password';
+  static const editAddress = 'edit_address';
 }
 
 class IndigoPaths {
@@ -61,6 +63,7 @@ class IndigoPaths {
   static const profile = '/profile';
   static const confirmPassword = '/confirm-password';
   static const changePassword = '/change-password';
+  static const editAddress = '/edit-address';
 }
 
 final List<RouteBase> indigoRoutes = [
@@ -202,6 +205,29 @@ final List<RouteBase> indigoRoutes = [
     builder: (context, state) {
       final extra = state.extra as Map<String, dynamic>?;
       return ChangePasswordView(extra: extra);
+    },
+  ),
+  GoRoute(
+    name: IndigoRouteNames.editAddress,
+    path: IndigoPaths.editAddress,
+    builder: (context, state) {
+      final args = state.extra as Map<String, dynamic>;
+      return EditAddressView(
+        initialCity: args['initialCity'] as String? ?? '',
+        initialNeighborhood: args['initialNeighborhood'] as String? ?? '',
+        initialStreet: args['initialStreet'] as String? ?? '',
+        initialNumber: args['initialNumber'] as String? ?? '',
+        initialComplement: args['initialComplement'] as String? ?? '',
+        onSave:
+            args['onSave']
+                as Future<void> Function({
+                  required String city,
+                  required String neighborhood,
+                  required String street,
+                  required String number,
+                  required String complement,
+                }),
+      );
     },
   ),
 ];

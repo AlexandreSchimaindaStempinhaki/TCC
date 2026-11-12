@@ -40,7 +40,7 @@ class _ProfileViewState extends State<ProfileView> {
       final initials = nameText.isNotEmpty ? nameText[0].toUpperCase() : 'U';
 
       const double avatarRadius = 120;
-      const double avatarTop = 80;
+      const double avatarTop = 50;
       const double headerHeight = 265;
 
       return Scaffold(

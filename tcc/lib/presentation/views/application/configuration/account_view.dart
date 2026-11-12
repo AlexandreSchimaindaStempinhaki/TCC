@@ -11,6 +11,7 @@ import 'package:tcc/presentation/widgets/animated_three_dots.dart';
 import '../../../../core/routes/auth_routes.dart';
 import '../../../../core/routes/indigo_routes.dart';
 import '../../../controllers/authentication/auth_session_viewmodel.dart';
+import '../../../controllers/user_viewmodel.dart';
 
 class AccountView extends StatefulWidget {
   const AccountView({super.key});
@@ -21,14 +22,17 @@ class AccountView extends StatefulWidget {
 
 class _AccountViewState extends State<AccountView> {
   late final AuthViewModel authController;
+  late final UserViewModel _userViewModel;
 
   bool _notificationsEnabled = true;
-  bool _isLoggingOut = false; // Controle de estado do loading
+  bool _isLoggingOut = false;
 
   @override
   void initState() {
     super.initState();
     authController = injector.get<AuthViewModel>();
+    _userViewModel = injector.get<UserViewModel>();
+    _userViewModel.commands.fetchUser();
   }
 
   Widget _buildSectionTitle(BuildContext context, String title, {double topPadding = 24}) {
@@ -56,7 +60,6 @@ class _AccountViewState extends State<AccountView> {
     final colorScheme = theme.colorScheme;
     final themeController = injector.get<ThemeController>();
 
-    // O AbsorbPointer bloqueia TODOS os toques na tela enquanto _isLoggingOut for true
     return AbsorbPointer(
       absorbing: _isLoggingOut,
       child: Scaffold(
@@ -99,19 +102,25 @@ class _AccountViewState extends State<AccountView> {
                       // ================= SEÇÃO: CONTA =================
                       _buildSectionTitle(context, 'Conta', topPadding: 16),
                       
-                      AccountOption(
-                        icon: Icons.person_outline_rounded,
-                        title: 'Perfil',
-                        onTap: () {
-                          context.pushNamed(
-                            IndigoRouteNames.editProfile,
-                            extra: {
-                              'name': 'Gabriel Silva',
-                              'role': 'Estudante • UFPR Litoral',
-                            },
-                          );
-                        },
-                      ),
+                      Watch((context) {
+                        final currentUser = _userViewModel.state.user.value;
+                        
+                        final hasMissingData = 
+                            (currentUser?.email == null || currentUser!.email.trim().isEmpty) ||
+                            (currentUser?.phone == null || currentUser!.phone!.trim().isEmpty) ||
+                            (currentUser?.cpf == null || currentUser!.cpf!.trim().isEmpty);
+
+                        return AccountOption(
+                          icon: Icons.person_outline_rounded,
+                          title: 'Perfil',
+                          trailing: hasMissingData 
+                              ? const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 22) 
+                              : null,
+                          onTap: () {
+                            context.pushNamed(IndigoRouteNames.editProfile);
+                          },
+                        );
+                      }),
                       const SizedBox(height: 8),
 
                       Watch((context) {
@@ -132,20 +141,22 @@ class _AccountViewState extends State<AccountView> {
                       }),
                       const SizedBox(height: 8),
                       
-                      AccountOption(
-                        icon: Icons.home_outlined,
-                        title: 'Endereço Residencial',
-                        onTap: () {
-                          context.pushNamed(IndigoRouteNames.manageAddress);
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      
-                      AccountOption(
-                        icon: Icons.place_outlined,
-                        title: 'Pontos de Parada Salvos',
-                        onTap: () {},
-                      ),
+                      // Endereço Residencial com verificação reativa se a localização/ponto está nulo
+                      Watch((context) {
+                        final currentUser = _userViewModel.state.user.value;
+                        final hasMissingAddress = currentUser?.boardingPoint == null;
+
+                        return AccountOption(
+                          icon: Icons.home_outlined,
+                          title: 'Endereço Residencial',
+                          trailing: hasMissingAddress
+                              ? const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 22)
+                              : null,
+                          onTap: () {
+                            context.pushNamed(IndigoRouteNames.manageAddress);
+                          },
+                        );
+                      }),
                       const SizedBox(height: 8),
                       
                       AccountOption(
@@ -163,27 +174,24 @@ class _AccountViewState extends State<AccountView> {
                       ),
                       const SizedBox(height: 8),
 
-                      // ================= BOTÃO DE SAIR (COM DIÁLOGO E LOADING) =================
+                      // ================= BOTÃO DE SAIR =================
                       AccountOption(
                         icon: Icons.logout_rounded,
                         title: 'Sair da Conta',
                         iconColor: Colors.redAccent,
                         textColor: Colors.redAccent,
-                        // Se estiver saindo, mostra as reticências
                         trailing: _isLoggingOut 
                             ? const AnimatedThreeDots(color: Colors.redAccent) 
                             : null,
                         onTap: () async {
-                          // 1. Abre o diálogo de confirmação
                           final confirm = await showDialog<bool>(
                             context: context,
                             builder: (context) => const LogoutConfirmation(),
                           );
 
-                          // 2. Se confirmar, dispara o estado de loading e a lógica de saída
                           if (confirm == true) {
                             setState(() {
-                              _isLoggingOut = true; // Aciona o AbsorbPointer e a animação
+                              _isLoggingOut = true;
                             });
 
                             try {
@@ -194,7 +202,6 @@ class _AccountViewState extends State<AccountView> {
                               router.goNamed(AuthRouteNames.welcome); 
                             } catch (e) {
                               if (!context.mounted) return;
-                              // Em caso de erro, remove o estado de carregamento e o bloqueio
                               setState(() {
                                 _isLoggingOut = false;
                               });

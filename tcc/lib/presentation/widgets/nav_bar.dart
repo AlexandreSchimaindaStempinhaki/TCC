@@ -2,13 +2,59 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/routes/indigo_routes.dart';
 
-class BottomNavBar extends StatelessWidget {
+class BottomNavBar extends StatefulWidget {
   final int currentIndex;
 
   const BottomNavBar({super.key, required this.currentIndex});
 
+  @override
+  State<BottomNavBar> createState() => _BottomNavBarState();
+}
+
+class _BottomNavBarState extends State<BottomNavBar> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  late double _previousIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _previousIndex = widget.currentIndex.toDouble();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _animation = Tween<double>(
+      begin: widget.currentIndex.toDouble(),
+      end: widget.currentIndex.toDouble(),
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void didUpdateWidget(covariant BottomNavBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentIndex != widget.currentIndex) {
+      _previousIndex = oldWidget.currentIndex.toDouble();
+      
+      _animation = Tween<double>(
+        begin: _previousIndex,
+        end: widget.currentIndex.toDouble(),
+      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+
+      _controller.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   void _onTap(BuildContext context, int index) {
-    if (index == currentIndex) return;
+    if (index == widget.currentIndex) return;
 
     switch (index) {
       case 0:
@@ -31,17 +77,16 @@ class BottomNavBar extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    // Cores adaptativas baseadas no tema atual (Claro ou Escuro)
-    final cardBgColor = theme.cardColor; // #FFFFFF no claro, #1E293B no escuro
-    final borderColor = theme.dividerColor; // #F1F5F9 no claro, #334155 no escuro
-    final activeColor = colorScheme.primary; // Azul escuro no claro, Azul claro no escuro
-    final inactiveColor = colorScheme.secondary; // Slate secundário de contraste
+    final cardBgColor = theme.cardColor;
+    final borderColor = theme.dividerColor;
+    final activeColor = colorScheme.primary;
+    final inactiveColor = colorScheme.secondary;
 
-    final List navItems = [
-      {'icon': Icons.explore_rounded, 'label': 'Explorar'},
-      {'icon': Icons.bookmark_rounded, 'label': 'Rotas Salvas'},
-      {'icon': Icons.alt_route_rounded, 'label': 'Minhas Rotas'},
-      {'icon': Icons.settings_rounded, 'label': 'Configurações'},
+    final List<IconData> navIcons = [
+      Icons.explore_rounded,
+      Icons.bookmark_rounded,
+      Icons.alt_route_rounded,
+      Icons.settings_rounded,
     ];
 
     return Container(
@@ -50,7 +95,7 @@ class BottomNavBar extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.only(left: 36, right: 36, bottom: 36),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             decoration: BoxDecoration(
               color: cardBgColor,
               borderRadius: BorderRadius.circular(30),
@@ -65,56 +110,45 @@ class BottomNavBar extends StatelessWidget {
                 ),
               ],
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(navItems.length, (index) {
-                final isSelected = currentIndex == index;
-                final item = navItems[index];
+            child: AnimatedBuilder(
+              animation: _animation,
+              builder: (context, child) {
+                final double currentValue = _animation.value;
 
-                return InkWell(
-                  onTap: () => _onTap(context, index),
-                  splashColor: Colors.transparent,
-                  highlightColor: Colors.transparent,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Pílula compacta do ícone
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 4,
-                        ),
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(navIcons.length, (index) {
+                    final double distance = (currentValue - index).abs();
+                    final double t = (1.0 - distance.clamp(0.0, 1.0));
+
+                    final iconColor = Color.lerp(inactiveColor, activeColor, t);
+                    final pillColor = activeColor.withOpacity((0.25) * t,
+                    );
+
+                    return InkWell(
+                      onTap: () => _onTap(context, index),
+                      splashColor: Colors.transparent,
+                      highlightColor: Colors.transparent,
+                      borderRadius: BorderRadius.circular(22),
+                      child: Container(
+                        width: 70,
+                        height: 42,
                         decoration: BoxDecoration(
-                          color: isSelected
-                              ? activeColor.withOpacity(
-                                  theme.brightness == Brightness.dark ? 0.25 : 0.12,
-                                )
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(16),
+                          color: pillColor,
+                          borderRadius: BorderRadius.circular(22),
                         ),
-                        child: Icon(
-                          item['icon'] as IconData,
-                          color: isSelected ? activeColor : inactiveColor,
-                          size: 18,
+                        child: Center(
+                          child: Icon(
+                            navIcons[index],
+                            color: iconColor,
+                            size: 24, // Ícone maior sem alterar o tamanho geral da navbar
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      // Rótulo da aba
-                      Text(
-                        item['label'] as String,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.w500,
-                          color: isSelected ? activeColor : inactiveColor,
-                        ),
-                      ),
-                    ],
-                  ),
+                    );
+                  }),
                 );
-              }),
+              },
             ),
           ),
         ),
