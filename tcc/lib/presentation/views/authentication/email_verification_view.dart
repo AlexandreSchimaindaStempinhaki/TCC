@@ -68,7 +68,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage>
                         ),
                         child: IconButton(
                           icon: const Icon(
-                            Icons.arrow_back_ios_new_rounded,
+                            Icons.arrow_back_rounded,
                             color: Colors.white,
                             size: 20,
                           ),
@@ -177,7 +177,6 @@ class _EmailVerificationPageState extends State<EmailVerificationPage>
 
                     const SizedBox(height: 16),
 
-                    // Botão "Reenviar Link"
                     Watch(
                       (context) => SizedBox(
                         width: double.infinity,

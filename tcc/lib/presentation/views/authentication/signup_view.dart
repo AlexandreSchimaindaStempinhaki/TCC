@@ -71,7 +71,7 @@ class _SignupPageState extends State<SignupPage> {
                       ),
                       child: IconButton(
                         icon: const Icon(
-                          Icons.arrow_back_ios_new_rounded,
+                          Icons.arrow_back_rounded,
                           color: Colors.white,
                           size: 20,
                         ),

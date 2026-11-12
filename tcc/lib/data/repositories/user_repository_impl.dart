@@ -10,7 +10,7 @@ final class UserRepositoryImpl implements IUserRepository {
   final IUserRemoteService _remoteService;
 
   UserRepositoryImpl({required IUserRemoteService remoteService})
-      : _remoteService = remoteService;
+    : _remoteService = remoteService;
 
   @override
   Future<VoidResult> saveUser(UserModel user) async {
@@ -36,16 +36,6 @@ final class UserRepositoryImpl implements IUserRepository {
   Future<Result<String, Failure>> updateProfilePicture(File imageFile) async {
     try {
       final fotoUrl = await _remoteService.uploadProfileImage(imageFile);
-      
-      // Atualiza automaticamente o campo fotoUrl no Firestore
-      await _remoteService.saveUserData(
-        UserModel(
-          uid: '', // O service cuida de pegar o uid ativo do Auth
-          email: '',
-          name: '',
-          photoUrl: fotoUrl,
-        ),
-      );
 
       return Success(fotoUrl);
     } catch (e) {

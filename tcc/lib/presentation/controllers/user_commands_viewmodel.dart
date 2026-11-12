@@ -1,8 +1,10 @@
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import '../../../core/failure/failure.dart';
 import '../../../core/patterns/command.dart';
 import '../../../domain/models/user_entity.dart';
+import '../../core/patterns/result.dart';
 import '../../domain/usecases/i_user_usecases.dart';
 import '../commands/user_commands.dart';
 import 'user_state_viewmodel.dart';
@@ -56,19 +58,30 @@ class UserCommands {
 
   Future<void> saveUserData(UserModel user) async {
     state.clearMessage();
-    await _saveUserDataCommand.executeWith(SaveUserDataParams(user: user));
+    final result = await _saveUserDataCommand.executeWith(
+      SaveUserDataParams(user: user),
+    );
+
+    if (result.isSuccess) {
+      Future.microtask(() {
+        state.user.value = user;
+      });
+    }
   }
 
   Future<void> updateProfilePicture(File imageFile) async {
     state.clearMessage();
+
     await _updateProfilePictureCommand.executeWith(
       UpdateProfilePictureParams(imageFile: imageFile),
     );
   }
 
-  Future<void> deleteUserAccount() async {
+  Future<bool> deleteUserAccount() async {
     state.clearMessage();
-    await _deleteUserAccountCommand.executeWith(());
+    final result = await _deleteUserAccountCommand.executeWith(());
+
+    return result.isSuccess;
   }
 
   // ========================================================
@@ -123,8 +136,8 @@ class UserCommands {
     _observeCommand<String>(
       _updateProfilePictureCommand,
       onSuccess: (fotoUrl) {
-        // Atualiza localmente o model se ele já existir no state, adicionando a nova foto
-        final currentUser = state.user.value;
+        final currentUser = untracked(() => state.user.value);
+
         if (currentUser != null) {
           state.setUser(currentUser.copyWith(photoUrl: fotoUrl));
         }

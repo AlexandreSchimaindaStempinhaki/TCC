@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../presentation/views/application/home_view.dart';
 import '../../presentation/views/application/saved_view.dart';
@@ -10,6 +11,9 @@ import '../../presentation/views/application/joined_route_detail_view.dart';
 import '../../presentation/views/application/edit_profile_view.dart';
 import '../../presentation/views/application/location_picker_view.dart';
 import '../../presentation/views/application/manage_adress_view.dart';
+import '../../presentation/views/application/edit_profile_filed_view.dart';
+import '../../presentation/views/application/edit_profile_date_view.dart';
+import '../../presentation/views/application/edit_profile_photo_view.dart';
 
 class IndigoRouteNames {
   static const home = 'home';
@@ -24,6 +28,9 @@ class IndigoRouteNames {
   static const editProfile = 'edit_profile';
   static const locationPicker = 'location_picker';
   static const manageAddress = 'manage_address';
+  static const editProfileField = 'edit_profile_field';
+  static const editProfileDate = 'edit_profile_date';
+  static const editProfilePhoto = 'edit_profile_photo';
 }
 
 class IndigoPaths {
@@ -39,6 +46,9 @@ class IndigoPaths {
   static const editProfile = '/edit-profile';
   static const locationPicker = '/location-picker';
   static const manageAddress = '/manage-address';
+  static const editProfileField = '/edit-profile-field';
+  static const editProfileDate = '/edit-profile-date';
+  static const editProfilePhoto = '/edit-profile-photo';
 }
 
 final List<RouteBase> indigoRoutes = [
@@ -115,6 +125,37 @@ final List<RouteBase> indigoRoutes = [
     name: IndigoRouteNames.manageAddress,
     builder: (context, state) {
       return const ManageAddressView();
+    },
+  ),
+  GoRoute(
+    name: IndigoRouteNames.editProfileField,
+    path: '/edit-profile-view-field',
+    builder: (context, state) {
+      final args = state.extra as Map<String, dynamic>;
+
+      return EditProfileFieldView(
+        title: args['title'] as String,
+        currentValue: args['currentValue'] as String,
+        keyboardType: args['keyboardType'] as TextInputType,
+        onSave: args['onSave'] as Future<void> Function(String),
+        hintText: args['hintText'] as String?,
+        inputFormatters: args['inputFormatters'] as List<TextInputFormatter>?,
+      );
+    },
+  ),
+  GoRoute(
+    name: IndigoRouteNames.editProfileDate,
+    path: '/edit-profile-date',
+    builder: (context, state) {
+      return const EditProfileDateView();
+    },
+  ),
+
+  GoRoute(
+    name: IndigoRouteNames.editProfilePhoto,
+    path: '/edit-profile-photo',
+    builder: (context, state) {
+      return const EditProfilePhotoView();
     },
   ),
 ];

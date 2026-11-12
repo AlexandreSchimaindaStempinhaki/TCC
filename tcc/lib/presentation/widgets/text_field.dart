@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Importação padrão corrigida
 
 class CustomTextField extends StatelessWidget {
   final String label;
@@ -8,6 +9,7 @@ class CustomTextField extends StatelessWidget {
   final TextInputType keyboardType;
   final Widget? suffixIcon;
   final void Function(String)? onChanged;
+  final List<TextInputFormatter>? inputFormatters;
 
   const CustomTextField({
     super.key,
@@ -17,7 +19,8 @@ class CustomTextField extends StatelessWidget {
     this.obscureText = false,
     this.keyboardType = TextInputType.text,
     this.suffixIcon,
-    this.onChanged,
+    this.onChanged, 
+    this.inputFormatters,
   });
 
   @override
@@ -42,6 +45,7 @@ class CustomTextField extends StatelessWidget {
           obscureText: obscureText,
           keyboardType: keyboardType,
           onChanged: onChanged,
+          inputFormatters: inputFormatters,
           style: TextStyle(color: colorScheme.onSurface),
           decoration: InputDecoration(
             hintText: hintText,

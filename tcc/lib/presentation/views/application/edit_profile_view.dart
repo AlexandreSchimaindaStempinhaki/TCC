@@ -3,11 +3,13 @@ import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../core/di/dependency_injection.dart';
+import '../../../core/routes/auth_routes.dart';
+import '../../../core/routes/indigo_routes.dart';
+import '../../../core/utils/app_formatters.dart';
 import '../../controllers/user_viewmodel.dart';
 import '../../widgets/account_option.dart';
 import '../../widgets/profile_header_card.dart';
-import 'package:tcc/presentation/widgets/animated_three_dots.dart'; 
-import '../../../core/routes/auth_routes.dart';
+import '../../widgets/animated_three_dots.dart';
 
 class EditProfileView extends StatefulWidget {
   const EditProfileView({super.key});
@@ -25,6 +27,20 @@ class _EditProfileViewState extends State<EditProfileView> {
     super.initState();
     _userViewModel = injector.get<UserViewModel>();
     _userViewModel.commands.fetchUser();
+  }
+
+  Widget? _buildMissingIndicator(dynamic value) {
+    final bool isEmpty = value == null || value.toString().trim().isEmpty;
+    
+    if (isEmpty) {
+      return const Icon(
+        Icons.error_outline_rounded,
+        color: Colors.redAccent,
+        size: 22,
+      );
+    }
+    
+    return null; 
   }
 
   Widget _buildSectionTitle(BuildContext context, String title, {double topPadding = 24}) {
@@ -70,11 +86,7 @@ class _EditProfileViewState extends State<EditProfileView> {
             ),
             title: Text(
               'Editar Conta',
-              style: TextStyle(
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
+              style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 18),
             ),
             centerTitle: true,
           ),
@@ -83,12 +95,8 @@ class _EditProfileViewState extends State<EditProfileView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ProfileHeaderCard(
-                  name: nameText,
-                  email: emailText,
-                  photoUrl: photoUrl,
-                ),
-                const SizedBox(height: 16),
+                ProfileHeaderCard(name: nameText, email: emailText, photoUrl: photoUrl),
+                const SizedBox(height: 24),
 
                 Container(
                   clipBehavior: Clip.antiAlias,
@@ -97,44 +105,136 @@ class _EditProfileViewState extends State<EditProfileView> {
                     color: theme.cardColor,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
+                      BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4)),
                     ],
                   ),
                   child: Column(
                     children: [
                       _buildSectionTitle(context, 'Dados Pessoais', topPadding: 16),
-                      AccountOption(icon: Icons.camera_alt_outlined, title: 'Foto de Perfil', onTap: () {}),
+                      
+                      AccountOption(
+                        icon: Icons.camera_alt_outlined,
+                        title: 'Foto de Perfil',
+                        trailing: _buildMissingIndicator(currentUser?.photoUrl),
+                        onTap: () => context.pushNamed(IndigoRouteNames.editProfilePhoto),
+                      ),
                       const SizedBox(height: 8),
-                      AccountOption(icon: Icons.person_outline_rounded, title: 'Nome Completo', onTap: () {}),
+                      
+                      AccountOption(
+                        icon: Icons.person_outline_rounded,
+                        title: 'Nome Completo',
+                        trailing: _buildMissingIndicator(currentUser?.name),
+                        onTap: () {
+                          context.pushNamed(
+                            IndigoRouteNames.editProfileField,
+                            extra: {
+                              'title': 'Nome',
+                              'currentValue': currentUser?.name ?? '',
+                              'keyboardType': TextInputType.name,
+                              'inputFormatters': [AppFormatters.nameLimit(50)],
+                              'onSave': (String newValue) async {
+                                final updated = currentUser!.copyWith(name: newValue);
+                                await _userViewModel.commands.saveUserData(updated);
+                              },
+                            },
+                          );
+                        },
+                      ),
                       const SizedBox(height: 8),
-                      AccountOption(icon: Icons.phone_outlined, title: 'Telefone', onTap: () {}),
+
+                      AccountOption(
+                        icon: Icons.phone_outlined,
+                        title: 'Telefone',
+                        trailing: _buildMissingIndicator(currentUser?.phone),
+                        onTap: () {
+                          context.pushNamed(
+                            IndigoRouteNames.editProfileField,
+                            extra: {
+                              'title': 'Telefone',
+                              'currentValue': currentUser?.phone ?? '',
+                              'keyboardType': TextInputType.phone,
+                              'inputFormatters': [AppFormatters.phone],
+                              'onSave': (String newValue) async {
+                                final updated = currentUser!.copyWith(phone: newValue);
+                                await _userViewModel.commands.saveUserData(updated);
+                              },
+                            },
+                          );
+                        },
+                      ),
                       const SizedBox(height: 8),
-                      AccountOption(icon: Icons.badge_outlined, title: 'CPF', onTap: () {}),
+
+                      AccountOption(
+                        icon: Icons.badge_outlined,
+                        title: 'CPF',
+                        trailing: _buildMissingIndicator(currentUser?.cpf),
+                        onTap: () {
+                          context.pushNamed(
+                            IndigoRouteNames.editProfileField,
+                            extra: {
+                              'title': 'CPF',
+                              'currentValue': currentUser?.cpf ?? '',
+                              'keyboardType': TextInputType.number,
+                              'inputFormatters': [AppFormatters.cpf],
+                              'onSave': (String newValue) async {
+                                final updated = currentUser!.copyWith(cpf: newValue);
+                                await _userViewModel.commands.saveUserData(updated);
+                              },
+                            },
+                          );
+                        },
+                      ),
                       const SizedBox(height: 8),
-                      AccountOption(icon: Icons.cake_outlined, title: 'Data de Nascimento', onTap: () {}),
+
+                      AccountOption(
+                        icon: Icons.cake_outlined,
+                        title: 'Data de Nascimento',
+                        trailing: _buildMissingIndicator(currentUser?.birthDate?.toString()),
+                        onTap: () => context.pushNamed(IndigoRouteNames.editProfileDate),
+                      ),
                       const SizedBox(height: 8),
-                      AccountOption(icon: Icons.directions_car_rounded, title: 'CNH', onTap: () {}),
+
+                      AccountOption(
+                        icon: Icons.directions_car_rounded,
+                        title: 'CNH',
+                        // CNH propositalmente sem o indicador de obrigatoriedade
+                        onTap: () {
+                          context.pushNamed(
+                            IndigoRouteNames.editProfileField,
+                            extra: {
+                              'title': 'CNH',
+                              'currentValue': currentUser?.driverLicense ?? '',
+                              'keyboardType': TextInputType.number,
+                              'inputFormatters': [AppFormatters.cnhLimit()],
+                              'onSave': (String newValue) async {
+                                final updated = currentUser!.copyWith(driverLicense: newValue);
+                                await _userViewModel.commands.saveUserData(updated);
+                              },
+                            },
+                          );
+                        },
+                      ),
                       const SizedBox(height: 8),
 
                       _buildSectionTitle(context, 'Segurança'),
-                      AccountOption(icon: Icons.lock_outline_rounded, title: 'Mudar Senha', onTap: () {}),
+                      
+                      AccountOption(
+                        icon: Icons.lock_outline_rounded,
+                        title: 'Mudar Senha',
+                        onTap: () {
+                          // TODO: Substitua pelo nome da sua rota de recuperar/mudar senha
+                          // context.pushNamed(AuthRouteNames.forgotPassword);
+                        },
+                      ),
                       const SizedBox(height: 8),
 
-                      // ================= BOTÃO DE EXCLUIR CONTA =================
                       AccountOption(
                         icon: Icons.delete_outline_rounded,
                         title: 'Excluir Conta',
                         iconColor: Colors.redAccent,
                         textColor: Colors.redAccent,
-                        trailing: _isDeletingAccount 
-                            ? const AnimatedThreeDots(color: Colors.redAccent) 
-                            : null,
+                        trailing: _isDeletingAccount ? const AnimatedThreeDots(color: Colors.redAccent) : null,
                         onTap: () async {
-                          // 1. Modal de Confirmação
                           final confirm = await showDialog<bool>(
                             context: context,
                             builder: (context) => AlertDialog(
@@ -147,7 +247,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                                 ],
                               ),
                               content: const Text(
-                                'Esta ação é irreversível. Todos os seus dados, histórico de rotas e preferências serão apagados permanentemente. Deseja continuar?',
+                                'Esta ação é irreversível. Todos os seus dados serão apagados permanentemente. Deseja continuar?',
                                 style: TextStyle(fontSize: 15),
                               ),
                               actions: [
@@ -168,27 +268,20 @@ class _EditProfileViewState extends State<EditProfileView> {
                             ),
                           );
 
-                          // 2. Lógica de Exclusão
                           if (confirm == true) {
-                            setState(() {
-                              _isDeletingAccount = true;
-                            });
+                            setState(() => _isDeletingAccount = true);
 
-                            try {
-                              final router = GoRouter.of(context);
-                              
-                              await _userViewModel.commands.deleteUserAccount(); 
-                              
-                              if (!context.mounted) return;
-                              router.goNamed(AuthRouteNames.welcome); 
-                            } catch (e) {
-                              if (!context.mounted) return;
-                              setState(() {
-                                _isDeletingAccount = false;
-                              });
+                            final success = await _userViewModel.commands.deleteUserAccount();
+
+                            if (!context.mounted) return;
+
+                            if (success) {
+                              GoRouter.of(context).goNamed(AuthRouteNames.welcome);
+                            } else {
+                              setState(() => _isDeletingAccount = false);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Erro ao excluir conta: $e'),
+                                const SnackBar(
+                                  content: Text('Por segurança, saia do app, faça login novamente e tente excluir.'),
                                   backgroundColor: Colors.redAccent,
                                 ),
                               );
