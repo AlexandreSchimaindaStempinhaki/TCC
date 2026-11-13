@@ -14,16 +14,14 @@ class BottomNavBar extends StatefulWidget {
 class _BottomNavBarState extends State<BottomNavBar> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-  late double _previousIndex;
+  bool _isNavigating = false;
 
   @override
   void initState() {
     super.initState();
-    _previousIndex = widget.currentIndex.toDouble();
-
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 250),
     );
 
     _animation = Tween<double>(
@@ -33,28 +31,27 @@ class _BottomNavBarState extends State<BottomNavBar> with SingleTickerProviderSt
   }
 
   @override
-  void didUpdateWidget(covariant BottomNavBar oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.currentIndex != widget.currentIndex) {
-      _previousIndex = oldWidget.currentIndex.toDouble();
-      
-      _animation = Tween<double>(
-        begin: _previousIndex,
-        end: widget.currentIndex.toDouble(),
-      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-
-      _controller.forward(from: 0.0);
-    }
-  }
-
-  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
-  void _onTap(BuildContext context, int index) {
-    if (index == widget.currentIndex) return;
+  void _onTap(BuildContext context, int index) async {
+    if (index == widget.currentIndex || _isNavigating) return;
+
+    setState(() {
+      _isNavigating = true;
+      _animation = Tween<double>(
+        begin: widget.currentIndex.toDouble(),
+        end: index.toDouble(),
+      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    });
+
+    _controller.reset();
+    
+    await _controller.forward();
+
+    if (!context.mounted) return;
 
     switch (index) {
       case 0:
@@ -69,6 +66,10 @@ class _BottomNavBarState extends State<BottomNavBar> with SingleTickerProviderSt
       case 3:
         context.goNamed(IndigoRouteNames.account);
         break;
+    }
+
+    if (mounted) {
+      setState(() => _isNavigating = false);
     }
   }
 
@@ -110,43 +111,68 @@ class _BottomNavBarState extends State<BottomNavBar> with SingleTickerProviderSt
                 ),
               ],
             ),
-            child: AnimatedBuilder(
-              animation: _animation,
-              builder: (context, child) {
-                final double currentValue = _animation.value;
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final double itemWidth = constraints.maxWidth / navIcons.length;
+                const double pillWidth = 70.0;
+                const double pillHeight = 42.0;
 
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(navIcons.length, (index) {
-                    final double distance = (currentValue - index).abs();
-                    final double t = (1.0 - distance.clamp(0.0, 1.0));
+                return SizedBox(
+                  height: pillHeight,
+                  child: AnimatedBuilder(
+                    animation: _animation,
+                    builder: (context, child) {
+                      final double currentValue = _animation.value;
+                      
+                      final double pillLeft = (currentValue * itemWidth) + (itemWidth / 2) - (pillWidth / 2);
 
-                    final iconColor = Color.lerp(inactiveColor, activeColor, t);
-                    final pillColor = activeColor.withOpacity((0.25) * t,
-                    );
-
-                    return InkWell(
-                      onTap: () => _onTap(context, index),
-                      splashColor: Colors.transparent,
-                      highlightColor: Colors.transparent,
-                      borderRadius: BorderRadius.circular(22),
-                      child: Container(
-                        width: 70,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: pillColor,
-                          borderRadius: BorderRadius.circular(22),
-                        ),
-                        child: Center(
-                          child: Icon(
-                            navIcons[index],
-                            color: iconColor,
-                            size: 24, // Ícone maior sem alterar o tamanho geral da navbar
+                      return Stack(
+                        children: [
+                          Positioned(
+                            left: pillLeft,
+                            top: 0,
+                            bottom: 0,
+                            child: Container(
+                              width: pillWidth,
+                              decoration: BoxDecoration(
+                                color: activeColor.withOpacity(
+                                  theme.brightness == Brightness.dark ? 0.25 : 0.12,
+                                ),
+                                borderRadius: BorderRadius.circular(22),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    );
-                  }),
+                          
+                          // 2. OS ÍCONES
+                          Row(
+                            children: List.generate(navIcons.length, (index) {
+                              final double distance = (currentValue - index).abs();
+                              final double t = (1.0 - distance.clamp(0.0, 1.0));
+                              final Color? iconColor = Color.lerp(inactiveColor, activeColor, t);
+
+                              return SizedBox(
+                                width: itemWidth,
+                                height: pillHeight,
+                                child: InkWell(
+                                  onTap: () => _onTap(context, index),
+                                  splashColor: Colors.transparent,
+                                  highlightColor: Colors.transparent,
+                                  borderRadius: BorderRadius.circular(22),
+                                  child: Center(
+                                    child: Icon(
+                                      navIcons[index],
+                                      color: iconColor,
+                                      size: 24, // Ícone num tamanho bom e visível
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 );
               },
             ),
