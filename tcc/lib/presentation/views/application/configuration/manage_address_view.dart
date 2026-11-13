@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../../core/di/dependency_injection.dart';
 import '../../../../core/routes/indigo_routes.dart';
+import '../../../../domain/models/address_entity.dart'; // Ajuste o caminho se o nome do arquivo for outro
 import '../../../controllers/user_viewmodel.dart';
 import '../../../widgets/account_option.dart';
 
@@ -27,22 +27,22 @@ class _ManageAddressViewState extends State<ManageAddressView> {
     _userViewModel.commands.fetchUser();
   }
 
-  // Indicador visual caso o campo de endereço esteja vazio
-  Widget? _buildMissingIndicator(dynamic value) {
-    final bool isEmpty = value == null || value.toString().trim().isEmpty;
-
-    if (isEmpty) {
+  Widget? _buildMissingIndicator(bool isMissing) {
+    if (isMissing) {
       return const Icon(
         Icons.error_outline_rounded,
         color: Colors.redAccent,
         size: 22,
       );
     }
-
     return null;
   }
 
-  Widget _buildSectionTitle(BuildContext context, String title, {double topPadding = 24}) {
+  Widget _buildSectionTitle(
+    BuildContext context,
+    String title, {
+    double topPadding = 24,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: EdgeInsets.fromLTRB(16, topPadding, 20, 8),
@@ -67,46 +67,6 @@ class _ManageAddressViewState extends State<ManageAddressView> {
     );
   }
 
-  // Função para pegar a localização atual via GPS em tempo real
-  Future<void> _getCurrentLocation() async {
-    setState(() => _isLoadingGps = true);
-
-    try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        _showSnackBar('Por favor, ative o GPS do aparelho.');
-        setState(() => _isLoadingGps = false);
-        return;
-      }
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          _showSnackBar('Permissão de localização negada.');
-          setState(() => _isLoadingGps = false);
-          return;
-        }
-      }
-
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      final currentUser = _userViewModel.state.user.value;
-      if (currentUser != null) {
-        _showSnackBar(
-          'GPS Atualizado: Lat ${position.latitude.toStringAsFixed(4)}, Lng ${position.longitude.toStringAsFixed(4)}',
-        );
-      }
-
-      setState(() => _isLoadingGps = false);
-    } catch (e) {
-      setState(() => _isLoadingGps = false);
-      _showSnackBar('Erro ao obter localização: $e');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -114,7 +74,8 @@ class _ManageAddressViewState extends State<ManageAddressView> {
 
     return Watch((context) {
       final currentUser = _userViewModel.state.user.value;
-      final balneario = currentUser?.boardingPoint ?? '';
+      final address = currentUser?.address;
+      final isAddressMissing = address == null;
 
       return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
@@ -156,22 +117,21 @@ class _ManageAddressViewState extends State<ManageAddressView> {
                 ),
                 child: Column(
                   children: [
-                    // ================= SEÇÃO: RESIDÊNCIA =================
                     _buildSectionTitle(context, 'Residência', topPadding: 16),
 
                     AccountOption(
                       icon: Icons.edit_location_alt_outlined,
                       title: 'Editar Endereço',
-                      trailing: _buildMissingIndicator(balneario),
+                      trailing: _buildMissingIndicator(isAddressMissing),
                       onTap: () {
                         context.pushNamed(
                           IndigoRouteNames.editAddress,
                           extra: {
-                            'initialCity': '',
-                            'initialNeighborhood': balneario,
-                            'initialStreet': '',
-                            'initialNumber': '',
-                            'initialComplement': '',
+                            'initialCity': address?.city ?? '',
+                            'initialNeighborhood': address?.neighborhood ?? '',
+                            'initialStreet': address?.street ?? '',
+                            'initialNumber': address?.number ?? '',
+                            'initialComplement': address?.complement ?? '',
                             'onSave': ({
                               required String city,
                               required String neighborhood,
@@ -179,7 +139,21 @@ class _ManageAddressViewState extends State<ManageAddressView> {
                               required String number,
                               required String complement,
                             }) async {
-                              // Nenhuma alteração persistida no banco por enquanto
+                              if (currentUser == null) return;
+
+                              final newAddress = AddressModel(
+                                city: city,
+                                neighborhood: neighborhood,
+                                street: street,
+                                number: number,
+                                complement: complement,
+                              );
+
+                              final updatedUser = currentUser.copyWith(
+                                address: newAddress,
+                              );
+                              
+                              await _userViewModel.commands.saveUserData(updatedUser);
                             },
                           },
                         );
@@ -230,7 +204,6 @@ class _ManageAddressViewState extends State<ManageAddressView> {
                                   ),
                                   onTap: () {
                                     context.pop();
-                                    _getCurrentLocation();
                                   },
                                 ),
                                 ListTile(
@@ -260,14 +233,19 @@ class _ManageAddressViewState extends State<ManageAddressView> {
                     ),
                     const SizedBox(height: 8),
 
-                    // ================= SEÇÃO: ADICIONAR PONTOS DE PARADA =================
-                    _buildSectionTitle(context, 'Adicionar pontos de parada', topPadding: 16),
+                    _buildSectionTitle(
+                      context,
+                      'Adicionar pontos de parada',
+                      topPadding: 16,
+                    ),
 
                     AccountOption(
                       icon: Icons.add_location_alt_outlined,
                       title: 'Novo Ponto de Parada',
                       onTap: () {
-                        _showSnackBar('Funcionalidade de pontos de parada em breve.');
+                        _showSnackBar(
+                          'Funcionalidade de pontos de parada em breve.',
+                        );
                       },
                     ),
                     const SizedBox(height: 8),

@@ -1,4 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp, GeoPoint;
+import 'package:tcc/domain/models/address_entity.dart' show AddressModel;
 
 class UserModel {
   final String uid;
@@ -11,6 +12,7 @@ class UserModel {
   final GeoPoint? disembarkationPoint;
   final String? driverLicense;
   final String? photoUrl;
+  final AddressModel? address;
 
   const UserModel({
     required this.uid,
@@ -23,14 +25,14 @@ class UserModel {
     this.disembarkationPoint,
     this.driverLicense,
     this.photoUrl,
+    this.address,
   });
 
-  // Converte do Firestore para o Objeto Dart de forma segura contra nulos
   factory UserModel.fromMap(Map<String, dynamic> map, String documentId) {
     return UserModel(
       uid: map['uid'] ?? documentId,
       cpf: map['cpf'],
-      name: map['name'] ?? map['nome'] ?? '', // Suporta legado caso já tenha algo salvo como 'nome'
+      name: map['name'] ?? map['nome'] ?? '', 
       email: map['email'] ?? '',
       phone: map['phone'] ?? map['telefone'],
       birthDate: map['birthDate'] != null 
@@ -40,10 +42,13 @@ class UserModel {
       disembarkationPoint: map['disembarkationPoint'] ?? map['pontoDesembarque'] as GeoPoint?,
       driverLicense: map['driverLicense'] ?? map['carteiraMotorista'],
       photoUrl: map['photoUrl'] ?? map['fotoUrl'],
+      // <--- NOVO: CONVERTE O MAP DO FIREBASE PARA O OBJETO ADDRESSMODEL
+      address: map['address'] != null 
+          ? AddressModel.fromMap(Map<String, dynamic>.from(map['address']))
+          : null,
     );
   }
 
-  // Converte do Objeto Dart para o Firestore (tratando datas nulas com segurança)
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
@@ -56,10 +61,10 @@ class UserModel {
       'disembarkationPoint': disembarkationPoint,
       'driverLicense': driverLicense,
       'photoUrl': photoUrl,
+      if (address != null) 'address': address!.toMap(), 
     };
   }
 
-  // Permite clonar o objeto alterando apenas campos específicos
   UserModel copyWith({
     String? uid,
     String? cpf,
@@ -71,6 +76,7 @@ class UserModel {
     GeoPoint? disembarkationPoint,
     String? driverLicense,
     String? photoUrl,
+    AddressModel? address,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -83,6 +89,7 @@ class UserModel {
       disembarkationPoint: disembarkationPoint ?? this.disembarkationPoint,
       driverLicense: driverLicense ?? this.driverLicense,
       photoUrl: photoUrl ?? this.photoUrl,
+      address: address ?? this.address,
     );
   }
 }

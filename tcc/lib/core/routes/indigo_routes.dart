@@ -207,6 +207,7 @@ final List<RouteBase> indigoRoutes = [
       return ChangePasswordView(extra: extra);
     },
   ),
+  // Em indigo_routes.dart
   GoRoute(
     name: IndigoRouteNames.editAddress,
     path: IndigoPaths.editAddress,

@@ -20,7 +20,8 @@ class EditAddressView extends StatefulWidget {
     required String street,
     required String number,
     required String complement,
-  }) onSave;
+  })
+  onSave;
 
   const EditAddressView({
     super.key,
@@ -50,10 +51,14 @@ class _EditAddressViewState extends State<EditAddressView> {
   void initState() {
     super.initState();
     _cityController = TextEditingController(text: widget.initialCity);
-    _neighborhoodController = TextEditingController(text: widget.initialNeighborhood);
+    _neighborhoodController = TextEditingController(
+      text: widget.initialNeighborhood,
+    );
     _streetController = TextEditingController(text: widget.initialStreet);
     _numberController = TextEditingController(text: widget.initialNumber);
-    _complementController = TextEditingController(text: widget.initialComplement);
+    _complementController = TextEditingController(
+      text: widget.initialComplement,
+    );
   }
 
   @override
@@ -69,13 +74,34 @@ class _EditAddressViewState extends State<EditAddressView> {
   }
 
   bool _validateFields() {
-    if (_cityController.text.trim().isEmpty ||
-        _neighborhoodController.text.trim().isEmpty ||
-        _streetController.text.trim().isEmpty ||
-        _numberController.text.trim().isEmpty) {
-      errorMessage.value = 'Preencha os campos obrigatórios (Cidade, Bairro, Rua e Número).';
+    final city = _cityController.text.trim();
+    final neighborhood = _neighborhoodController.text.trim();
+    final street = _streetController.text.trim();
+    final number = _numberController.text.trim();
+
+    if (city.isEmpty ||
+        neighborhood.isEmpty ||
+        street.isEmpty ||
+        number.isEmpty) {
+      errorMessage.value = 'Preencha todos os campos obrigatórios.';
       return false;
     }
+
+    if (city.length < 3) {
+      errorMessage.value = 'A cidade deve ter pelo menos 3 caracteres.';
+      return false;
+    }
+
+    if (neighborhood.length < 3) {
+      errorMessage.value = 'O bairro deve ter pelo menos 3 caracteres.';
+      return false;
+    }
+
+    if (street.length < 3) {
+      errorMessage.value = 'O logradouro deve ter pelo menos 3 caracteres.';
+      return false;
+    }
+
     errorMessage.value = null;
     return true;
   }
@@ -117,7 +143,7 @@ class _EditAddressViewState extends State<EditAddressView> {
                 ),
               ],
             ),
-            
+
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 28.0,
@@ -137,7 +163,6 @@ class _EditAddressViewState extends State<EditAddressView> {
                   ),
                   const SizedBox(height: 20),
 
-                  // 1. Cidade
                   CustomTextField(
                     label: 'Cidade',
                     hintText: 'Ex: Pontal do Paraná',
@@ -146,7 +171,6 @@ class _EditAddressViewState extends State<EditAddressView> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 2. Bairro
                   CustomTextField(
                     label: 'Bairro / Balneário',
                     hintText: 'Ex: Pontal do Sul',
@@ -155,7 +179,6 @@ class _EditAddressViewState extends State<EditAddressView> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 3. Rua
                   CustomTextField(
                     label: 'Rua / Logradouro',
                     hintText: 'Ex: Rua Barão do Rio Branco',
@@ -164,7 +187,6 @@ class _EditAddressViewState extends State<EditAddressView> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 4 & 5. Número e Complemento lado a lado
                   Row(
                     children: [
                       Expanded(
@@ -222,16 +244,19 @@ class _EditAddressViewState extends State<EditAddressView> {
                                   isLoading.value = true;
                                   await widget.onSave(
                                     city: _cityController.text.trim(),
-                                    neighborhood: _neighborhoodController.text.trim(),
+                                    neighborhood: _neighborhoodController.text
+                                        .trim(),
                                     street: _streetController.text.trim(),
                                     number: _numberController.text.trim(),
-                                    complement: _complementController.text.trim(),
+                                    complement: _complementController.text
+                                        .trim(),
                                   );
-                                  
+
                                   if (!context.mounted) return;
                                   router.pop();
                                 } catch (e) {
-                                  errorMessage.value = 'Erro ao salvar endereço. Tente novamente.';
+                                  errorMessage.value =
+                                      'Erro ao salvar endereço. Tente novamente.';
                                 } finally {
                                   if (context.mounted) {
                                     isLoading.value = false;
