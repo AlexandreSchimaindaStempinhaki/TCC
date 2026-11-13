@@ -1,6 +1,6 @@
 import 'package:signals_flutter/signals_flutter.dart';
-import '../../domain/facades/i_user_use_case_facade.dart';
-import '../commands/user_commands.dart';
+import '../../../domain/facades/i_user_use_case_facade.dart';
+import '../../commands/user_commands.dart';
 import 'user_commands_viewmodel.dart';
 import 'user_state_viewmodel.dart';
 

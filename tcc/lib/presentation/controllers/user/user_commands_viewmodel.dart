@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:signals_flutter/signals_flutter.dart';
-import '../../../core/failure/failure.dart';
-import '../../../core/patterns/command.dart';
-import '../../../domain/models/user_entity.dart';
-import '../../core/patterns/result.dart';
-import '../../domain/usecases/i_user_usecases.dart';
-import '../commands/user_commands.dart';
+import '../../../../core/failure/failure.dart';
+import '../../../../core/patterns/command.dart';
+import '../../../../domain/models/user_entity.dart';
+import '../../../core/patterns/result.dart';
+import '../../../domain/usecases/i_user_usecases.dart';
+import '../../commands/user_commands.dart';
 import 'user_state_viewmodel.dart';
 
 class UserCommands {

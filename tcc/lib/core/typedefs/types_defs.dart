@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/models/authentication/auth_entities.dart';
+import '../../domain/models/company_entity.dart';
 import '../failure/failure.dart';
 // import '../../domain/models/account_entity.dart';
 
@@ -55,6 +56,31 @@ class SendPasswordResetEmailParams {
   final String email;
 
   SendPasswordResetEmailParams({required this.email});
+}
+
+class CreateCompanyParams {
+  final CompanyModel company;
+  const CreateCompanyParams({required this.company});
+}
+
+class FetchCompaniesByOwnerParams {
+  final String ownerId;
+  const FetchCompaniesByOwnerParams({required this.ownerId});
+}
+
+class FetchCompaniesByMemberParams {
+  final String memberId;
+  const FetchCompaniesByMemberParams({required this.memberId});
+}
+
+class UpdateCompanyParams {
+  final CompanyModel company;
+  const UpdateCompanyParams({required this.company});
+}
+
+class DeleteCompanyParams {
+  final String cnpj;
+  const DeleteCompanyParams({required this.cnpj});
 }
 
 // // typedefs para tipo Result

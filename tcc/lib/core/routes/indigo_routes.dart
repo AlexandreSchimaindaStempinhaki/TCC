@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/models/user_entity.dart';
-import '../../presentation/controllers/user_viewmodel.dart';
+import '../../presentation/controllers/user/user_viewmodel.dart';
 import '../../presentation/views/application/configuration/about_view.dart';
 import '../../presentation/views/application/configuration/edit_address_view.dart';
 import '../../presentation/views/application/configuration/location_view_map.dart';

@@ -11,7 +11,7 @@ import '../../../core/di/dependency_injection.dart';
 import '../../../data/repositories/authentication/i_auth_repository.dart';
 import '../../../domain/models/authentication/auth_entities.dart';
 import '../../commands/authentication/auth_commands.dart';
-import '../../controllers/user_viewmodel.dart';
+import '../user/user_viewmodel.dart';
 import 'auth_session_state_viewmodel.dart';
 
 class AuthSessionCommands {

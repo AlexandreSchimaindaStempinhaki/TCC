@@ -7,7 +7,7 @@ import '../../../../core/di/dependency_injection.dart';
 import '../../../../core/routes/auth_routes.dart';
 import '../../../../core/routes/indigo_routes.dart';
 import '../../../../core/utils/app_formatters.dart';
-import '../../../controllers/user_viewmodel.dart';
+import '../../../controllers/user/user_viewmodel.dart';
 import '../../../widgets/account_option.dart';
 import '../../../widgets/profile_header_card.dart';
 import '../../../widgets/animated_three_dots.dart';

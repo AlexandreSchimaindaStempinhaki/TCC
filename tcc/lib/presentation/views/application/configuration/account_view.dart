@@ -11,7 +11,7 @@ import 'package:tcc/presentation/widgets/animated_three_dots.dart';
 import '../../../../core/routes/auth_routes.dart';
 import '../../../../core/routes/indigo_routes.dart';
 import '../../../controllers/authentication/auth_session_viewmodel.dart';
-import '../../../controllers/user_viewmodel.dart';
+import '../../../controllers/user/user_viewmodel.dart';
 
 class AccountView extends StatefulWidget {
   const AccountView({super.key});

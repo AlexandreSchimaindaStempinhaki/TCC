@@ -1,5 +1,5 @@
 import 'package:signals_flutter/signals_flutter.dart';
-import '../../domain/models/user_entity.dart';
+import '../../../domain/models/user_entity.dart';
 
 class UserState {
   final user = signal<UserModel?>(null);

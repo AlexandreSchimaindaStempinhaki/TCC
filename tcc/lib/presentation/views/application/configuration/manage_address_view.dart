@@ -6,7 +6,7 @@ import 'package:signals_flutter/signals_flutter.dart';
 import '../../../../core/di/dependency_injection.dart';
 import '../../../../core/routes/indigo_routes.dart';
 import '../../../../domain/models/address_entity.dart';
-import '../../../controllers/user_viewmodel.dart';
+import '../../../controllers/user/user_viewmodel.dart';
 import '../../../widgets/account_option.dart';
 
 class ManageAddressView extends StatefulWidget {

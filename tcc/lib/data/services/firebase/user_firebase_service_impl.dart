@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../domain/models/user_entity.dart';
 import 'package:http/http.dart' as http;
-import 'i_user_remote_service.dart';
+import 'i_user_firebase_service.dart';
 
 final class UserRemoteServiceImpl implements IUserRemoteService {
   final FirebaseFirestore _firestore;
