@@ -24,15 +24,21 @@ class CompanyViewModel {
       fetchCompaniesByOwnerCommand: FetchCompaniesByOwnerCommand(_facade),
       fetchCompaniesByMemberCommand: FetchCompaniesByMemberCommand(_facade),
       updateCompanyCommand: UpdateCompanyCommand(_facade),
+      updateCompanyLogoCommand: UpdateCompanyLogoCommand(_facade),
       deleteCompanyCommand: DeleteCompanyCommand(_facade),
     );
 
     _loading = signal(false);
   }
 
+  // --- Comandos expostos diretamente para conveniência na UI ---
   CreateCompanyCommand get createCompanyCommand => _commands.createCompanyCommand;
-  FetchCompaniesByOwnerCommand get fetchCompaniesByOwnerCommand => _commands.fetchCompaniesByOwnerCommand;
-  FetchCompaniesByMemberCommand get fetchCompaniesByMemberCommand => _commands.fetchCompaniesByMemberCommand;
+  FetchCompaniesByOwnerCommand get fetchCompaniesByOwnerCommand =>
+      _commands.fetchCompaniesByOwnerCommand;
+  FetchCompaniesByMemberCommand get fetchCompaniesByMemberCommand =>
+      _commands.fetchCompaniesByMemberCommand;
   UpdateCompanyCommand get updateCompanyCommand => _commands.updateCompanyCommand;
+  UpdateCompanyLogoCommand get updateCompanyLogoCommand =>
+      _commands.updateCompanyLogoCommand;
   DeleteCompanyCommand get deleteCompanyCommand => _commands.deleteCompanyCommand;
 }

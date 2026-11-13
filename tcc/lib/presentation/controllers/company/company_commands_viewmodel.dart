@@ -1,9 +1,11 @@
+import 'dart:io';
 import 'package:signals_flutter/signals_flutter.dart';
-
 import '../../../../core/failure/failure.dart';
 import '../../../../core/patterns/command.dart';
+import '../../../../core/patterns/result.dart';
 import '../../../core/typedefs/types_defs.dart';
 import '../../../domain/models/company_entity.dart';
+import '../../../domain/usecases/i_company_use_cases.dart';
 import '../../commands/company_commands.dart';
 import 'company_state_viewmodel.dart';
 
@@ -13,6 +15,7 @@ class CompanyCommands {
   final FetchCompaniesByOwnerCommand _fetchCompaniesByOwnerCommand;
   final FetchCompaniesByMemberCommand _fetchCompaniesByMemberCommand;
   final UpdateCompanyCommand _updateCompanyCommand;
+  final UpdateCompanyLogoCommand _updateCompanyLogoCommand;
   final DeleteCompanyCommand _deleteCompanyCommand;
 
   CompanyCommands({
@@ -21,16 +24,19 @@ class CompanyCommands {
     required FetchCompaniesByOwnerCommand fetchCompaniesByOwnerCommand,
     required FetchCompaniesByMemberCommand fetchCompaniesByMemberCommand,
     required UpdateCompanyCommand updateCompanyCommand,
+    required UpdateCompanyLogoCommand updateCompanyLogoCommand,
     required DeleteCompanyCommand deleteCompanyCommand,
-  })  : _createCompanyCommand = createCompanyCommand,
-        _fetchCompaniesByOwnerCommand = fetchCompaniesByOwnerCommand,
-        _fetchCompaniesByMemberCommand = fetchCompaniesByMemberCommand,
-        _updateCompanyCommand = updateCompanyCommand,
-        _deleteCompanyCommand = deleteCompanyCommand {
+  }) : _createCompanyCommand = createCompanyCommand,
+       _fetchCompaniesByOwnerCommand = fetchCompaniesByOwnerCommand,
+       _fetchCompaniesByMemberCommand = fetchCompaniesByMemberCommand,
+       _updateCompanyCommand = updateCompanyCommand,
+       _updateCompanyLogoCommand = updateCompanyLogoCommand,
+       _deleteCompanyCommand = deleteCompanyCommand {
     _observeCreateCompany();
     _observeFetchCompaniesByOwner();
     _observeFetchCompaniesByMember();
     _observeUpdateCompany();
+    _observeUpdateCompanyLogo();
     _observeDeleteCompany();
   }
 
@@ -38,9 +44,13 @@ class CompanyCommands {
   //   GETTERS PARA WIDGETS USAREM DIRETAMENTE OS COMANDOS
   // ========================================================
   CreateCompanyCommand get createCompanyCommand => _createCompanyCommand;
-  FetchCompaniesByOwnerCommand get fetchCompaniesByOwnerCommand => _fetchCompaniesByOwnerCommand;
-  FetchCompaniesByMemberCommand get fetchCompaniesByMemberCommand => _fetchCompaniesByMemberCommand;
+  FetchCompaniesByOwnerCommand get fetchCompaniesByOwnerCommand =>
+      _fetchCompaniesByOwnerCommand;
+  FetchCompaniesByMemberCommand get fetchCompaniesByMemberCommand =>
+      _fetchCompaniesByMemberCommand;
   UpdateCompanyCommand get updateCompanyCommand => _updateCompanyCommand;
+  UpdateCompanyLogoCommand get updateCompanyLogoCommand =>
+      _updateCompanyLogoCommand;
   DeleteCompanyCommand get deleteCompanyCommand => _deleteCompanyCommand;
 
   // ========================================================
@@ -53,20 +63,22 @@ class CompanyCommands {
     );
 
     if (result.isSuccess) {
-      state.addCompany(company);
+      Future.microtask(() {
+        state.addCompany(company);
+      });
       return true;
     }
     return false;
   }
 
-  Future<void> fetchCompaniesByOwner(String ownerId) async {
+  Future<void> fetchCompaniesByOwner([String? ownerId]) async {
     state.clearMessage();
     await _fetchCompaniesByOwnerCommand.executeWith(
       FetchCompaniesByOwnerParams(ownerId: ownerId),
     );
   }
 
-  Future<void> fetchCompaniesByMember(String memberId) async {
+  Future<void> fetchCompaniesByMember([String? memberId]) async {
     state.clearMessage();
     await _fetchCompaniesByMemberCommand.executeWith(
       FetchCompaniesByMemberParams(memberId: memberId),
@@ -80,10 +92,19 @@ class CompanyCommands {
     );
 
     if (result.isSuccess) {
-      state.updateCompanyInList(company);
+      Future.microtask(() {
+        state.updateCompanyInList(company);
+      });
       return true;
     }
     return false;
+  }
+
+  Future<void> updateCompanyLogo(String cnpj, File imageFile) async {
+    state.clearMessage();
+    await _updateCompanyLogoCommand.executeWith(
+      UpdateCompanyLogoParams(cnpj: cnpj, imageFile: imageFile),
+    );
   }
 
   Future<bool> deleteCompany(String cnpj) async {
@@ -133,7 +154,7 @@ class CompanyCommands {
     _observeCommand<void>(
       _createCompanyCommand,
       onSuccess: (_) {
-        state.setMessage('Empresa cadastrada com sucesso!');
+        state.clearMessage();
       },
     );
   }
@@ -160,7 +181,25 @@ class CompanyCommands {
     _observeCommand<void>(
       _updateCompanyCommand,
       onSuccess: (_) {
-        state.setMessage('Empresa atualizada com sucesso!');
+        state.clearMessage();
+      },
+    );
+  }
+
+  void _observeUpdateCompanyLogo() {
+    _observeCommand<String>(
+      _updateCompanyLogoCommand,
+      onSuccess: (logoUrl) {
+        final targetCnpj = _updateCompanyLogoCommand.parameter?.cnpj;
+        if (targetCnpj != null) {
+          final currentList = untracked(() => state.companies.value);
+          for (final comp in currentList) {
+            if (comp.cnpj == targetCnpj) {
+              state.updateCompanyInList(comp.copyWith(logoUrl: logoUrl));
+              break;
+            }
+          }
+        }
       },
     );
   }
@@ -169,7 +208,7 @@ class CompanyCommands {
     _observeCommand<void>(
       _deleteCompanyCommand,
       onSuccess: (_) {
-        state.setMessage('Empresa excluída com sucesso!');
+        state.clearMessage();
       },
     );
   }

@@ -1,9 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tcc/presentation/views/application/configuration/my_companies_view.dart';
+import '../../domain/models/company_entity.dart';
 import '../../domain/models/user_entity.dart';
 import '../../presentation/controllers/user/user_viewmodel.dart';
 import '../../presentation/views/application/configuration/about_view.dart';
+import '../../presentation/views/application/configuration/company_home_view.dart';
+import '../../presentation/views/application/configuration/create_companion_view.dart';
 import '../../presentation/views/application/configuration/edit_address_view.dart';
 import '../../presentation/views/application/configuration/location_view_map.dart';
 import '../../presentation/views/application/configuration/manage_geolocation_view.dart';
@@ -49,6 +53,8 @@ class IndigoRouteNames {
   static const manageGeolocation = 'manage_geolocation';
   static const singleLocationMap = 'single_location_map';
   static const about = 'about';
+  static const myCompanies = 'my_companies';
+  static const companyHome = 'company_home';
 }
 
 class IndigoPaths {
@@ -74,6 +80,8 @@ class IndigoPaths {
   static const manageGeolocation = '/manage-geolocation';
   static const singleLocationMap = '/single-location-map';
   static const about = '/about';
+  static const myCompanies = '/my-companies';
+  static const companyHome = '/company-home';
 }
 
 final List<RouteBase> indigoRoutes = [
@@ -248,8 +256,7 @@ final List<RouteBase> indigoRoutes = [
     name: IndigoRouteNames.manageGeolocation,
     builder: (context, state) {
       final args = state.extra as Map<String, dynamic>?;
-      final isBoarding =
-          args?['isBoarding'] as bool? ?? true;
+      final isBoarding = args?['isBoarding'] as bool? ?? true;
 
       return ManageGeolocationView(isBoarding: isBoarding);
     },
@@ -267,8 +274,29 @@ final List<RouteBase> indigoRoutes = [
     },
   ),
   GoRoute(
-  path: IndigoPaths.about,
-  name: IndigoRouteNames.about,
-  builder: (context, state) => const AboutView(),
-),
+    path: IndigoPaths.about,
+    name: IndigoRouteNames.about,
+    builder: (context, state) => const AboutView(),
+  ),
+  GoRoute(
+    path: '/create-company',
+    name: IndigoRouteNames.createCompany,
+    builder: (context, state) {
+      final company = state.extra as CompanyModel?;
+      return CreateCompanyView(initialCompany: company);
+    },
+  ),
+  GoRoute(
+    path: '/my-companies',
+    name: IndigoRouteNames.myCompanies,
+    builder: (context, state) => const MyCompaniesView(),
+  ),
+  GoRoute(
+    path: '/company-home',
+    name: IndigoRouteNames.companyHome,
+    builder: (context, state) {
+      final company = state.extra as CompanyModel?;
+      return CompanyHomeView(initialCompany: company);
+    },
+  ),
 ];

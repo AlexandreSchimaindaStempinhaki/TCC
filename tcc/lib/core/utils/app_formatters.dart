@@ -8,6 +8,12 @@ class AppFormatters {
     type: MaskAutoCompletionType.lazy,
   );
 
+  static final cnpj = MaskTextInputFormatter(
+    mask: '##.###.###/####-##',
+    filter: {"#": RegExp(r'[0-9]')},
+    type: MaskAutoCompletionType.lazy,
+  );
+
   static final phone = MaskTextInputFormatter(
     mask: '(##) #####-####',
     filter: {"#": RegExp(r'[0-9]')},
@@ -20,12 +26,11 @@ class AppFormatters {
     type: MaskAutoCompletionType.lazy,
   );
 
-  // O Flutter já tem um formatador nativo para limitar caracteres
   static TextInputFormatter nameLimit(int limit) =>
       LengthLimitingTextInputFormatter(limit);
 
   static TextInputFormatter cnhLimit() =>
-      LengthLimitingTextInputFormatter(11); // CNH tem 11 dígitos
+      LengthLimitingTextInputFormatter(11);
 
   static String formatDate(DateTime? date) {
     if (date == null) return '';

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import '../../domain/models/authentication/auth_entities.dart';
 import '../../domain/models/company_entity.dart';
@@ -64,18 +66,24 @@ class CreateCompanyParams {
 }
 
 class FetchCompaniesByOwnerParams {
-  final String ownerId;
-  const FetchCompaniesByOwnerParams({required this.ownerId});
+  final String? ownerId;
+  const FetchCompaniesByOwnerParams({this.ownerId});
 }
 
 class FetchCompaniesByMemberParams {
-  final String memberId;
-  const FetchCompaniesByMemberParams({required this.memberId});
+  final String? memberId;
+  const FetchCompaniesByMemberParams({this.memberId});
 }
 
 class UpdateCompanyParams {
   final CompanyModel company;
   const UpdateCompanyParams({required this.company});
+}
+
+class UpdateCompanyLogoParams {
+  final String cnpj;
+  final File imageFile;
+  const UpdateCompanyLogoParams({required this.cnpj, required this.imageFile});
 }
 
 class DeleteCompanyParams {

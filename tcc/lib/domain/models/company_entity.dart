@@ -1,5 +1,4 @@
 class CompanyModel {
-  final String id;
   final String ownerId;
   final String cnpj;
   final String name;
@@ -11,7 +10,6 @@ class CompanyModel {
   final List<String> memberIds;
 
   const CompanyModel({
-    required this.id,
     required this.ownerId,
     required this.cnpj,
     required this.name,
@@ -25,7 +23,6 @@ class CompanyModel {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
       'ownerId': ownerId,
       'cnpj': cnpj,
       'name': name,
@@ -40,22 +37,19 @@ class CompanyModel {
 
   factory CompanyModel.fromMap(Map<String, dynamic> map, [String? documentId]) {
     return CompanyModel(
-      id: documentId ?? map['id'] ?? '',
       ownerId: map['ownerId'] ?? '',
-      cnpj: map['cnpj'] ?? '',
+      cnpj: documentId ?? map['cnpj'] ?? '',
       name: map['name'] ?? '',
       email: map['email'] ?? '',
       phone: map['phone'] ?? '',
       rating: (map['rating'] ?? 0.0).toDouble(),
       ratingCount: (map['ratingCount'] ?? 0).toInt(),
       logoUrl: map['logoUrl'],
-      // Converte com segurança a lista que vem do Firestore para List<String>
       memberIds: List<String>.from(map['memberIds'] ?? []),
     );
   }
 
   CompanyModel copyWith({
-    String? id,
     String? ownerId,
     String? cnpj,
     String? name,
@@ -67,7 +61,6 @@ class CompanyModel {
     List<String>? memberIds,
   }) {
     return CompanyModel(
-      id: id ?? this.id,
       ownerId: ownerId ?? this.ownerId,
       cnpj: cnpj ?? this.cnpj,
       name: name ?? this.name,

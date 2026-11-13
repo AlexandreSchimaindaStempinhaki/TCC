@@ -12,5 +12,8 @@ abstract interface class ICompanyUseCaseFacade {
     FetchCompaniesByMemberParams params,
   );
   Future<VoidResult> updateCompany(UpdateCompanyParams params);
+  Future<Result<String, Failure>> updateCompanyLogo(
+    UpdateCompanyLogoParams params,
+  );
   Future<VoidResult> deleteCompany(DeleteCompanyParams params);
 }

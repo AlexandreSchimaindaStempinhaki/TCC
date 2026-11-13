@@ -10,6 +10,7 @@ class CompanyUseCaseFacadeImpl implements ICompanyUseCaseFacade {
   final IFetchCompaniesByOwnerUseCase _fetchCompaniesByOwnerUseCase;
   final IFetchCompaniesByMemberUseCase _fetchCompaniesByMemberUseCase;
   final IUpdateCompanyUseCase _updateCompanyUseCase;
+  final IUpdateCompanyLogoUseCase _updateCompanyLogoUseCase;
   final IDeleteCompanyUseCase _deleteCompanyUseCase;
 
   CompanyUseCaseFacadeImpl({
@@ -17,11 +18,13 @@ class CompanyUseCaseFacadeImpl implements ICompanyUseCaseFacade {
     required IFetchCompaniesByOwnerUseCase fetchCompaniesByOwnerUseCase,
     required IFetchCompaniesByMemberUseCase fetchCompaniesByMemberUseCase,
     required IUpdateCompanyUseCase updateCompanyUseCase,
+    required IUpdateCompanyLogoUseCase updateCompanyLogoUseCase,
     required IDeleteCompanyUseCase deleteCompanyUseCase,
   }) : _createCompanyUseCase = createCompanyUseCase,
        _fetchCompaniesByOwnerUseCase = fetchCompaniesByOwnerUseCase,
        _fetchCompaniesByMemberUseCase = fetchCompaniesByMemberUseCase,
        _updateCompanyUseCase = updateCompanyUseCase,
+       _updateCompanyLogoUseCase = updateCompanyLogoUseCase,
        _deleteCompanyUseCase = deleteCompanyUseCase;
 
   @override
@@ -46,6 +49,13 @@ class CompanyUseCaseFacadeImpl implements ICompanyUseCaseFacade {
   @override
   Future<VoidResult> updateCompany(UpdateCompanyParams params) {
     return _updateCompanyUseCase(params);
+  }
+
+  @override
+  Future<Result<String, Failure>> updateCompanyLogo(
+    UpdateCompanyLogoParams params,
+  ) {
+    return _updateCompanyLogoUseCase(params);
   }
 
   @override

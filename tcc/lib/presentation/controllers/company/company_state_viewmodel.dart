@@ -3,9 +3,7 @@ import '../../../domain/models/company_entity.dart';
 
 class CompanyState {
   final companies = signal<List<CompanyModel>>([]);
-  
   final selectedCompany = signal<CompanyModel?>(null);
-
   final message = signal<String?>(null);
 
   bool get hasCompanies => companies.value.isNotEmpty;
@@ -28,7 +26,7 @@ class CompanyState {
     companies.value = companies.value.map((comp) {
       return comp.cnpj == updatedCompany.cnpj ? updatedCompany : comp;
     }).toList();
-    
+
     if (selectedCompany.value?.cnpj == updatedCompany.cnpj) {
       selectedCompany.value = updatedCompany;
     }

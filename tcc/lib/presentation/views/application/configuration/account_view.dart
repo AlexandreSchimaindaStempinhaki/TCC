@@ -5,12 +5,13 @@ import 'package:signals_flutter/signals_flutter.dart';
 import '../../../../core/di/dependency_injection.dart';
 import '../../../../core/theme/theme_controller.dart';
 import 'package:tcc/presentation/widgets/nav_bar.dart';
-import 'package:tcc/presentation/widgets/account_option.dart'; 
-import 'package:tcc/presentation/widgets/logout_confirmation.dart'; 
-import 'package:tcc/presentation/widgets/animated_three_dots.dart'; 
+import 'package:tcc/presentation/widgets/account_option.dart';
+import 'package:tcc/presentation/widgets/logout_confirmation.dart';
+import 'package:tcc/presentation/widgets/animated_three_dots.dart';
 import '../../../../core/routes/auth_routes.dart';
 import '../../../../core/routes/indigo_routes.dart';
 import '../../../controllers/authentication/auth_session_viewmodel.dart';
+import '../../../controllers/company/company_list_viewmodel.dart';
 import '../../../controllers/user/user_viewmodel.dart';
 
 class AccountView extends StatefulWidget {
@@ -23,6 +24,7 @@ class AccountView extends StatefulWidget {
 class _AccountViewState extends State<AccountView> {
   late final AuthViewModel authController;
   late final UserViewModel _userViewModel;
+  late final CompanyListViewModel _companyListViewModel;
 
   bool _notificationsEnabled = true;
   bool _isLoggingOut = false;
@@ -32,10 +34,17 @@ class _AccountViewState extends State<AccountView> {
     super.initState();
     authController = injector.get<AuthViewModel>();
     _userViewModel = injector.get<UserViewModel>();
+    _companyListViewModel = injector.get<CompanyListViewModel>();
+
     _userViewModel.commands.fetchUser();
+    _companyListViewModel.commands.fetchOwnedCompanies();
   }
 
-  Widget _buildSectionTitle(BuildContext context, String title, {double topPadding = 24}) {
+  Widget _buildSectionTitle(
+    BuildContext context,
+    String title, {
+    double topPadding = 24,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: EdgeInsets.fromLTRB(16, topPadding, 20, 8),
@@ -101,20 +110,27 @@ class _AccountViewState extends State<AccountView> {
                     children: [
                       // ================= SEÇÃO: CONTA =================
                       _buildSectionTitle(context, 'Conta', topPadding: 16),
-                      
+
                       Watch((context) {
                         final currentUser = _userViewModel.state.user.value;
-                        
-                        final hasMissingData = 
-                            (currentUser?.email == null || currentUser!.email.trim().isEmpty) ||
-                            (currentUser?.phone == null || currentUser!.phone!.trim().isEmpty) ||
-                            (currentUser?.cpf == null || currentUser!.cpf!.trim().isEmpty);
+
+                        final hasMissingData =
+                            (currentUser?.email == null ||
+                                currentUser!.email.trim().isEmpty) ||
+                            (currentUser?.phone == null ||
+                                currentUser!.phone!.trim().isEmpty) ||
+                            (currentUser?.cpf == null ||
+                                currentUser!.cpf!.trim().isEmpty);
 
                         return AccountOption(
                           icon: Icons.person_outline_rounded,
                           title: 'Perfil',
-                          trailing: hasMissingData 
-                              ? const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 22) 
+                          trailing: hasMissingData
+                              ? const Icon(
+                                  Icons.error_outline_rounded,
+                                  color: Colors.redAccent,
+                                  size: 22,
+                                )
                               : null,
                           onTap: () {
                             context.pushNamed(IndigoRouteNames.editProfile);
@@ -140,16 +156,21 @@ class _AccountViewState extends State<AccountView> {
                         );
                       }),
                       const SizedBox(height: 8),
-                      
+
                       Watch((context) {
                         final currentUser = _userViewModel.state.user.value;
-                        final hasMissingAddress = currentUser?.boardingPoint == null;
+                        final hasMissingAddress =
+                            currentUser?.boardingPoint == null;
 
                         return AccountOption(
                           icon: Icons.map_outlined,
                           title: 'Endereço e Pontos de Parada',
                           trailing: hasMissingAddress
-                              ? const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 22)
+                              ? const Icon(
+                                  Icons.error_outline_rounded,
+                                  color: Colors.redAccent,
+                                  size: 22,
+                                )
                               : null,
                           onTap: () {
                             context.pushNamed(IndigoRouteNames.manageAddress);
@@ -157,7 +178,7 @@ class _AccountViewState extends State<AccountView> {
                         );
                       }),
                       const SizedBox(height: 8),
-                      
+
                       AccountOption(
                         icon: Icons.notifications_none_outlined,
                         title: 'Notificações',
@@ -173,14 +194,13 @@ class _AccountViewState extends State<AccountView> {
                       ),
                       const SizedBox(height: 8),
 
-                      // ================= BOTÃO DE SAIR =================
                       AccountOption(
                         icon: Icons.logout_rounded,
                         title: 'Sair da Conta',
                         iconColor: Colors.redAccent,
                         textColor: Colors.redAccent,
-                        trailing: _isLoggingOut 
-                            ? const AnimatedThreeDots(color: Colors.redAccent) 
+                        trailing: _isLoggingOut
+                            ? const AnimatedThreeDots(color: Colors.redAccent)
                             : null,
                         onTap: () async {
                           final confirm = await showDialog<bool>(
@@ -196,16 +216,18 @@ class _AccountViewState extends State<AccountView> {
                             try {
                               final router = GoRouter.of(context);
                               await authController.commands.signOut();
-                              
+
                               if (!context.mounted) return;
-                              router.goNamed(AuthRouteNames.welcome); 
+                              router.goNamed(AuthRouteNames.welcome);
                             } catch (e) {
                               if (!context.mounted) return;
                               setState(() {
                                 _isLoggingOut = false;
                               });
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Erro ao sair da conta: $e')),
+                                SnackBar(
+                                  content: Text('Erro ao sair da conta: $e'),
+                                ),
                               );
                             }
                           }
@@ -214,12 +236,38 @@ class _AccountViewState extends State<AccountView> {
 
                       // ================= SEÇÃO: TRABALHE CONOSCO =================
                       _buildSectionTitle(context, 'Trabalhe Conosco'),
-                      
+
                       AccountOption(
                         icon: Icons.business_center_outlined,
                         title: 'Cadastrar Empresa',
-                        onTap: () {},
+                        onTap: () async {
+                          await context.pushNamed(IndigoRouteNames.createCompany);
+                          // Atualiza a lista ao voltar do cadastro para exibir o botão se cadastrou
+                          _companyListViewModel.commands.fetchOwnedCompanies();
+                        },
                       ),
+
+                      Watch((context) {
+                        final ownedCompanies =
+                            _companyListViewModel.state.ownedCompanies.value;
+
+                        if (ownedCompanies.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+
+                        return Column(
+                          children: [
+                            const SizedBox(height: 8),
+                            AccountOption(
+                              icon: Icons.domain_rounded,
+                              title: 'Minhas Empresas',
+                              onTap: () {
+                                context.pushNamed(IndigoRouteNames.myCompanies);
+                              },
+                            ),
+                          ],
+                        );
+                      }),
 
                       // ================= SEÇÃO: SUPORTE =================
                       _buildSectionTitle(context, 'Suporte'),
@@ -230,7 +278,7 @@ class _AccountViewState extends State<AccountView> {
                         onTap: () {},
                       ),
                       const SizedBox(height: 8),
-                      
+
                       AccountOption(
                         icon: Icons.info_outline_rounded,
                         title: 'Sobre o Aplicativo',

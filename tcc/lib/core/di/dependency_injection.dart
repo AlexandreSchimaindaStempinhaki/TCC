@@ -1,23 +1,24 @@
 import 'package:auto_injector/auto_injector.dart';
 
-import '../../data/repositories/company_repository.dart';
-import '../../data/services/firebase/company_firebase_service_impl.dart';
-import '../../data/services/firebase/i_company_firebase_service.dart';
 import '../../domain/facades/i_user_use_case_facade.dart';
 import '../../data/repositories/i_user_repositoy.dart';
 import '../../data/repositories/user_repository_impl.dart';
 import '../../data/services/firebase/i_user_firebase_service.dart';
 import '../../data/services/firebase/user_firebase_service_impl.dart';
 import '../../domain/facades/user_use_case_facade.dart';
-import '../../domain/usecases/company_use_cases_impl.dart';
-import '../../domain/usecases/i_company_use_cases.dart';
 import '../../domain/usecases/i_user_usecases.dart';
 import '../../domain/usecases/user_use_cases_impl.dart';
-import '../../presentation/controllers/company/company_viewmodel.dart';
 import '../../presentation/controllers/user/user_viewmodel.dart';
+import '../../data/services/firebase/i_company_firebase_service.dart';
+import '../../data/services/firebase/company_firebase_service_impl.dart';
 import '../../data/repositories/i_company_repository.dart';
+import '../../data/repositories/company_repository.dart';
+import '../../domain/usecases/i_company_use_cases.dart';
+import '../../domain/usecases/company_use_cases_impl.dart';
 import '../../domain/facades/i_company_use_case_facade.dart';
 import '../../domain/facades/company_use_case_facade_impl.dart';
+import '../../presentation/controllers/company/company_viewmodel.dart';
+import '../../presentation/controllers/company/company_list_viewmodel.dart';
 import '../theme/theme_controller.dart';
 import '../../data/repositories/authentication/auth_repository_impl.dart';
 import '../../data/repositories/authentication/i_auth_repository.dart';
@@ -48,12 +49,13 @@ void setupDependencyInjection() {
   injector.addSingleton<IUserUseCaseFacade>(UserUseCaseFacadeImpl.new);
 
   // Módulo de Empresa
-  injector.addSingleton<CompanyService>(CompanyServiceImpl.new);
+  injector.addSingleton<ICompanyRemoteService>(CompanyRemoteServiceImpl.new);
   injector.addSingleton<ICompanyRepository>(CompanyRepositoryImpl.new);
   injector.addSingleton<ICreateCompanyUseCase>(CreateCompanyUseCase.new);
   injector.addSingleton<IFetchCompaniesByOwnerUseCase>(FetchCompaniesByOwnerUseCase.new);
   injector.addSingleton<IFetchCompaniesByMemberUseCase>(FetchCompaniesByMemberUseCase.new);
   injector.addSingleton<IUpdateCompanyUseCase>(UpdateCompanyUseCase.new);
+  injector.addSingleton<IUpdateCompanyLogoUseCase>(UpdateCompanyLogoUseCase.new);
   injector.addSingleton<IDeleteCompanyUseCase>(DeleteCompanyUseCase.new);
   injector.addSingleton<ICompanyUseCaseFacade>(CompanyUseCaseFacadeImpl.new);
 
@@ -80,6 +82,7 @@ void setupDependencyInjection() {
   injector.addSingleton<AuthViewModel>(AuthViewModel.new);
   injector.addSingleton<UserViewModel>(UserViewModel.new);
   injector.addSingleton<CompanyViewModel>(CompanyViewModel.new);
+  injector.addSingleton<CompanyListViewModel>(CompanyListViewModel.new);
 
   injector.commit();
 }

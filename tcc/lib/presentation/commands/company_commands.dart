@@ -4,6 +4,7 @@ import '../../../../core/patterns/command.dart';
 import '../../../../core/patterns/result.dart';
 import '../../domain/facades/i_company_use_case_facade.dart';
 import '../../domain/models/company_entity.dart';
+import '../../domain/usecases/i_company_use_cases.dart';
 
 final class CreateCompanyCommand
     extends ParameterizedCommand<void, Failure, CreateCompanyParams> {
@@ -70,6 +71,23 @@ final class UpdateCompanyCommand
       );
     }
     return await _companyUseCaseFacade.updateCompany(parameter!);
+  }
+}
+
+final class UpdateCompanyLogoCommand
+    extends ParameterizedCommand<String, Failure, UpdateCompanyLogoParams> {
+  final ICompanyUseCaseFacade _companyUseCaseFacade;
+
+  UpdateCompanyLogoCommand(this._companyUseCaseFacade);
+
+  @override
+  Future<Result<String, Failure>> execute() async {
+    if (parameter == null || !parameter!.imageFile.existsSync()) {
+      return Error(
+        InvalidInputFailure('Arquivo de imagem inválido ou não fornecido.'),
+      );
+    }
+    return await _companyUseCaseFacade.updateCompanyLogo(parameter!);
   }
 }
 

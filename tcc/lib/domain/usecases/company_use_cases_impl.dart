@@ -1,5 +1,5 @@
 import '../../../../core/typedefs/types_defs.dart';
-import '../../../core/failure/failure.dart';
+import '../../../core/failure/failure.dart' show Failure, DefaultFailure;
 import '../../../core/patterns/result.dart';
 import '../../domain/models/company_entity.dart';
 import '../../data/repositories/i_company_repository.dart';
@@ -9,7 +9,7 @@ final class CreateCompanyUseCase implements ICreateCompanyUseCase {
   final ICompanyRepository _companyRepository;
 
   CreateCompanyUseCase({required ICompanyRepository companyRepository})
-      : _companyRepository = companyRepository;
+    : _companyRepository = companyRepository;
 
   @override
   Future<VoidResult> call(CreateCompanyParams params) async {
@@ -21,10 +21,12 @@ final class FetchCompaniesByOwnerUseCase implements IFetchCompaniesByOwnerUseCas
   final ICompanyRepository _companyRepository;
 
   FetchCompaniesByOwnerUseCase({required ICompanyRepository companyRepository})
-      : _companyRepository = companyRepository;
+    : _companyRepository = companyRepository;
 
   @override
-  Future<Result<List<CompanyModel>, Failure>> call(FetchCompaniesByOwnerParams params) async {
+  Future<Result<List<CompanyModel>, Failure>> call(
+    FetchCompaniesByOwnerParams params,
+  ) async {
     return _companyRepository.fetchCompaniesByOwner(params.ownerId);
   }
 }
@@ -33,10 +35,12 @@ final class FetchCompaniesByMemberUseCase implements IFetchCompaniesByMemberUseC
   final ICompanyRepository _companyRepository;
 
   FetchCompaniesByMemberUseCase({required ICompanyRepository companyRepository})
-      : _companyRepository = companyRepository;
+    : _companyRepository = companyRepository;
 
   @override
-  Future<Result<List<CompanyModel>, Failure>> call(FetchCompaniesByMemberParams params) async {
+  Future<Result<List<CompanyModel>, Failure>> call(
+    FetchCompaniesByMemberParams params,
+  ) async {
     return _companyRepository.fetchCompaniesByMember(params.memberId);
   }
 }
@@ -45,7 +49,7 @@ final class UpdateCompanyUseCase implements IUpdateCompanyUseCase {
   final ICompanyRepository _companyRepository;
 
   UpdateCompanyUseCase({required ICompanyRepository companyRepository})
-      : _companyRepository = companyRepository;
+    : _companyRepository = companyRepository;
 
   @override
   Future<VoidResult> call(UpdateCompanyParams params) async {
@@ -53,11 +57,28 @@ final class UpdateCompanyUseCase implements IUpdateCompanyUseCase {
   }
 }
 
+final class UpdateCompanyLogoUseCase implements IUpdateCompanyLogoUseCase {
+  final ICompanyRepository _companyRepository;
+
+  UpdateCompanyLogoUseCase({required ICompanyRepository companyRepository})
+    : _companyRepository = companyRepository;
+
+  @override
+  Future<Result<String, Failure>> call(UpdateCompanyLogoParams params) async {
+    if (!params.imageFile.existsSync()) {
+      return Error(
+        DefaultFailure('O arquivo de imagem selecionado não foi encontrado.'),
+      );
+    }
+    return _companyRepository.updateCompanyLogo(params.cnpj, params.imageFile);
+  }
+}
+
 final class DeleteCompanyUseCase implements IDeleteCompanyUseCase {
   final ICompanyRepository _companyRepository;
 
   DeleteCompanyUseCase({required ICompanyRepository companyRepository})
-      : _companyRepository = companyRepository;
+    : _companyRepository = companyRepository;
 
   @override
   Future<VoidResult> call(DeleteCompanyParams params) async {
