@@ -141,14 +141,13 @@ class _AccountViewState extends State<AccountView> {
                       }),
                       const SizedBox(height: 8),
                       
-                      // Endereço Residencial com verificação reativa se a localização/ponto está nulo
                       Watch((context) {
                         final currentUser = _userViewModel.state.user.value;
                         final hasMissingAddress = currentUser?.boardingPoint == null;
 
                         return AccountOption(
-                          icon: Icons.home_outlined,
-                          title: 'Endereço Residencial',
+                          icon: Icons.map_outlined,
+                          title: 'Endereço e Pontos de Parada',
                           trailing: hasMissingAddress
                               ? const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 22)
                               : null,
@@ -235,7 +234,9 @@ class _AccountViewState extends State<AccountView> {
                       AccountOption(
                         icon: Icons.info_outline_rounded,
                         title: 'Sobre o Aplicativo',
-                        onTap: () {},
+                        onTap: () {
+                          context.goNamed(IndigoRouteNames.about);
+                        },
                       ),
                       const SizedBox(height: 8),
                     ],

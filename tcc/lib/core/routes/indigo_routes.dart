@@ -1,8 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/models/user_entity.dart';
 import '../../presentation/controllers/user_viewmodel.dart';
+import '../../presentation/views/application/configuration/about_view.dart';
 import '../../presentation/views/application/configuration/edit_address_view.dart';
+import '../../presentation/views/application/configuration/location_view_map.dart';
+import '../../presentation/views/application/configuration/manage_geolocation_view.dart';
 import '../../presentation/views/application/home_view.dart';
 import '../../presentation/views/application/saved_view.dart';
 import '../../presentation/views/application/my_routes_view.dart';
@@ -12,7 +16,7 @@ import '../../presentation/views/application/route_map_view.dart';
 import '../../presentation/views/application/company_profile_view.dart';
 import '../../presentation/views/application/joined_route_detail_view.dart';
 import '../../presentation/views/application/configuration/edit_profile_view.dart';
-import '../../presentation/views/application/location_picker_view.dart';
+import '../../presentation/views/application/configuration/location_picker_view.dart';
 import '../../presentation/views/application/configuration/manage_address_view.dart';
 import '../../presentation/views/application/configuration/edit_profile_filed_view.dart';
 import '../../presentation/views/application/configuration/edit_profile_date_view.dart';
@@ -42,6 +46,9 @@ class IndigoRouteNames {
   static const confirmPassword = 'confirm_password';
   static const changePassword = 'change_password';
   static const editAddress = 'edit_address';
+  static const manageGeolocation = 'manage_geolocation';
+  static const singleLocationMap = 'single_location_map';
+  static const about = 'about';
 }
 
 class IndigoPaths {
@@ -64,6 +71,9 @@ class IndigoPaths {
   static const confirmPassword = '/confirm-password';
   static const changePassword = '/change-password';
   static const editAddress = '/edit-address';
+  static const manageGeolocation = '/manage-geolocation';
+  static const singleLocationMap = '/single-location-map';
+  static const about = '/about';
 }
 
 final List<RouteBase> indigoRoutes = [
@@ -132,7 +142,9 @@ final List<RouteBase> indigoRoutes = [
     path: IndigoPaths.locationPicker,
     name: IndigoRouteNames.locationPicker,
     builder: (context, state) {
-      return const LocationPickerView();
+      final initialLocation = state.extra as GeoPoint?;
+
+      return LocationPickerView(initialLocation: initialLocation);
     },
   ),
   GoRoute(
@@ -231,4 +243,32 @@ final List<RouteBase> indigoRoutes = [
       );
     },
   ),
+  GoRoute(
+    path: IndigoPaths.manageGeolocation,
+    name: IndigoRouteNames.manageGeolocation,
+    builder: (context, state) {
+      final args = state.extra as Map<String, dynamic>?;
+      final isBoarding =
+          args?['isBoarding'] as bool? ?? true;
+
+      return ManageGeolocationView(isBoarding: isBoarding);
+    },
+  ),
+  GoRoute(
+    path: IndigoPaths.singleLocationMap,
+    name: IndigoRouteNames.singleLocationMap,
+    builder: (context, state) {
+      final args = state.extra as Map<String, dynamic>;
+      return SingleLocationMapView(
+        latitude: args['latitude'] as double,
+        longitude: args['longitude'] as double,
+        title: args['title'] as String? ?? 'Localização',
+      );
+    },
+  ),
+  GoRoute(
+  path: IndigoPaths.about,
+  name: IndigoRouteNames.about,
+  builder: (context, state) => const AboutView(),
+),
 ];

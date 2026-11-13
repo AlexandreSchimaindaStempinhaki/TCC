@@ -153,7 +153,7 @@ class _EditAddressViewState extends State<EditAddressView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Editar Endereço',
+                    'Editar  Endereço',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,

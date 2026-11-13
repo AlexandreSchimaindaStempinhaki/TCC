@@ -18,8 +18,8 @@ class RouteMapView extends StatefulWidget {
 class _RouteMapViewState extends State<RouteMapView> {
   GoogleMapController? _mapController;
 
-  final LatLng _startPoint = const LatLng(-25.6793952, -48.4642768);
-  final LatLng _endPoint = const LatLng(-25.5854082, -48.5648844);
+  late LatLng _startPoint;
+  late LatLng _endPoint;
 
   List<LatLng> _routePoints = [];
   bool _isLoadingRoute = true;
@@ -27,6 +27,17 @@ class _RouteMapViewState extends State<RouteMapView> {
   @override
   void initState() {
     super.initState();
+    
+    // Extrai dinamicamente as coordenadas vindas do 'extra' do GoRouter ou define padrões
+    final double startLat = widget.route['startLatitude'] ?? -25.6793952;
+    final double startLng = widget.route['startLongitude'] ?? -48.4642768;
+    
+    final double endLat = widget.route['endLatitude'] ?? -25.5854082;
+    final double endLng = widget.route['endLongitude'] ?? -48.5648844;
+
+    _startPoint = LatLng(startLat, startLng);
+    _endPoint = LatLng(endLat, endLng);
+
     _fetchRoadRoute();
   }
 
@@ -65,9 +76,9 @@ class _RouteMapViewState extends State<RouteMapView> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final origin = widget.route['origin'] as String? ?? 'Av. das Magnólias, 58';
-    final destination = widget.route['destination'] as String? ?? 'IFPR - Campus Paranaguá';
-    final companyName = widget.route['companyName'] as String? ?? 'Linha Universitária';
+    final origin = widget.route['origin'] as String? ?? 'Origem Selecionada';
+    final destination = widget.route['destination'] as String? ?? 'Destino Selecionado';
+    final companyName = widget.route['companyName'] as String? ?? 'Detalhes da Rota';
 
     final Set<Marker> markers = {
       Marker(
@@ -89,7 +100,7 @@ class _RouteMapViewState extends State<RouteMapView> {
         Polyline(
           polylineId: const PolylineId('indigo_real_route'),
           points: _routePoints,
-          color: colorScheme.primary, // Adapta para azul claro no escuro / azul escuro no claro
+          color: colorScheme.primary,
           width: 5,
           jointType: JointType.round,
           startCap: Cap.roundCap,
@@ -100,7 +111,6 @@ class _RouteMapViewState extends State<RouteMapView> {
     return Scaffold(
       body: Stack(
         children: [
-          // 1. GOOGLE MAPS
           GoogleMap(
             initialCameraPosition: CameraPosition(
               target: LatLng(
@@ -121,7 +131,6 @@ class _RouteMapViewState extends State<RouteMapView> {
             },
           ),
 
-          // Feedback visual durante o cálculo da rota
           if (_isLoadingRoute)
             Positioned(
               top: 100,
@@ -147,7 +156,6 @@ class _RouteMapViewState extends State<RouteMapView> {
               ),
             ),
 
-          // 2. BOTÃO VOLTAR
           Positioned(
             top: 50,
             left: 20,
@@ -166,7 +174,6 @@ class _RouteMapViewState extends State<RouteMapView> {
             ),
           ),
 
-          // 3. CARD INFERIOR COM ENDEREÇOS ATUALIZADOS
           Positioned(
             left: 20,
             right: 20,

@@ -5,7 +5,7 @@ import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../../core/di/dependency_injection.dart';
 import '../../../../core/routes/indigo_routes.dart';
-import '../../../../domain/models/address_entity.dart'; // Ajuste o caminho se o nome do arquivo for outro
+import '../../../../domain/models/address_entity.dart';
 import '../../../controllers/user_viewmodel.dart';
 import '../../../widgets/account_option.dart';
 
@@ -18,7 +18,6 @@ class ManageAddressView extends StatefulWidget {
 
 class _ManageAddressViewState extends State<ManageAddressView> {
   late final UserViewModel _userViewModel;
-  bool _isLoadingGps = false;
 
   @override
   void initState() {
@@ -51,19 +50,13 @@ class _ManageAddressViewState extends State<ManageAddressView> {
         child: Text(
           title,
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 22,
             fontWeight: FontWeight.w600,
             color: colorScheme.onSurfaceVariant,
             letterSpacing: 1.1,
           ),
         ),
       ),
-    );
-  }
-
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
     );
   }
 
@@ -76,6 +69,9 @@ class _ManageAddressViewState extends State<ManageAddressView> {
       final currentUser = _userViewModel.state.user.value;
       final address = currentUser?.address;
       final isAddressMissing = address == null;
+      
+      final isBoardingMissing = currentUser?.boardingPoint == null;
+      final isDisembarkationMissing = currentUser?.disembarkationPoint == null;
 
       return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
@@ -117,11 +113,11 @@ class _ManageAddressViewState extends State<ManageAddressView> {
                 ),
                 child: Column(
                   children: [
-                    _buildSectionTitle(context, 'Residência', topPadding: 16),
+                    _buildSectionTitle(context, 'Endereço', topPadding: 16),
 
                     AccountOption(
                       icon: Icons.edit_location_alt_outlined,
-                      title: 'Editar Endereço',
+                      title: 'Endereço Residencial',
                       trailing: _buildMissingIndicator(isAddressMissing),
                       onTap: () {
                         context.pushNamed(
@@ -133,101 +129,28 @@ class _ManageAddressViewState extends State<ManageAddressView> {
                             'initialNumber': address?.number ?? '',
                             'initialComplement': address?.complement ?? '',
                             'onSave': ({
-                              required String city,
-                              required String neighborhood,
-                              required String street,
-                              required String number,
-                              required String complement,
-                            }) async {
-                              if (currentUser == null) return;
-
-                              final newAddress = AddressModel(
-                                city: city,
-                                neighborhood: neighborhood,
-                                street: street,
-                                number: number,
-                                complement: complement,
-                              );
-
-                              final updatedUser = currentUser.copyWith(
-                                address: newAddress,
-                              );
-                              
-                              await _userViewModel.commands.saveUserData(updatedUser);
-                            },
+                                  required String city,
+                                  required String neighborhood,
+                                  required String street,
+                                  required String number,
+                                  required String complement,
+                                }) async {
+                                  if (currentUser == null) return;
+                                  final newAddress = AddressModel(
+                                    city: city,
+                                    neighborhood: neighborhood,
+                                    street: street,
+                                    number: number,
+                                    complement: complement,
+                                  );
+                                  final updatedUser = currentUser.copyWith(
+                                    address: newAddress,
+                                  );
+                                  await _userViewModel.commands.saveUserData(
+                                    updatedUser,
+                                  );
+                                },
                           },
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 8),
-
-                    AccountOption(
-                      icon: Icons.map_outlined,
-                      title: 'Geolocalização',
-                      trailing: _isLoadingGps
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.chevron_right_rounded),
-                      onTap: () async {
-                        showModalBottomSheet(
-                          context: context,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(24),
-                            ),
-                          ),
-                          builder: (context) => Padding(
-                            padding: const EdgeInsets.all(24.0),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Gerenciar Geolocalização',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: colorScheme.onSurface,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                ListTile(
-                                  leading: Icon(
-                                    Icons.my_location_rounded,
-                                    color: colorScheme.primary,
-                                  ),
-                                  title: const Text(
-                                    'Usar Localização Atual (GPS)',
-                                  ),
-                                  onTap: () {
-                                    context.pop();
-                                  },
-                                ),
-                                ListTile(
-                                  leading: Icon(
-                                    Icons.map_outlined,
-                                    color: colorScheme.primary,
-                                  ),
-                                  title: const Text('Escolher no Mapa'),
-                                  onTap: () async {
-                                    context.pop();
-                                    final LatLng? pickedLocation = await context
-                                        .pushNamed<LatLng>(
-                                          IndigoRouteNames.locationPicker,
-                                        );
-                                    if (pickedLocation != null) {
-                                      _showSnackBar(
-                                        'Coordenadas obtidas via Mapa!',
-                                      );
-                                    }
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
                         );
                       },
                     ),
@@ -235,16 +158,35 @@ class _ManageAddressViewState extends State<ManageAddressView> {
 
                     _buildSectionTitle(
                       context,
-                      'Adicionar pontos de parada',
+                      'Pontos de coleta',
                       topPadding: 16,
                     ),
 
                     AccountOption(
-                      icon: Icons.add_location_alt_outlined,
-                      title: 'Novo Ponto de Parada',
+                      icon: Icons.pin_drop_outlined,
+                      title: 'Ponto de Embarque (Ida)',
+                      trailing: isBoardingMissing 
+                          ? _buildMissingIndicator(true) 
+                          : const Icon(Icons.chevron_right_rounded),
                       onTap: () {
-                        _showSnackBar(
-                          'Funcionalidade de pontos de parada em breve.',
+                        context.pushNamed(
+                          IndigoRouteNames.manageGeolocation,
+                          extra: {'isBoarding': true},
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 8),
+
+                    AccountOption(
+                      icon: Icons.flag_outlined,
+                      title: 'Ponto de Desembarque (Volta)',
+                      trailing: isDisembarkationMissing 
+                          ? _buildMissingIndicator(true) 
+                          : const Icon(Icons.chevron_right_rounded),
+                      onTap: () {
+                        context.pushNamed(
+                          IndigoRouteNames.manageGeolocation,
+                          extra: {'isBoarding': false},
                         );
                       },
                     ),
