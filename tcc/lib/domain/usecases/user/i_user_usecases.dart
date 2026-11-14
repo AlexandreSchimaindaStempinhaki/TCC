@@ -1,9 +1,9 @@
 import 'dart:io';
-import '../../../../core/typedefs/types_defs.dart';
-import '../../../../core/patterns/i_usecases.dart';
-import '../../../core/failure/failure.dart';
-import '../../../core/patterns/result.dart';
-import '../../domain/models/user_entity.dart';
+import '../../../../../core/typedefs/types_defs.dart';
+import '../../../../../core/patterns/i_usecases.dart';
+import '../../../../core/failure/failure.dart';
+import '../../../../core/patterns/result.dart';
+import '../../models/user_entity.dart';
 
 class SaveUserDataParams {
   final UserModel user;

@@ -2,9 +2,9 @@ import '../../../../core/failure/failure.dart';
 import '../../../../core/typedefs/types_defs.dart';
 import '../../../../core/patterns/command.dart';
 import '../../../../core/patterns/result.dart';
-import '../../domain/facades/i_user_use_case_facade.dart';
+import '../../domain/facades/user/i_user_use_case_facade.dart';
 import '../../../../domain/models/user_entity.dart';
-import '../../domain/usecases/i_user_usecases.dart';
+import '../../domain/usecases/user/i_user_usecases.dart';
 
 final class GetUserCommand extends Command<UserModel?, Failure> {
   final IUserUseCaseFacade _userUseCaseFacade;

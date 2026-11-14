@@ -1,5 +1,5 @@
 import 'package:signals_flutter/signals_flutter.dart';
-import '../../../domain/facades/i_company_use_case_facade.dart';
+import '../../../domain/facades/company/i_company_use_case_facade.dart';
 import '../../commands/company_commands.dart';
 import 'company_list_commands_viewmodel.dart';
 import 'company_list_state_viewmodel.dart';

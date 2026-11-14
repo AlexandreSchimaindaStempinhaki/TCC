@@ -3,7 +3,7 @@ import '../../../../core/typedefs/types_defs.dart';
 import '../../../core/failure/failure.dart' show Failure, DefaultFailure;
 import '../../../core/patterns/result.dart';
 import '../../../data/repositories/authentication/i_auth_repository.dart';
-import '../../../data/repositories/i_user_repositoy.dart';
+import '../../../data/repositories/user/i_user_repositoy.dart';
 import '../../models/user_entity.dart';
 import 'i_auth_usecases.dart';
 

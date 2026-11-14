@@ -2,9 +2,9 @@ import '../../../../core/failure/failure.dart';
 import '../../../../core/typedefs/types_defs.dart';
 import '../../../../core/patterns/command.dart';
 import '../../../../core/patterns/result.dart';
-import '../../domain/facades/i_company_use_case_facade.dart';
+import '../../domain/facades/company/i_company_use_case_facade.dart';
 import '../../domain/models/company_entity.dart';
-import '../../domain/usecases/i_company_use_cases.dart';
+import '../../domain/usecases/company/i_company_use_cases.dart';
 
 final class CreateCompanyCommand
     extends ParameterizedCommand<void, Failure, CreateCompanyParams> {

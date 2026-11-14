@@ -1,9 +1,9 @@
 import 'dart:io';
-import '../../../../core/typedefs/types_defs.dart';
-import '../../../core/failure/failure.dart';
-import '../../../core/patterns/result.dart';
-import '../../domain/models/user_entity.dart';
-import '../services/firebase/i_user_firebase_service.dart';
+import '../../../../../core/typedefs/types_defs.dart';
+import '../../../../core/failure/failure.dart';
+import '../../../../core/patterns/result.dart';
+import '../../../domain/models/user_entity.dart';
+import '../../services/user/i_user_firebase_service.dart';
 import 'i_user_repositoy.dart';
 
 final class UserRepositoryImpl implements IUserRepository {

@@ -1,8 +1,8 @@
-import '../../../../core/typedefs/types_defs.dart';
-import '../../../core/failure/failure.dart' show Failure, DefaultFailure;
-import '../../../core/patterns/result.dart';
-import '../../domain/models/company_entity.dart';
-import '../../data/repositories/i_company_repository.dart';
+import '../../../../../core/typedefs/types_defs.dart';
+import '../../../../core/failure/failure.dart' show Failure, DefaultFailure;
+import '../../../../core/patterns/result.dart';
+import '../../models/company_entity.dart';
+import '../../../data/repositories/company/i_company_repository.dart';
 import 'i_company_use_cases.dart';
 
 final class CreateCompanyUseCase implements ICreateCompanyUseCase {

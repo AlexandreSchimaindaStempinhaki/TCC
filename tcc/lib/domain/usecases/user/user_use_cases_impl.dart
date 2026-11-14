@@ -1,8 +1,8 @@
-import '../../../../core/typedefs/types_defs.dart';
-import '../../../core/failure/failure.dart' show Failure, DefaultFailure;
-import '../../../core/patterns/result.dart';
-import '../../domain/models/user_entity.dart';
-import '../../data/repositories/i_user_repositoy.dart';
+import '../../../../../core/typedefs/types_defs.dart';
+import '../../../../core/failure/failure.dart' show Failure, DefaultFailure;
+import '../../../../core/patterns/result.dart';
+import '../../models/user_entity.dart';
+import '../../../data/repositories/user/i_user_repositoy.dart';
 import 'i_user_usecases.dart';
 
 final class GetUserUseCase implements IGetUserUseCase {

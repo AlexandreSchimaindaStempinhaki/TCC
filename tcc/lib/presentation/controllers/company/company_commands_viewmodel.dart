@@ -5,7 +5,7 @@ import '../../../../core/patterns/command.dart';
 import '../../../../core/patterns/result.dart';
 import '../../../core/typedefs/types_defs.dart';
 import '../../../domain/models/company_entity.dart';
-import '../../../domain/usecases/i_company_use_cases.dart';
+import '../../../domain/usecases/company/i_company_use_cases.dart';
 import '../../commands/company_commands.dart';
 import 'company_state_viewmodel.dart';
 

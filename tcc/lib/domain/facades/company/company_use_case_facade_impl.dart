@@ -1,8 +1,8 @@
-import '../../../../core/typedefs/types_defs.dart';
-import '../../../core/failure/failure.dart';
-import '../../../core/patterns/result.dart';
-import '../../domain/models/company_entity.dart';
-import '../usecases/i_company_use_cases.dart';
+import '../../../../../core/typedefs/types_defs.dart';
+import '../../../../core/failure/failure.dart';
+import '../../../../core/patterns/result.dart';
+import '../../models/company_entity.dart';
+import '../../usecases/company/i_company_use_cases.dart';
 import 'i_company_use_case_facade.dart';
 
 class CompanyUseCaseFacadeImpl implements ICompanyUseCaseFacade {

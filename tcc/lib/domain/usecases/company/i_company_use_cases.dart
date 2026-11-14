@@ -1,9 +1,9 @@
 import 'dart:io';
-import '../../../../core/typedefs/types_defs.dart';
-import '../../../../core/patterns/i_usecases.dart';
-import '../../../core/failure/failure.dart';
-import '../../../core/patterns/result.dart';
-import '../../domain/models/company_entity.dart';
+import '../../../../../core/typedefs/types_defs.dart';
+import '../../../../../core/patterns/i_usecases.dart';
+import '../../../../core/failure/failure.dart';
+import '../../../../core/patterns/result.dart';
+import '../../models/company_entity.dart';
 
 abstract interface class ICreateCompanyUseCase
     implements IUseCase<VoidResult, CreateCompanyParams> {}

@@ -1,8 +1,8 @@
-import '../../../../core/typedefs/types_defs.dart';
-import '../../../core/failure/failure.dart';
-import '../../../core/patterns/result.dart';
-import '../../domain/models/user_entity.dart';
-import '../usecases/i_user_usecases.dart';
+import '../../../../../core/typedefs/types_defs.dart';
+import '../../../../core/failure/failure.dart';
+import '../../../../core/patterns/result.dart';
+import '../../models/user_entity.dart';
+import '../../usecases/user/i_user_usecases.dart';
 import 'i_user_use_case_facade.dart';
 
 class UserUseCaseFacadeImpl implements IUserUseCaseFacade {
