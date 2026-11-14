@@ -21,12 +21,28 @@ class _MyCompaniesViewState extends State<MyCompaniesView> {
   late final CompanyListViewModel _companyListViewModel;
   late final CompanyViewModel _companyViewModel;
 
+  final _isInitialLoading = signal(true);
+
   @override
   void initState() {
     super.initState();
     _companyListViewModel = injector.get<CompanyListViewModel>();
     _companyViewModel = injector.get<CompanyViewModel>();
-    _companyListViewModel.commands.fetchOwnedCompanies();
+    _loadCompanies();
+  }
+
+  Future<void> _loadCompanies() async {
+    _isInitialLoading.value = true;
+    await _companyListViewModel.commands.fetchOwnedCompanies();
+    if (mounted) {
+      _isInitialLoading.value = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _isInitialLoading.dispose();
+    super.dispose();
   }
 
   void _handleBack(BuildContext context) {
@@ -173,16 +189,6 @@ class _MyCompaniesViewState extends State<MyCompaniesView> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add_business_rounded, color: colorScheme.primary),
-            tooltip: 'Nova Empresa',
-            onPressed: () async {
-              await context.pushNamed(IndigoRouteNames.createCompany);
-              _companyListViewModel.commands.fetchOwnedCompanies();
-            },
-          ),
-        ],
       ),
       body: Watch((context) {
         final isExecuting = _companyListViewModel
@@ -192,8 +198,10 @@ class _MyCompaniesViewState extends State<MyCompaniesView> {
         final companies = _companyListViewModel.state.ownedCompanies.value;
         final errorMessage = _companyListViewModel.state.message.value;
 
-        if (isExecuting && companies.isEmpty) {
-          return Center(child: AnimatedThreeDots(color: colorScheme.primary));
+        if (_isInitialLoading.value || (isExecuting && companies.isEmpty)) {
+          return Center(
+            child: AnimatedThreeDots(color: colorScheme.onSurface),
+          );
         }
 
         if (errorMessage != null && companies.isEmpty) {
@@ -216,8 +224,7 @@ class _MyCompaniesViewState extends State<MyCompaniesView> {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () =>
-                        _companyListViewModel.commands.fetchOwnedCompanies(),
+                    onPressed: _loadCompanies,
                     child: const Text('Tentar Novamente'),
                   ),
                 ],
@@ -279,17 +286,8 @@ class _MyCompaniesViewState extends State<MyCompaniesView> {
                     extra: company,
                   );
 
-                  _companyListViewModel.commands.fetchOwnedCompanies();
+                  _loadCompanies();
                 },
-                onEdit: () async {
-                  _companyViewModel.state.setSelectedCompany(company);
-                  await context.pushNamed(
-                    IndigoRouteNames.createCompany,
-                    extra: company,
-                  );
-                  _companyListViewModel.commands.fetchOwnedCompanies();
-                },
-                onDelete: () => _confirmAndDeleteCompany(context, company),
               );
             },
           ),

@@ -4,15 +4,11 @@ import '../../domain/models/company_entity.dart';
 class CompanyCard extends StatelessWidget {
   final CompanyModel company;
   final VoidCallback onTap;
-  final VoidCallback onEdit;
-  final Future<bool> Function() onDelete;
 
   const CompanyCard({
     super.key,
     required this.company,
     required this.onTap,
-    required this.onEdit,
-    required this.onDelete,
   });
 
   String _formatCnpj(String cnpj) {
@@ -89,15 +85,6 @@ class CompanyCard extends StatelessWidget {
             ],
           ),
         ),
-        confirmDismiss: (direction) async {
-          if (direction == DismissDirection.endToStart) {
-            onEdit();
-            return false;
-          } else if (direction == DismissDirection.startToEnd) {
-            return await onDelete();
-          }
-          return false;
-        },
         child: Material(
           color: theme.cardColor,
           elevation: 0,

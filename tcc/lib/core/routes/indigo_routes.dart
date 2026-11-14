@@ -9,7 +9,7 @@ import '../../presentation/views/application/configuration/about_view.dart';
 import '../../presentation/views/application/configuration/company_home_view.dart';
 import '../../presentation/views/application/configuration/create_companion_view.dart';
 import '../../presentation/views/application/configuration/edit_address_view.dart';
-import '../../presentation/views/application/configuration/location_view_map.dart';
+import '../../presentation/views/application/configuration/location_map_view.dart';
 import '../../presentation/views/application/configuration/manage_geolocation_view.dart';
 import '../../presentation/views/application/home_view.dart';
 import '../../presentation/views/application/saved_view.dart';

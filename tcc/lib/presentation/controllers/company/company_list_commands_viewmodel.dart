@@ -83,16 +83,18 @@ class CompanyListCommands {
       final result = command.result.value;
       if (result == null) return;
 
-      result.fold(
-        onSuccess: (data) {
-          state.clearMessage();
-          onSuccess(data);
-        },
-        onFailure: (err) {
-          state.setMessage(err.msg);
-          if (onFailure != null) onFailure(err);
-        },
-      );
+      untracked(() {
+        result.fold(
+          onSuccess: (data) {
+            state.clearMessage();
+            onSuccess(data);
+          },
+          onFailure: (err) {
+            state.setMessage(err.msg);
+            if (onFailure != null) onFailure(err);
+          },
+        );
+      });
     });
   }
 

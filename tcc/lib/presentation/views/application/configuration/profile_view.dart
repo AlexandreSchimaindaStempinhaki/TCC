@@ -6,6 +6,7 @@ import '../../../../core/routes/indigo_routes.dart';
 import '../../../../core/utils/app_formatters.dart';
 import '../../../../domain/models/user_entity.dart';
 import '../../../controllers/user/user_viewmodel.dart';
+import '../../../widgets/animated_three_dots.dart';
 import '../../../widgets/clean_header_background.dart';
 import '../../../widgets/profile_info_tile.dart';
 
@@ -20,10 +21,28 @@ class ProfileView extends StatefulWidget {
 }
 
 class _ProfileViewState extends State<ProfileView> {
+  final _isInitialLoading = signal(true);
+
   @override
   void initState() {
     super.initState();
-    widget.userViewModel.commands.fetchUser();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    _isInitialLoading.value = true;
+    if (widget.user == null) {
+      await widget.userViewModel.commands.fetchUser();
+    }
+    if (mounted) {
+      _isInitialLoading.value = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _isInitialLoading.dispose();
+    super.dispose();
   }
 
   @override
@@ -31,17 +50,59 @@ class _ProfileViewState extends State<ProfileView> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    const double avatarRadius = 120;
+    const double avatarTop = 50;
+    const double headerHeight = 265;
+
     return Watch((context) {
+      // Enquanto busca no banco, exibe apenas o cabeçalho e os 3 pontinhos no corpo
+      if (_isInitialLoading.value) {
+        return Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          body: Column(
+            children: [
+              Stack(
+                children: [
+                  const CleanHeaderBackground(height: headerHeight),
+                  SafeArea(
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 12, top: 8),
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            color: Colors.black,
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.arrow_back_rounded,
+                              color: Colors.white,
+                            ),
+                            onPressed: () => context.pop(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Expanded(
+                child: Center(
+                  child: AnimatedThreeDots(color: colorScheme.onSurface),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
       final loggedUser = widget.userViewModel.state.user.value;
       final targetUser = widget.user ?? loggedUser;
       final bool isOwner = widget.userViewModel.commands.isOwner(targetUser);
 
       final nameText = targetUser?.name ?? 'Usuário';
       final initials = nameText.isNotEmpty ? nameText[0].toUpperCase() : 'U';
-
-      const double avatarRadius = 120;
-      const double avatarTop = 50;
-      const double headerHeight = 265;
 
       return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,

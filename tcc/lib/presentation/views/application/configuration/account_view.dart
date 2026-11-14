@@ -26,6 +26,7 @@ class _AccountViewState extends State<AccountView> {
   late final UserViewModel _userViewModel;
   late final CompanyListViewModel _companyListViewModel;
 
+  final _isInitialLoading = signal(true);
   bool _notificationsEnabled = true;
   bool _isLoggingOut = false;
 
@@ -36,8 +37,24 @@ class _AccountViewState extends State<AccountView> {
     _userViewModel = injector.get<UserViewModel>();
     _companyListViewModel = injector.get<CompanyListViewModel>();
 
-    _userViewModel.commands.fetchUser();
-    _companyListViewModel.commands.fetchOwnedCompanies();
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    _isInitialLoading.value = true;
+    await Future.wait([
+      _userViewModel.commands.fetchUser(),
+      _companyListViewModel.commands.fetchOwnedCompanies(),
+    ]);
+    if (mounted) {
+      _isInitialLoading.value = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _isInitialLoading.dispose();
+    super.dispose();
   }
 
   Widget _buildSectionTitle(
@@ -77,12 +94,13 @@ class _AccountViewState extends State<AccountView> {
         bottomNavigationBar: const BottomNavBar(currentIndex: 3),
         body: SafeArea(
           bottom: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // CABEÇALHO FIXO SEMPRE VISÍVEL
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+                child: Text(
                   'Configurações',
                   style: TextStyle(
                     fontSize: 24,
@@ -90,209 +108,234 @@ class _AccountViewState extends State<AccountView> {
                     color: colorScheme.onSurface,
                   ),
                 ),
-                const SizedBox(height: 24),
+              ),
 
-                Container(
-                  clipBehavior: Clip.antiAlias,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    color: theme.cardColor,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      // ================= SEÇÃO: CONTA =================
-                      _buildSectionTitle(context, 'Conta', topPadding: 16),
+              // CORPO DA PÁGINA (ALTERNA ENTRE OS 3 PONTINHOS E O CONTEÚDO)
+              Expanded(
+                child: Watch((context) {
+                  if (_isInitialLoading.value) {
+                    return Center(
+                      child: AnimatedThreeDots(color: colorScheme.onSurface),
+                    );
+                  }
 
-                      Watch((context) {
-                        final currentUser = _userViewModel.state.user.value;
-
-                        final hasMissingData =
-                            (currentUser?.email == null ||
-                                currentUser!.email.trim().isEmpty) ||
-                            (currentUser?.phone == null ||
-                                currentUser!.phone!.trim().isEmpty) ||
-                            (currentUser?.cpf == null ||
-                                currentUser!.cpf!.trim().isEmpty);
-
-                        return AccountOption(
-                          icon: Icons.person_outline_rounded,
-                          title: 'Perfil',
-                          trailing: hasMissingData
-                              ? const Icon(
-                                  Icons.error_outline_rounded,
-                                  color: Colors.redAccent,
-                                  size: 22,
-                                )
-                              : null,
-                          onTap: () {
-                            context.pushNamed(IndigoRouteNames.editProfile);
-                          },
-                        );
-                      }),
-                      const SizedBox(height: 8),
-
-                      Watch((context) {
-                        final isDarkMode = themeController.isDarkMode;
-                        return AccountOption(
-                          icon: isDarkMode
-                              ? Icons.dark_mode_outlined
-                              : Icons.light_mode_outlined,
-                          title: 'Modo Escuro',
-                          trailing: Switch(
-                            value: isDarkMode,
-                            activeColor: colorScheme.primary,
-                            onChanged: (val) {
-                              themeController.toggleTheme(val);
-                            },
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+                    child: Container(
+                      clipBehavior: Clip.antiAlias,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: theme.cardColor,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
                           ),
-                        );
-                      }),
-                      const SizedBox(height: 8),
-
-                      Watch((context) {
-                        final currentUser = _userViewModel.state.user.value;
-                        final hasMissingAddress =
-                            currentUser?.boardingPoint == null;
-
-                        return AccountOption(
-                          icon: Icons.map_outlined,
-                          title: 'Endereço e Pontos de Parada',
-                          trailing: hasMissingAddress
-                              ? const Icon(
-                                  Icons.error_outline_rounded,
-                                  color: Colors.redAccent,
-                                  size: 22,
-                                )
-                              : null,
-                          onTap: () {
-                            context.pushNamed(IndigoRouteNames.manageAddress);
-                          },
-                        );
-                      }),
-                      const SizedBox(height: 8),
-
-                      AccountOption(
-                        icon: Icons.notifications_none_outlined,
-                        title: 'Notificações',
-                        trailing: Switch(
-                          value: _notificationsEnabled,
-                          activeColor: colorScheme.primary,
-                          onChanged: (val) {
-                            setState(() {
-                              _notificationsEnabled = val;
-                            });
-                          },
-                        ),
+                        ],
                       ),
-                      const SizedBox(height: 8),
+                      child: Column(
+                        children: [
+                          // ================= SEÇÃO: CONTA =================
+                          _buildSectionTitle(context, 'Conta', topPadding: 16),
 
-                      AccountOption(
-                        icon: Icons.logout_rounded,
-                        title: 'Sair da Conta',
-                        iconColor: Colors.redAccent,
-                        textColor: Colors.redAccent,
-                        trailing: _isLoggingOut
-                            ? const AnimatedThreeDots(color: Colors.redAccent)
-                            : null,
-                        onTap: () async {
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => const LogoutConfirmation(),
-                          );
+                          Watch((context) {
+                            final currentUser = _userViewModel.state.user.value;
 
-                          if (confirm == true) {
-                            setState(() {
-                              _isLoggingOut = true;
-                            });
+                            final hasMissingData =
+                                (currentUser?.email == null ||
+                                    currentUser!.email.trim().isEmpty) ||
+                                (currentUser?.phone == null ||
+                                    currentUser!.phone!.trim().isEmpty) ||
+                                (currentUser?.cpf == null ||
+                                    currentUser!.cpf!.trim().isEmpty);
 
-                            try {
-                              final router = GoRouter.of(context);
-                              await authController.commands.signOut();
-
-                              if (!context.mounted) return;
-                              router.goNamed(AuthRouteNames.welcome);
-                            } catch (e) {
-                              if (!context.mounted) return;
-                              setState(() {
-                                _isLoggingOut = false;
-                              });
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Erro ao sair da conta: $e'),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                      ),
-
-                      // ================= SEÇÃO: TRABALHE CONOSCO =================
-                      _buildSectionTitle(context, 'Trabalhe Conosco'),
-
-                      AccountOption(
-                        icon: Icons.business_center_outlined,
-                        title: 'Cadastrar Empresa',
-                        onTap: () async {
-                          await context.pushNamed(IndigoRouteNames.createCompany);
-                          // Atualiza a lista ao voltar do cadastro para exibir o botão se cadastrou
-                          _companyListViewModel.commands.fetchOwnedCompanies();
-                        },
-                      ),
-
-                      Watch((context) {
-                        final ownedCompanies =
-                            _companyListViewModel.state.ownedCompanies.value;
-
-                        if (ownedCompanies.isEmpty) {
-                          return const SizedBox.shrink();
-                        }
-
-                        return Column(
-                          children: [
-                            const SizedBox(height: 8),
-                            AccountOption(
-                              icon: Icons.domain_rounded,
-                              title: 'Minhas Empresas',
+                            return AccountOption(
+                              icon: Icons.person_outline_rounded,
+                              title: 'Perfil',
+                              trailing: hasMissingData
+                                  ? const Icon(
+                                      Icons.error_outline_rounded,
+                                      color: Colors.redAccent,
+                                      size: 22,
+                                    )
+                                  : null,
                               onTap: () {
-                                context.pushNamed(IndigoRouteNames.myCompanies);
+                                context.pushNamed(IndigoRouteNames.editProfile);
+                              },
+                            );
+                          }),
+                          const SizedBox(height: 8),
+
+                          Watch((context) {
+                            final isDarkMode = themeController.isDarkMode;
+                            return AccountOption(
+                              icon: isDarkMode
+                                  ? Icons.dark_mode_outlined
+                                  : Icons.light_mode_outlined,
+                              title: 'Modo Escuro',
+                              trailing: Switch(
+                                value: isDarkMode,
+                                activeColor: colorScheme.primary,
+                                onChanged: (val) {
+                                  themeController.toggleTheme(val);
+                                },
+                              ),
+                            );
+                          }),
+                          const SizedBox(height: 8),
+
+                          Watch((context) {
+                            final currentUser = _userViewModel.state.user.value;
+                            final hasMissingAddress =
+                                currentUser?.boardingPoint == null;
+
+                            return AccountOption(
+                              icon: Icons.map_outlined,
+                              title: 'Endereço e Pontos de Parada',
+                              trailing: hasMissingAddress
+                                  ? const Icon(
+                                      Icons.error_outline_rounded,
+                                      color: Colors.redAccent,
+                                      size: 22,
+                                    )
+                                  : null,
+                              onTap: () {
+                                context.pushNamed(
+                                  IndigoRouteNames.manageAddress,
+                                );
+                              },
+                            );
+                          }),
+                          const SizedBox(height: 8),
+
+                          AccountOption(
+                            icon: Icons.notifications_none_outlined,
+                            title: 'Notificações',
+                            trailing: Switch(
+                              value: _notificationsEnabled,
+                              activeColor: colorScheme.primary,
+                              onChanged: (val) {
+                                setState(() {
+                                  _notificationsEnabled = val;
+                                });
                               },
                             ),
-                          ],
-                        );
-                      }),
+                          ),
+                          const SizedBox(height: 8),
 
-                      // ================= SEÇÃO: SUPORTE =================
-                      _buildSectionTitle(context, 'Suporte'),
+                          AccountOption(
+                            icon: Icons.logout_rounded,
+                            title: 'Sair da Conta',
+                            iconColor: Colors.redAccent,
+                            textColor: Colors.redAccent,
+                            trailing: _isLoggingOut
+                                ? const AnimatedThreeDots(
+                                    color: Colors.redAccent,
+                                  )
+                                : null,
+                            onTap: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (context) =>
+                                    const LogoutConfirmation(),
+                              );
 
-                      AccountOption(
-                        icon: Icons.help_outline_rounded,
-                        title: 'Ajuda e Suporte',
-                        onTap: () {},
+                              if (confirm == true) {
+                                setState(() {
+                                  _isLoggingOut = true;
+                                });
+
+                                try {
+                                  final router = GoRouter.of(context);
+                                  await authController.commands.signOut();
+
+                                  if (!context.mounted) return;
+                                  router.goNamed(AuthRouteNames.welcome);
+                                } catch (e) {
+                                  if (!context.mounted) return;
+                                  setState(() {
+                                    _isLoggingOut = false;
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Erro ao sair da conta: $e',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                          ),
+
+                          // ================= SEÇÃO: TRABALHE CONOSCO =================
+                          _buildSectionTitle(context, 'Trabalhe Conosco'),
+
+                          AccountOption(
+                            icon: Icons.business_center_outlined,
+                            title: 'Cadastrar Empresa',
+                            onTap: () async {
+                              await context.pushNamed(
+                                IndigoRouteNames.createCompany,
+                              );
+                              _companyListViewModel.commands
+                                  .fetchOwnedCompanies();
+                            },
+                          ),
+
+                          Watch((context) {
+                            final ownedCompanies = _companyListViewModel
+                                .state
+                                .ownedCompanies
+                                .value;
+
+                            if (ownedCompanies.isEmpty) {
+                              return const SizedBox.shrink();
+                            }
+
+                            return Column(
+                              children: [
+                                const SizedBox(height: 8),
+                                AccountOption(
+                                  icon: Icons.domain_rounded,
+                                  title: 'Minhas Empresas',
+                                  onTap: () {
+                                    context.pushNamed(
+                                      IndigoRouteNames.myCompanies,
+                                    );
+                                  },
+                                ),
+                              ],
+                            );
+                          }),
+
+                          // ================= SEÇÃO: SUPORTE =================
+                          _buildSectionTitle(context, 'Suporte'),
+
+                          AccountOption(
+                            icon: Icons.help_outline_rounded,
+                            title: 'Ajuda e Suporte',
+                            onTap: () {},
+                          ),
+                          const SizedBox(height: 8),
+
+                          AccountOption(
+                            icon: Icons.info_outline_rounded,
+                            title: 'Sobre o Aplicativo',
+                            onTap: () {
+                              context.goNamed(IndigoRouteNames.about);
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-
-                      AccountOption(
-                        icon: Icons.info_outline_rounded,
-                        title: 'Sobre o Aplicativo',
-                        onTap: () {
-                          context.goNamed(IndigoRouteNames.about);
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
+                    ),
+                  );
+                }),
+              ),
+            ],
           ),
         ),
       ),

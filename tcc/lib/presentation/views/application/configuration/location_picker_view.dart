@@ -6,6 +6,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 
+import '../../../widgets/animated_three_dots.dart';
+
 class LocationPickerView extends StatefulWidget {
   final GeoPoint? initialLocation;
   final String title;
@@ -26,6 +28,7 @@ class _LocationPickerViewState extends State<LocationPickerView> {
 
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
+  bool _isMapLoading = true;
 
   Timer? _debounce;
   List<dynamic> _searchResults = [];
@@ -43,8 +46,6 @@ class _LocationPickerViewState extends State<LocationPickerView> {
       _targetPosition = const LatLng(-25.5678, -48.3456);
     }
   }
-
-  // Resto do código da tela...
 
   @override
   void dispose() {
@@ -128,6 +129,7 @@ class _LocationPickerViewState extends State<LocationPickerView> {
     };
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
           GoogleMap(
@@ -138,7 +140,12 @@ class _LocationPickerViewState extends State<LocationPickerView> {
             markers: markers,
             zoomControlsEnabled: false,
             myLocationButtonEnabled: false,
-            onMapCreated: (controller) => _mapController = controller,
+            onMapCreated: (controller) {
+              _mapController = controller;
+              if (mounted) {
+                setState(() => _isMapLoading = false);
+              }
+            },
             onTap: (newPosition) {
               FocusScope.of(context).unfocus();
               setState(() {
@@ -148,98 +155,111 @@ class _LocationPickerViewState extends State<LocationPickerView> {
             },
           ),
 
-          Positioned(
-            left: 20,
-            right: 20,
-            bottom: 30,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: theme.cardColor,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: theme.dividerColor),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(
-                      theme.brightness == Brightness.dark ? 0.3 : 0.08,
-                    ),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.location_on_rounded,
-                        color: colorScheme.onSurface,
-                        size: 40,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              widget.title,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Lat:    ${_targetPosition.latitude.toStringAsFixed(5)}\nLng:  ${_targetPosition.longitude.toStringAsFixed(5)}',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Clique no mapa para selecionar uma nova localização',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton.icon(
-                      onPressed: () => context.pop(_targetPosition),
-                      label: const Text(
-                        'Confirmar Localização',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colorScheme.primary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+          // OVERLAY DE CARREGAMENTO ENQUANTO O MAPA INICIALIZA
+          if (_isMapLoading)
+            Positioned.fill(
+              child: Container(
+                color: theme.scaffoldBackgroundColor,
+                child: Center(
+                  child: AnimatedThreeDots(color: colorScheme.onSurface),
+                ),
               ),
             ),
-          ),
 
+          if (!_isMapLoading)
+            Positioned(
+              left: 20,
+              right: 20,
+              bottom: 30,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: theme.dividerColor),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(
+                        theme.brightness == Brightness.dark ? 0.3 : 0.08,
+                      ),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_rounded,
+                          color: colorScheme.onSurface,
+                          size: 40,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                widget.title,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Lat:    ${_targetPosition.latitude.toStringAsFixed(5)}\nLng:  ${_targetPosition.longitude.toStringAsFixed(5)}',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Clique no mapa para selecionar uma nova localização',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        onPressed: () => context.pop(_targetPosition),
+                        label: const Text(
+                          'Confirmar Localização',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colorScheme.primary,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // CABEÇALHO DE PESQUISA SEMPRE VISÍVEL NO TOPO
           Positioned(
             top: 50,
             left: 20,
@@ -296,14 +316,11 @@ class _LocationPickerViewState extends State<LocationPickerView> {
                           ),
                           if (_isSearching)
                             Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: colorScheme.primary,
-                                ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12.0,
+                              ),
+                              child: AnimatedThreeDots(
+                                color: colorScheme.onSurface,
                               ),
                             )
                           else
