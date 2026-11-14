@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../domain/models/authentication/auth_entities.dart';
 import '../../domain/models/company_entity.dart';
+import '../../domain/models/route_entity.dart';
 import '../failure/failure.dart';
 // import '../../domain/models/account_entity.dart';
 
@@ -89,6 +90,36 @@ class UpdateCompanyLogoParams {
 class DeleteCompanyParams {
   final String cnpj;
   const DeleteCompanyParams({required this.cnpj});
+}
+
+class CreateRouteParams {
+  final RouteModel route;
+  final File? imageFile;
+
+  const CreateRouteParams({
+    required this.route,
+    this.imageFile,
+  });
+}
+
+class UpdateRouteParams {
+  final RouteModel route;
+  final File? imageFile;
+
+  const UpdateRouteParams({
+    required this.route,
+    this.imageFile,
+  });
+}
+
+class UpdateRouteImageParams {
+  final int routeId;
+  final File imageFile;
+
+  const UpdateRouteImageParams({
+    required this.routeId,
+    required this.imageFile,
+  });
 }
 
 // // typedefs para tipo Result

@@ -15,7 +15,6 @@ class CompanyMemberModel {
   final String cargo;
   final DateTime dataIngresso;
 
-  // Dados hidratados da Pessoa para exibição direta na UI (nome, foto, CNH, etc.)
   final UserModel? user;
 
   const CompanyMemberModel({

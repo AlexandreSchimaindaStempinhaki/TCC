@@ -8,7 +8,7 @@ class TripModel {
   final DateTime data;
   final DateTime horarioSaida;
   final DateTime? horarioChegada;
-  final String status; // Ex: 'Agendada', 'Em Andamento', 'Concluída', 'Cancelada'
+  final String status;
   final int numeroPassageiros;
 
   const TripModel({

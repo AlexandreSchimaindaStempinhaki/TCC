@@ -1,6 +1,7 @@
 import 'package:auto_injector/auto_injector.dart';
 
 import '../../data/repositories/company_member/i_company_member_repository.dart';
+import '../../data/repositories/route/i_route_repository.dart';
 import '../../domain/facades/user/i_user_use_case_facade.dart';
 import '../../data/repositories/user/i_user_repositoy.dart';
 import '../../data/repositories/user/user_repository_impl.dart';
@@ -35,6 +36,7 @@ import '../../domain/usecases/authentication/auth_use_cases.impl.dart';
 import '../../presentation/commands/authentication/auth_commands.dart';
 import '../../presentation/controllers/authentication/auth_session_viewmodel.dart';
 
+// CompanyMember Module Imports
 import '../../data/services/company_member/i_company_member_service.dart';
 import '../../data/services/company_member/company_member_service_impl.dart';
 import '../../data/repositories/company_member/company_member_repository_impl.dart';
@@ -44,99 +46,90 @@ import '../../domain/facades/company_member/i_company_member_facade.dart';
 import '../../domain/facades/company_member/company_member_facade_impl.dart';
 import '../../presentation/controllers/company_member/company_member_viewmodel.dart';
 
+// Route Module Imports
+import '../../data/services/route/i_route_service.dart';
+import '../../data/services/route/route_service_impl.dart';
+import '../../data/repositories/route/route_repository_impl.dart';
+import '../../domain/usecases/route/i_route_usecases.dart';
+import '../../domain/usecases/route/route_usecases_impl.dart';
+import '../../domain/facades/route/i_route_facade.dart';
+import '../../domain/facades/route/route_facade_impl.dart';
+import '../../presentation/controllers/route/route_viewmodel.dart';
+
 final injector = AutoInjector();
 
 void setupDependencyInjection() {
   injector.addSingleton<ThemeController>(() => ThemeController());
 
-  // Módulo de Usuário
+  // User Module
   injector.addSingleton<IUserRemoteService>(UserRemoteServiceImpl.new);
   injector.addSingleton<IUserRepository>(UserRepositoryImpl.new);
   injector.addSingleton<IGetUserUseCase>(GetUserUseCase.new);
   injector.addSingleton<ISaveUserDataUseCase>(SaveUserDataUseCase.new);
-  injector.addSingleton<IUpdateProfilePictureUseCase>(
-    UpdateProfilePictureUseCase.new,
-  );
-  injector.addSingleton<IDeleteUserAccountUseCase>(
-    DeleteUserAccountUseCase.new,
-  );
+  injector.addSingleton<IUpdateProfilePictureUseCase>(UpdateProfilePictureUseCase.new);
+  injector.addSingleton<IDeleteUserAccountUseCase>(DeleteUserAccountUseCase.new);
   injector.addSingleton<IUserUseCaseFacade>(UserUseCaseFacadeImpl.new);
 
-  // Módulo de Empresa
+  // Company Module
   injector.addSingleton<ICompanyRemoteService>(CompanyRemoteServiceImpl.new);
   injector.addSingleton<ICompanyRepository>(CompanyRepositoryImpl.new);
   injector.addSingleton<ICreateCompanyUseCase>(CreateCompanyUseCase.new);
-  injector.addSingleton<IFetchCompaniesByOwnerUseCase>(
-    FetchCompaniesByOwnerUseCase.new,
-  );
-  injector.addSingleton<IFetchCompaniesByMemberUseCase>(
-    FetchCompaniesByMemberUseCase.new,
-  );
+  injector.addSingleton<IFetchCompaniesByOwnerUseCase>(FetchCompaniesByOwnerUseCase.new);
+  injector.addSingleton<IFetchCompaniesByMemberUseCase>(FetchCompaniesByMemberUseCase.new);
   injector.addSingleton<IUpdateCompanyUseCase>(UpdateCompanyUseCase.new);
-  injector.addSingleton<IUpdateCompanyLogoUseCase>(
-    UpdateCompanyLogoUseCase.new,
-  );
+  injector.addSingleton<IUpdateCompanyLogoUseCase>(UpdateCompanyLogoUseCase.new);
   injector.addSingleton<IDeleteCompanyUseCase>(DeleteCompanyUseCase.new);
   injector.addSingleton<ICompanyUseCaseFacade>(CompanyUseCaseFacadeImpl.new);
 
-  // Módulo de Vínculo de Membros da Empresa (VinculoEmpresa)
+  // CompanyMember Module
   injector.addSingleton<ICompanyMemberService>(CompanyMemberServiceImpl.new);
-  injector.addSingleton<ICompanyMemberRepository>(
-    CompanyMemberRepositoryImpl.new,
-  );
-  injector.addSingleton<IFetchCompanyMembersUseCase>(
-    FetchCompanyMembersUseCaseImpl.new,
-  );
-  injector.addSingleton<IFetchUserMembershipsUseCase>(
-    FetchUserMembershipsUseCaseImpl.new,
-  );
+  injector.addSingleton<ICompanyMemberRepository>(CompanyMemberRepositoryImpl.new);
+  injector.addSingleton<IFetchCompanyMembersUseCase>(FetchCompanyMembersUseCaseImpl.new);
+  injector.addSingleton<IFetchUserMembershipsUseCase>(FetchUserMembershipsUseCaseImpl.new);
   injector.addSingleton<IGetMemberLinkUseCase>(GetMemberLinkUseCaseImpl.new);
-  injector.addSingleton<IAddCompanyMemberUseCase>(
-    AddCompanyMemberUseCaseImpl.new,
-  );
-  injector.addSingleton<IChangeCompanyMemberRoleUseCase>(
-    ChangeCompanyMemberRoleUseCaseImpl.new,
-  );
-  injector.addSingleton<IRemoveCompanyMemberUseCase>(
-    RemoveCompanyMemberUseCaseImpl.new,
-  );
+  injector.addSingleton<IAddCompanyMemberUseCase>(AddCompanyMemberUseCaseImpl.new);
+  injector.addSingleton<IChangeCompanyMemberRoleUseCase>(ChangeCompanyMemberRoleUseCaseImpl.new);
+  injector.addSingleton<IRemoveCompanyMemberUseCase>(RemoveCompanyMemberUseCaseImpl.new);
   injector.addSingleton<ICompanyMemberFacade>(CompanyMemberFacadeImpl.new);
 
-  // Módulo de Autenticação
+  // Route Module
+  injector.addSingleton<IRouteRemoteService>(RouteRemoteServiceImpl.new);
+  injector.addSingleton<IRouteRepository>(RouteRepositoryImpl.new);
+  injector.addSingleton<IFetchAllRoutesUseCase>(FetchAllRoutesUseCaseImpl.new);
+  injector.addSingleton<IFetchRoutesByCompanyUseCase>(FetchRoutesByCompanyUseCaseImpl.new);
+  injector.addSingleton<IGetRouteByIdUseCase>(GetRouteByIdUseCaseImpl.new);
+  injector.addSingleton<ICreateRouteUseCase>(CreateRouteUseCaseImpl.new);
+  injector.addSingleton<IUpdateRouteUseCase>(UpdateRouteUseCaseImpl.new);
+  injector.addSingleton<IUpdateRouteImageUseCase>(UpdateRouteImageUseCaseImpl.new);
+  injector.addSingleton<IDeleteRouteUseCase>(DeleteRouteUseCaseImpl.new);
+  injector.addSingleton<IRouteUseCaseFacade>(RouteUseCaseFacadeImpl.new);
+
+  // Authentication Module
   injector.addSingleton<ILocalSessionStore>(SharedPrefLocalSessionService.new);
   injector.addSingleton<AuthLocalSessionManager>(AuthLocalSessionManager.new);
   injector.addSingleton<IAuthService>(FirebaseAuthService.new);
   injector.addSingleton<IAuthRepository>(AuthRepositoryImpl.new);
-  injector.addSingleton<ISendEmailVerificationLinkUseCase>(
-    SendEmailVerificationLinkUseCase.new,
-  );
-  injector.addSingleton<ISignUpWithVerifiedEmailUseCase>(
-    SignUpWithVerifiedEmailUseCase.new,
-  );
-  injector.addSingleton<ICheckEmailVerifiedStatusUseCase>(
-    CheckEmailVerifiedStatusUseCase.new,
-  );
-  injector.addSingleton<IDeleteExpiredAccountUseCase>(
-    DeleteExpiredAccountUseCase.new,
-  );
+  injector.addSingleton<ISendEmailVerificationLinkUseCase>(SendEmailVerificationLinkUseCase.new);
+  injector.addSingleton<ISignUpWithVerifiedEmailUseCase>(SignUpWithVerifiedEmailUseCase.new);
+  injector.addSingleton<ICheckEmailVerifiedStatusUseCase>(CheckEmailVerifiedStatusUseCase.new);
+  injector.addSingleton<IDeleteExpiredAccountUseCase>(DeleteExpiredAccountUseCase.new);
   injector.addSingleton<ISignInUseCase>(SignInUseCase.new);
   injector.addSingleton<ISignInWithGoogleUseCase>(SignInWithGoogleUseCase.new);
   injector.addSingleton<ISignOutUseCase>(SignOutUseCase.new);
   injector.addSingleton<IChangePasswordUseCase>(ChangePasswordUseCase.new);
   injector.addSingleton<IDeleteAccountUseCase>(DeleteAccountUseCase.new);
-  injector.addSingleton<ISendPasswordResetEmailUseCase>(
-    SendPasswordResetEmailUseCase.new,
-  );
+  injector.addSingleton<ISendPasswordResetEmailUseCase>(SendPasswordResetEmailUseCase.new);
   injector.addSingleton<IReauthenticateUseCase>(ReauthenticateUseCase.new);
   injector.addSingleton<ReauthenticateCommand>(ReauthenticateCommand.new);
   injector.addSingleton<IAuthUseCaseFacade>(AuthUseCaseFacadeImpl.new);
 
-  // Viewmodels
+  // ViewModels
   injector.addSingleton<AuthViewModel>(AuthViewModel.new);
   injector.addSingleton<UserViewModel>(UserViewModel.new);
   injector.addSingleton<CompanyViewModel>(CompanyViewModel.new);
   injector.addSingleton<CompanyListViewModel>(CompanyListViewModel.new);
   injector.addSingleton<CompanyMemberViewModel>(CompanyMemberViewModel.new);
+  injector.addSingleton<RouteViewModel>(RouteViewModel.new);
 
   injector.commit();
 }
