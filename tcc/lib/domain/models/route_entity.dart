@@ -8,8 +8,12 @@ class RouteModel {
   final GeoPoint destination;
   final List<DateTime> schedules;
   final String? imageUrl;
-
-  // Hydrated company data for direct display in CompanyRouteCard
+  final String? driverId;
+  final bool isTripActive;
+  final DateTime? tripStartedAt;
+  final List<String> passengerIds;
+  final List<String> pendingPassengerIds;
+  final List<String> confirmedPassengerIds;
   final CompanyModel? company;
 
   const RouteModel({
@@ -19,6 +23,12 @@ class RouteModel {
     required this.destination,
     required this.schedules,
     this.imageUrl,
+    this.driverId,
+    this.isTripActive = false,
+    this.tripStartedAt,
+    this.passengerIds = const [],
+    this.pendingPassengerIds = const [],
+    this.confirmedPassengerIds = const [],
     this.company,
   });
 
@@ -29,6 +39,12 @@ class RouteModel {
     GeoPoint? destination,
     List<DateTime>? schedules,
     String? imageUrl,
+    String? driverId,
+    bool? isTripActive,
+    DateTime? tripStartedAt,
+    List<String>? passengerIds,
+    List<String>? pendingPassengerIds,
+    List<String>? confirmedPassengerIds,
     CompanyModel? company,
   }) {
     return RouteModel(
@@ -38,6 +54,13 @@ class RouteModel {
       destination: destination ?? this.destination,
       schedules: schedules ?? this.schedules,
       imageUrl: imageUrl ?? this.imageUrl,
+      driverId: driverId ?? this.driverId,
+      isTripActive: isTripActive ?? this.isTripActive,
+      tripStartedAt: tripStartedAt ?? this.tripStartedAt,
+      passengerIds: passengerIds ?? this.passengerIds,
+      pendingPassengerIds: pendingPassengerIds ?? this.pendingPassengerIds,
+      confirmedPassengerIds:
+          confirmedPassengerIds ?? this.confirmedPassengerIds,
       company: company ?? this.company,
     );
   }
@@ -58,19 +81,43 @@ class RouteModel {
     final rawOrigin = map['origin'] ?? map['pontoPartida'];
     final rawDestination = map['destination'] ?? map['destino'];
 
+    final rawPassengers =
+        (map['passengerIds'] ?? map['listaIdPassageiros']) as List<dynamic>? ??
+            [];
+    final rawPending =
+        (map['pendingPassengerIds'] ?? map['listaIdSolicitacoes'])
+                as List<dynamic>? ??
+            [];
+    final rawConfirmed =
+        (map['confirmedPassengerIds'] ?? map['listaIdConfirmados'])
+                as List<dynamic>? ??
+            [];
+
+    DateTime? parsedTripStart;
+    final rawStart = map['tripStartedAt'];
+    if (rawStart is Timestamp) parsedTripStart = rawStart.toDate();
+    if (rawStart is DateTime) parsedTripStart = rawStart;
+    if (rawStart is String) parsedTripStart = DateTime.tryParse(rawStart);
+
     return RouteModel(
       id: (map['id'] as num?)?.toInt() ?? 0,
-      companyCnpj:
-          (map['companyCnpj'] ?? map['cnpj_empresa'] ?? '') as String,
+      companyCnpj: (map['companyCnpj'] ?? map['cnpj_empresa'] ?? '') as String,
       origin: rawOrigin is GeoPoint
           ? rawOrigin
           : const GeoPoint(-25.5204, -48.5095),
       destination: rawDestination is GeoPoint
           ? rawDestination
           : const GeoPoint(-25.5855, -48.5630),
-      schedules: parsedSchedules.isNotEmpty ? parsedSchedules : [DateTime.now()],
+      schedules:
+          parsedSchedules.isNotEmpty ? parsedSchedules : [DateTime.now()],
       imageUrl:
           (map['imageUrl'] ?? map['fotoRota'] ?? map['image']) as String?,
+      driverId: (map['driverId'] ?? map['cpfMotorista']) as String?,
+      isTripActive: (map['isTripActive'] as bool?) ?? false,
+      tripStartedAt: parsedTripStart,
+      passengerIds: rawPassengers.map((e) => e.toString()).toList(),
+      pendingPassengerIds: rawPending.map((e) => e.toString()).toList(),
+      confirmedPassengerIds: rawConfirmed.map((e) => e.toString()).toList(),
       company: company,
     );
   }
@@ -83,6 +130,19 @@ class RouteModel {
       'destination': destination,
       'schedules': schedules.map((dt) => Timestamp.fromDate(dt)).toList(),
       'imageUrl': imageUrl,
+      'driverId': driverId,
+      'isTripActive': isTripActive,
+      'tripStartedAt':
+          tripStartedAt != null ? Timestamp.fromDate(tripStartedAt!) : null,
+      'passengerIds': passengerIds,
+      'pendingPassengerIds': pendingPassengerIds,
+      'confirmedPassengerIds': confirmedPassengerIds,
     };
   }
+
+  bool isUserPassenger(String userId) => passengerIds.contains(userId);
+  bool isUserPending(String userId) => pendingPassengerIds.contains(userId);
+  bool isUserConfirmed(String userId) => confirmedPassengerIds.contains(userId);
+  bool isUserDriver(String userId) =>
+      driverId != null && driverId!.trim().isNotEmpty && driverId == userId;
 }

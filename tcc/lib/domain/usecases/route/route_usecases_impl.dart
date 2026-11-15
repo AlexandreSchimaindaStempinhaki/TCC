@@ -1,7 +1,12 @@
 import 'dart:io';
 import '../../models/route_entity.dart';
+import '../../models/user_entity.dart';
 import '../../../data/repositories/route/i_route_repository.dart';
 import 'i_route_usecases.dart';
+
+// ===========================================================================
+//   CRUD DE ROTAS
+// ===========================================================================
 
 class FetchAllRoutesUseCaseImpl implements IFetchAllRoutesUseCase {
   final IRouteRepository _repository;
@@ -89,5 +94,134 @@ class DeleteRouteUseCaseImpl implements IDeleteRouteUseCase {
   @override
   Future<void> call(int routeId) {
     return _repository.deleteRoute(routeId);
+  }
+}
+
+// ===========================================================================
+//   ENTRADA, APROVAÇÃO E VISUALIZAÇÃO DE MEMBROS DA ROTA
+// ===========================================================================
+
+class RequestToJoinRouteUseCaseImpl implements IRequestToJoinRouteUseCase {
+  final IRouteRepository _repository;
+
+  RequestToJoinRouteUseCaseImpl(this._repository);
+
+  @override
+  Future<void> call(int routeId, String userId) {
+    if (userId.trim().isEmpty) {
+      throw Exception('User ID is required to request joining a route.');
+    }
+    return _repository.requestToJoinRoute(routeId, userId);
+  }
+}
+
+class CancelJoinRequestUseCaseImpl implements ICancelJoinRequestUseCase {
+  final IRouteRepository _repository;
+
+  CancelJoinRequestUseCaseImpl(this._repository);
+
+  @override
+  Future<void> call(int routeId, String userId) {
+    if (userId.trim().isEmpty) {
+      throw Exception('User ID is required to cancel the request.');
+    }
+    return _repository.cancelJoinRequest(routeId, userId);
+  }
+}
+
+class ApprovePassengerInRouteUseCaseImpl
+    implements IApprovePassengerInRouteUseCase {
+  final IRouteRepository _repository;
+
+  ApprovePassengerInRouteUseCaseImpl(this._repository);
+
+  @override
+  Future<void> call(int routeId, String userId) {
+    if (userId.trim().isEmpty) {
+      throw Exception('User ID is required to approve passenger.');
+    }
+    return _repository.approvePassengerInRoute(routeId, userId);
+  }
+}
+
+class RemovePassengerFromRouteUseCaseImpl
+    implements IRemovePassengerFromRouteUseCase {
+  final IRouteRepository _repository;
+
+  RemovePassengerFromRouteUseCaseImpl(this._repository);
+
+  @override
+  Future<void> call(int routeId, String userId) {
+    if (userId.trim().isEmpty) {
+      throw Exception('User ID is required to remove passenger.');
+    }
+    return _repository.removePassengerFromRoute(routeId, userId);
+  }
+}
+
+class FetchRouteUsersByIdsUseCaseImpl implements IFetchRouteUsersByIdsUseCase {
+  final IRouteRepository _repository;
+
+  FetchRouteUsersByIdsUseCaseImpl(this._repository);
+
+  @override
+  Future<List<UserModel>> call(List<String> userIds) {
+    if (userIds.isEmpty) return Future.value([]);
+    return _repository.fetchUsersByIds(userIds);
+  }
+}
+
+// ===========================================================================
+//   OPERAÇÃO DA ROTA (MOTORISTA E EMBARQUE DE PASSAGEIROS)
+// ===========================================================================
+
+class AssignDriverToRouteUseCaseImpl implements IAssignDriverToRouteUseCase {
+  final IRouteRepository _repository;
+
+  AssignDriverToRouteUseCaseImpl(this._repository);
+
+  @override
+  Future<void> call(int routeId, String? driverId) {
+    return _repository.assignDriverToRoute(routeId, driverId);
+  }
+}
+
+class TogglePassengerPresenceUseCaseImpl
+    implements ITogglePassengerPresenceUseCase {
+  final IRouteRepository _repository;
+
+  TogglePassengerPresenceUseCaseImpl(this._repository);
+
+  @override
+  Future<void> call(int routeId, String userId, bool isPresent) {
+    if (userId.trim().isEmpty) {
+      throw Exception('User ID is required to confirm presence.');
+    }
+    return _repository.togglePassengerPresence(routeId, userId, isPresent);
+  }
+}
+
+class StartRouteTripUseCaseImpl implements IStartRouteTripUseCase {
+  final IRouteRepository _repository;
+
+  StartRouteTripUseCaseImpl(this._repository);
+
+  @override
+  Future<RouteModel> call(int routeId, String driverId) {
+    if (driverId.trim().isEmpty) {
+      throw Exception('Driver ID is required to start the trip.');
+    }
+    return _repository.startRouteTrip(routeId, driverId);
+  }
+}
+
+class FinishRouteTripUseCaseImpl implements IFinishRouteTripUseCase {
+  final IRouteRepository _repository;
+
+  FinishRouteTripUseCaseImpl(this._repository);
+
+  @override
+  Future<RouteModel> call(int routeId) {
+    return _repository.finishRouteTrip(routeId);
   }
 }

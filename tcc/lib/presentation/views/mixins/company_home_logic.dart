@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -6,16 +7,21 @@ import 'package:signals_flutter/signals_flutter.dart';
 import '../../../core/di/dependency_injection.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../core/routes/indigo_routes.dart';
+import '../../../domain/facades/company_member/i_company_member_facade.dart';
 import '../../../domain/models/company_entity.dart';
 import '../../controllers/company/company_list_viewmodel.dart';
 import '../../controllers/company/company_viewmodel.dart';
+import '../../controllers/user/user_viewmodel.dart';
 import '../../views/application/configuration/company_home_view.dart';
 
 mixin CompanyHomeMixin on State<CompanyHomeView> {
   late final CompanyViewModel companyViewModel;
   late final CompanyListViewModel companyListViewModel;
+  late final UserViewModel userViewModel;
+  late final ICompanyMemberFacade _companyMemberFacade;
 
   final isInitialLoading = signal(false);
+  final userRoleInCompany = signal<String?>(null);
   bool isDeleting = false;
 
   String _cleanDigits(String value) => value.replaceAll(RegExp(r'\D'), '');
@@ -25,12 +31,13 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
     super.initState();
     companyViewModel = injector.get<CompanyViewModel>();
     companyListViewModel = injector.get<CompanyListViewModel>();
+    userViewModel = injector.get<UserViewModel>();
+    _companyMemberFacade = injector.get<ICompanyMemberFacade>();
 
     if (widget.initialCompany != null) {
       companyViewModel.state.setSelectedCompany(widget.initialCompany);
     }
 
-    // Só mostra loading de tela cheia se realmente não houver nenhuma empresa em memória
     final hasCompanyInMemory =
         companyViewModel.state.selectedCompany.value != null ||
         widget.initialCompany != null;
@@ -63,6 +70,25 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
             break;
           }
         }
+
+        // Busca o cargo do usuário diretamente na Facade (sem depender de Command específico)
+        final loggedUser = userViewModel.state.user.value;
+        final authUser = FirebaseAuth.instance.currentUser;
+        final userEmail = loggedUser?.email ?? authUser?.email ?? '';
+        final authUid = authUser?.uid ?? '';
+
+        if (userEmail.isNotEmpty || authUid.isNotEmpty) {
+          try {
+            final dynamic facade = _companyMemberFacade;
+            final identifier = userEmail.isNotEmpty ? userEmail : authUid;
+            final link = await facade.getMemberLink(targetCnpj, identifier);
+            if (link != null) {
+              userRoleInCompany.value =
+                  (link as dynamic).cargo?.toString() ??
+                  (link as dynamic).role?.toString();
+            }
+          } catch (_) {}
+        }
       }
     } catch (_) {
       // Evita que qualquer falha de rede prenda o isInitialLoading em true
@@ -76,7 +102,40 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
   @override
   void dispose() {
     isInitialLoading.dispose();
+    userRoleInCompany.dispose();
     super.dispose();
+  }
+
+  bool canManageCompanyRoutes(CompanyModel company) {
+    final authUser = FirebaseAuth.instance.currentUser;
+    final loggedUser = userViewModel.state.user.value;
+
+    // 1. Verifica se o usuário é o dono (CEO/Criador) direto da empresa
+    final isOwner =
+        (authUser != null &&
+            (company.ownerId == authUser.uid ||
+                company.ownerId == authUser.email)) ||
+        (loggedUser != null && company.ownerId == loggedUser.email) ||
+        companyListViewModel.state.ownedCompanies.value.any(
+          (c) => _cleanDigits(c.cnpj) == _cleanDigits(company.cnpj),
+        );
+
+    if (isOwner) return true;
+
+    // 2. Verifica se o cargo no vínculo da empresa é CEO, Gerente ou Admin
+    final role = (userRoleInCompany.value ?? '').trim().toLowerCase();
+    return role == 'ceo' ||
+        role == 'gerente' ||
+        role == 'manager' ||
+        role == 'admin' ||
+        role == 'administrador';
+  }
+
+  Future<void> openCreateRoute(
+    BuildContext context,
+    CompanyModel company,
+  ) async {
+    await context.pushNamed(IndigoRouteNames.createRoute, extra: company);
   }
 
   String formatCnpj(String cnpj) {

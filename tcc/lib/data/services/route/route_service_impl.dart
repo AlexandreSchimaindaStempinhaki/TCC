@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../domain/models/company_entity.dart';
 import '../../../domain/models/route_entity.dart';
+import '../../../domain/models/user_entity.dart';
 import 'i_route_service.dart';
 
 class RouteRemoteServiceImpl implements IRouteRemoteService {
@@ -19,6 +20,10 @@ class RouteRemoteServiceImpl implements IRouteRemoteService {
 
   CollectionReference get _companiesCollection =>
       _firestore.collection('companies');
+
+  CollectionReference get _usersCollection => _firestore.collection('users');
+
+  CollectionReference get _tripsCollection => _firestore.collection('trips');
 
   Map<String, dynamic>? _asMap(Object? rawData) {
     if (rawData == null) return null;
@@ -36,6 +41,31 @@ class RouteRemoteServiceImpl implements IRouteRemoteService {
     } on NoSuchMethodError {
       return parser(data) as CompanyModel;
     }
+  }
+
+  UserModel _parseUserModel(Map<String, dynamic> data, String docId) {
+    final dynamic parser = UserModel.fromMap;
+    try {
+      return parser(data, docId) as UserModel;
+    } on NoSuchMethodError {
+      return parser(data) as UserModel;
+    }
+  }
+
+  Future<DocumentReference> _resolveRouteDocRef(int routeId) async {
+    final docRef = _routesCollection.doc(routeId.toString());
+    final snapshot = await docRef.get();
+    if (snapshot.exists) return docRef;
+
+    final query = await _routesCollection
+        .where('id', isEqualTo: routeId)
+        .limit(1)
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      return query.docs.first.reference;
+    }
+    throw Exception('Route not found ($routeId).');
   }
 
   Future<CompanyModel?> _fetchCompanyData(
@@ -233,23 +263,8 @@ class RouteRemoteServiceImpl implements IRouteRemoteService {
       company: company,
     );
 
-    final docRef = _routesCollection.doc(route.id.toString());
-    final snapshot = await docRef.get();
-
-    if (snapshot.exists) {
-      await docRef.update(updatedModel.toMap());
-    } else {
-      final query = await _routesCollection
-          .where('id', isEqualTo: route.id)
-          .limit(1)
-          .get();
-
-      if (query.docs.isNotEmpty) {
-        await query.docs.first.reference.update(updatedModel.toMap());
-      } else {
-        await docRef.set(updatedModel.toMap());
-      }
-    }
+    final docRef = await _resolveRouteDocRef(route.id);
+    await docRef.update(updatedModel.toMap());
 
     return updatedModel;
   }
@@ -257,22 +272,8 @@ class RouteRemoteServiceImpl implements IRouteRemoteService {
   @override
   Future<String> updateRouteImage(int routeId, File imageFile) async {
     final imageUrl = await _uploadImageToCloudinary(imageFile, routeId);
-    final docRef = _routesCollection.doc(routeId.toString());
-    final snapshot = await docRef.get();
-
-    if (snapshot.exists) {
-      await docRef.update({'imageUrl': imageUrl});
-    } else {
-      final query = await _routesCollection
-          .where('id', isEqualTo: routeId)
-          .limit(1)
-          .get();
-
-      if (query.docs.isNotEmpty) {
-        await query.docs.first.reference.update({'imageUrl': imageUrl});
-      }
-    }
-
+    final docRef = await _resolveRouteDocRef(routeId);
+    await docRef.update({'imageUrl': imageUrl});
     return imageUrl;
   }
 
@@ -293,5 +294,169 @@ class RouteRemoteServiceImpl implements IRouteRemoteService {
     for (final doc in query.docs) {
       await doc.reference.delete();
     }
+  }
+
+  // ===========================================================================
+  //   ENTRADA, APROVAÇÃO E VISUALIZAÇÃO DE MEMBROS DA ROTA
+  // ===========================================================================
+
+  @override
+  Future<void> requestToJoinRoute(int routeId, String userId) async {
+    final docRef = await _resolveRouteDocRef(routeId);
+    await docRef.update({
+      'pendingPassengerIds': FieldValue.arrayUnion([userId]),
+    });
+  }
+
+  @override
+  Future<void> cancelJoinRequest(int routeId, String userId) async {
+    final docRef = await _resolveRouteDocRef(routeId);
+    await docRef.update({
+      'pendingPassengerIds': FieldValue.arrayRemove([userId]),
+    });
+  }
+
+  @override
+  Future<void> approvePassengerInRoute(int routeId, String userId) async {
+    final docRef = await _resolveRouteDocRef(routeId);
+    await docRef.update({
+      'pendingPassengerIds': FieldValue.arrayRemove([userId]),
+      'passengerIds': FieldValue.arrayUnion([userId]),
+    });
+  }
+
+  @override
+  Future<void> removePassengerFromRoute(int routeId, String userId) async {
+    final docRef = await _resolveRouteDocRef(routeId);
+    await docRef.update({
+      'pendingPassengerIds': FieldValue.arrayRemove([userId]),
+      'passengerIds': FieldValue.arrayRemove([userId]),
+      'confirmedPassengerIds': FieldValue.arrayRemove([userId]),
+    });
+  }
+
+  @override
+  Future<List<UserModel>> fetchUsersByIds(List<String> userIds) async {
+    if (userIds.isEmpty) return [];
+
+    final List<UserModel> users = [];
+    final Set<String> foundIds = {};
+
+    for (final rawId in userIds) {
+      if (rawId.trim().isEmpty) continue;
+
+      // 1. Tenta buscar direto pelo ID do documento (UID ou CPF)
+      final directDoc = await _usersCollection.doc(rawId).get();
+      final directData = _asMap(directDoc.data());
+      if (directDoc.exists && directData != null) {
+        users.add(_parseUserModel(directData, directDoc.id));
+        foundIds.add(rawId);
+        continue;
+      }
+
+      // 2. Fallback: busca pelo campo 'cpf' (com ou sem máscara) ou 'email'
+      final cleanId = _cleanDigits(rawId);
+      final cpfCandidates = <String>{
+        rawId.trim(),
+        if (cleanId.isNotEmpty) cleanId,
+      }.toList();
+
+      final query = await _usersCollection
+          .where('cpf', whereIn: cpfCandidates)
+          .limit(1)
+          .get();
+
+      if (query.docs.isNotEmpty) {
+        final doc = query.docs.first;
+        final docData = _asMap(doc.data());
+        if (docData != null && !foundIds.contains(doc.id)) {
+          users.add(_parseUserModel(docData, doc.id));
+          foundIds.add(doc.id);
+        }
+      }
+    }
+
+    return users;
+  }
+
+  // ===========================================================================
+  //   OPERAÇÃO DA ROTA (MOTORISTA, INICIAR/FINALIZAR VIAGEM E PRESENÇA)
+  // ===========================================================================
+
+  @override
+  Future<void> assignDriverToRoute(int routeId, String? driverId) async {
+    final docRef = await _resolveRouteDocRef(routeId);
+    await docRef.update({'driverId': driverId});
+  }
+
+  @override
+  Future<void> togglePassengerPresence(
+    int routeId,
+    String userId,
+    bool isPresent,
+  ) async {
+    final docRef = await _resolveRouteDocRef(routeId);
+    await docRef.update({
+      'confirmedPassengerIds': isPresent
+          ? FieldValue.arrayUnion([userId])
+          : FieldValue.arrayRemove([userId]),
+    });
+  }
+
+  @override
+  Future<RouteModel> startRouteTrip(int routeId, String driverId) async {
+    final docRef = await _resolveRouteDocRef(routeId);
+    final now = DateTime.now();
+
+    await docRef.update({
+      'driverId': driverId,
+      'isTripActive': true,
+      'tripStartedAt': Timestamp.fromDate(now),
+    });
+
+    final updatedRoute = await getRouteById(routeId);
+    if (updatedRoute == null) {
+      throw Exception('Failed to load route after starting trip.');
+    }
+    return updatedRoute;
+  }
+
+  @override
+  Future<RouteModel> finishRouteTrip(int routeId) async {
+    final currentRoute = await getRouteById(routeId);
+    if (currentRoute == null) {
+      throw Exception('Route not found ($routeId).');
+    }
+
+    final now = DateTime.now();
+    final tripId = DateTime.now().millisecondsSinceEpoch;
+
+    // Salva o registro histórico da Viagem (conforme a classe Viagem do diagrama)
+    await _tripsCollection.doc(tripId.toString()).set({
+      'id': tripId,
+      'routeId': routeId,
+      'companyCnpj': currentRoute.companyCnpj,
+      'driverId': currentRoute.driverId,
+      'data': Timestamp.fromDate(now),
+      'horarioSaida': Timestamp.fromDate(currentRoute.tripStartedAt ?? now),
+      'horarioChegada': Timestamp.fromDate(now),
+      'status': 'Finalizada',
+      'numeroPassageiros': currentRoute.confirmedPassengerIds.length,
+      'confirmedPassengerIds': currentRoute.confirmedPassengerIds,
+    });
+
+    // Encerra a viagem ativa na Rota e limpa a lista de presença para a próxima viagem
+    final docRef = await _resolveRouteDocRef(routeId);
+    await docRef.update({
+      'isTripActive': false,
+      'tripStartedAt': null,
+      'confirmedPassengerIds': <String>[],
+    });
+
+    return currentRoute.copyWith(
+      isTripActive: false,
+      tripStartedAt: null,
+      confirmedPassengerIds: const [],
+    );
   }
 }

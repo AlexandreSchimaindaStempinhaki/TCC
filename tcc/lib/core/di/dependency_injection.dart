@@ -35,8 +35,6 @@ import '../../domain/usecases/authentication/i_auth_usecases.dart';
 import '../../domain/usecases/authentication/auth_use_cases.impl.dart';
 import '../../presentation/commands/authentication/auth_commands.dart';
 import '../../presentation/controllers/authentication/auth_session_viewmodel.dart';
-
-// CompanyMember Module Imports
 import '../../data/services/company_member/i_company_member_service.dart';
 import '../../data/services/company_member/company_member_service_impl.dart';
 import '../../data/repositories/company_member/company_member_repository_impl.dart';
@@ -45,8 +43,6 @@ import '../../domain/usecases/company_member/company_member_usecases_impl.dart';
 import '../../domain/facades/company_member/i_company_member_facade.dart';
 import '../../domain/facades/company_member/company_member_facade_impl.dart';
 import '../../presentation/controllers/company_member/company_member_viewmodel.dart';
-
-// Route Module Imports
 import '../../data/services/route/i_route_service.dart';
 import '../../data/services/route/route_service_impl.dart';
 import '../../data/repositories/route/route_repository_impl.dart';
@@ -55,6 +51,7 @@ import '../../domain/usecases/route/route_usecases_impl.dart';
 import '../../domain/facades/route/i_route_facade.dart';
 import '../../domain/facades/route/route_facade_impl.dart';
 import '../../presentation/controllers/route/route_viewmodel.dart';
+import '../../presentation/controllers/route/route_list_viewmodel.dart';
 
 final injector = AutoInjector();
 
@@ -102,6 +99,15 @@ void setupDependencyInjection() {
   injector.addSingleton<IUpdateRouteUseCase>(UpdateRouteUseCaseImpl.new);
   injector.addSingleton<IUpdateRouteImageUseCase>(UpdateRouteImageUseCaseImpl.new);
   injector.addSingleton<IDeleteRouteUseCase>(DeleteRouteUseCaseImpl.new);
+  injector.addSingleton<IRequestToJoinRouteUseCase>(RequestToJoinRouteUseCaseImpl.new);
+  injector.addSingleton<ICancelJoinRequestUseCase>(CancelJoinRequestUseCaseImpl.new);
+  injector.addSingleton<IApprovePassengerInRouteUseCase>(ApprovePassengerInRouteUseCaseImpl.new);
+  injector.addSingleton<IRemovePassengerFromRouteUseCase>(RemovePassengerFromRouteUseCaseImpl.new);
+  injector.addSingleton<IFetchRouteUsersByIdsUseCase>(FetchRouteUsersByIdsUseCaseImpl.new);
+  injector.addSingleton<IAssignDriverToRouteUseCase>(AssignDriverToRouteUseCaseImpl.new);
+  injector.addSingleton<ITogglePassengerPresenceUseCase>(TogglePassengerPresenceUseCaseImpl.new);
+  injector.addSingleton<IStartRouteTripUseCase>(StartRouteTripUseCaseImpl.new);
+  injector.addSingleton<IFinishRouteTripUseCase>(FinishRouteTripUseCaseImpl.new);
   injector.addSingleton<IRouteUseCaseFacade>(RouteUseCaseFacadeImpl.new);
 
   // Authentication Module
@@ -130,6 +136,7 @@ void setupDependencyInjection() {
   injector.addSingleton<CompanyListViewModel>(CompanyListViewModel.new);
   injector.addSingleton<CompanyMemberViewModel>(CompanyMemberViewModel.new);
   injector.addSingleton<RouteViewModel>(RouteViewModel.new);
+  injector.addSingleton<RouteListViewModel>(RouteListViewModel.new);
 
   injector.commit();
 }

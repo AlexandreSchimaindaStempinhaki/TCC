@@ -11,14 +11,40 @@ class RouteListState {
   bool get hasRoutes => routes.value.isNotEmpty;
   bool get hasCompanyRoutes => companyRoutes.value.isNotEmpty;
 
+  // ========================================================
+  //   CONSULTAS REATIVAS DO PASSAGEIRO E MOTORISTA
+  // ========================================================
+
+  bool isFavorite(int routeId) => favoriteRouteIds.value.contains(routeId);
+
+  List<RouteModel> get favoriteRoutes =>
+      routes.value.where((r) => favoriteRouteIds.value.contains(r.id)).toList();
+
+  List<RouteModel> getPendingRoutesForUser(String userId) =>
+      routes.value.where((r) => r.pendingPassengerIds.contains(userId)).toList();
+
+  List<RouteModel> getJoinedRoutesForUser(String userId) =>
+      routes.value.where((r) => r.passengerIds.contains(userId)).toList();
+
+  List<RouteModel> getDriverRoutesForUser(String driverId) =>
+      routes.value.where((r) => r.isUserDriver(driverId)).toList();
+
+  // ========================================================
+  //   MUTAÇÕES EM TEMPO DE EXECUÇÃO
+  // ========================================================
+
   void setRoutes(List<RouteModel> list) {
-    routes.value = list;
+    routes.value = List<RouteModel>.from(list);
     message.value = null;
   }
 
   void setCompanyRoutes(List<RouteModel> list) {
-    companyRoutes.value = list;
+    companyRoutes.value = List<RouteModel>.from(list);
     message.value = null;
+  }
+
+  void setFavoriteRouteIds(Iterable<int> ids) {
+    favoriteRouteIds.value = Set<int>.from(ids);
   }
 
   void upsertRoute(RouteModel route) {
@@ -46,8 +72,6 @@ class RouteListState {
         companyRoutes.value.where((r) => r.id != routeId).toList();
     routes.value = routes.value.where((r) => r.id != routeId).toList();
   }
-
-  bool isFavorite(int routeId) => favoriteRouteIds.value.contains(routeId);
 
   void toggleFavorite(int routeId) {
     final updated = Set<int>.from(favoriteRouteIds.value);

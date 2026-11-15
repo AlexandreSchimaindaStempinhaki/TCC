@@ -25,6 +25,15 @@ class RouteViewModel {
       updateRouteCommand: UpdateRouteCommand(_facade),
       updateRouteImageCommand: UpdateRouteImageCommand(_facade),
       deleteRouteCommand: DeleteRouteCommand(_facade),
+      requestToJoinRouteCommand: RequestToJoinRouteCommand(_facade),
+      cancelJoinRequestCommand: CancelJoinRequestCommand(_facade),
+      approvePassengerInRouteCommand: ApprovePassengerInRouteCommand(_facade),
+      removePassengerFromRouteCommand: RemovePassengerFromRouteCommand(_facade),
+      fetchRouteUsersByIdsCommand: FetchRouteUsersByIdsCommand(_facade),
+      assignDriverToRouteCommand: AssignDriverToRouteCommand(_facade),
+      togglePassengerPresenceCommand: TogglePassengerPresenceCommand(_facade),
+      startRouteTripCommand: StartRouteTripCommand(_facade),
+      finishRouteTripCommand: FinishRouteTripCommand(_facade),
     );
 
     _loading = signal(false);
@@ -37,4 +46,24 @@ class RouteViewModel {
   UpdateRouteImageCommand get updateRouteImageCommand =>
       _commands.updateRouteImageCommand;
   DeleteRouteCommand get deleteRouteCommand => _commands.deleteRouteCommand;
+
+  RequestToJoinRouteCommand get requestToJoinRouteCommand =>
+      _commands.requestToJoinRouteCommand;
+  CancelJoinRequestCommand get cancelJoinRequestCommand =>
+      _commands.cancelJoinRequestCommand;
+  ApprovePassengerInRouteCommand get approvePassengerInRouteCommand =>
+      _commands.approvePassengerInRouteCommand;
+  RemovePassengerFromRouteCommand get removePassengerFromRouteCommand =>
+      _commands.removePassengerFromRouteCommand;
+  FetchRouteUsersByIdsCommand get fetchRouteUsersByIdsCommand =>
+      _commands.fetchRouteUsersByIdsCommand;
+
+  AssignDriverToRouteCommand get assignDriverToRouteCommand =>
+      _commands.assignDriverToRouteCommand;
+  TogglePassengerPresenceCommand get togglePassengerPresenceCommand =>
+      _commands.togglePassengerPresenceCommand;
+  StartRouteTripCommand get startRouteTripCommand =>
+      _commands.startRouteTripCommand;
+  FinishRouteTripCommand get finishRouteTripCommand =>
+      _commands.finishRouteTripCommand;
 }

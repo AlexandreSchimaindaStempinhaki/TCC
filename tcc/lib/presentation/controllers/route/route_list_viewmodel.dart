@@ -23,6 +23,11 @@ class RouteListViewModel {
       fetchAllRoutesCommand: FetchAllRoutesCommand(_facade),
       fetchRoutesByCompanyCommand: FetchRoutesByCompanyCommand(_facade),
       deleteRouteCommand: DeleteRouteCommand(_facade),
+      requestToJoinRouteCommand: RequestToJoinRouteCommand(_facade),
+      cancelJoinRequestCommand: CancelJoinRequestCommand(_facade),
+      approvePassengerInRouteCommand: ApprovePassengerInRouteCommand(_facade),
+      removePassengerFromRouteCommand: RemovePassengerFromRouteCommand(_facade),
+      togglePassengerPresenceCommand: TogglePassengerPresenceCommand(_facade),
     );
 
     _loading = signal(false);
@@ -34,4 +39,14 @@ class RouteListViewModel {
   FetchRoutesByCompanyCommand get fetchRoutesByCompanyCommand =>
       _commands.fetchRoutesByCompanyCommand;
   DeleteRouteCommand get deleteRouteCommand => _commands.deleteRouteCommand;
+  RequestToJoinRouteCommand get requestToJoinRouteCommand =>
+      _commands.requestToJoinRouteCommand;
+  CancelJoinRequestCommand get cancelJoinRequestCommand =>
+      _commands.cancelJoinRequestCommand;
+  ApprovePassengerInRouteCommand get approvePassengerInRouteCommand =>
+      _commands.approvePassengerInRouteCommand;
+  RemovePassengerFromRouteCommand get removePassengerFromRouteCommand =>
+      _commands.removePassengerFromRouteCommand;
+  TogglePassengerPresenceCommand get togglePassengerPresenceCommand =>
+      _commands.togglePassengerPresenceCommand;
 }

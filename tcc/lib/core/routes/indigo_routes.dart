@@ -3,11 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tcc/presentation/views/application/configuration/my_companies_view.dart';
 import '../../domain/models/company_entity.dart';
+import '../../domain/models/route_entity.dart';
 import '../../domain/models/user_entity.dart';
 import '../../presentation/controllers/user/user_viewmodel.dart';
 import '../../presentation/views/application/configuration/about_view.dart';
 import '../../presentation/views/application/configuration/company_home_view.dart';
 import '../../presentation/views/application/configuration/create_companion_view.dart';
+import '../../presentation/views/application/configuration/create_route_view.dart';
 import '../../presentation/views/application/configuration/edit_address_view.dart';
 import '../../presentation/views/application/configuration/location_map_view.dart';
 import '../../presentation/views/application/configuration/manage_geolocation_view.dart';
@@ -55,6 +57,7 @@ class IndigoRouteNames {
   static const about = 'about';
   static const myCompanies = 'my_companies';
   static const companyHome = 'company_home';
+  static const createRoute = 'create_route';
 }
 
 class IndigoPaths {
@@ -82,6 +85,7 @@ class IndigoPaths {
   static const about = '/about';
   static const myCompanies = '/my-companies';
   static const companyHome = '/company-home';
+  static const createRoute = '/create-route';
 }
 
 final List<RouteBase> indigoRoutes = [
@@ -297,6 +301,17 @@ final List<RouteBase> indigoRoutes = [
     builder: (context, state) {
       final company = state.extra as CompanyModel?;
       return CompanyHomeView(initialCompany: company);
+    },
+  ),
+  GoRoute(
+    path: '/create-route',
+    name: IndigoRouteNames.createRoute,
+    builder: (context, state) {
+      final extra = state.extra;
+      if (extra is RouteModel) {
+        return CreateRouteView(initialRoute: extra, company: extra.company);
+      }
+      return CreateRouteView(company: extra is CompanyModel ? extra : null);
     },
   ),
 ];
