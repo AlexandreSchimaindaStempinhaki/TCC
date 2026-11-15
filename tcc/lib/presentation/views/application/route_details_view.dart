@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
@@ -6,14 +6,8 @@ import 'package:tcc/presentation/widgets/account_option.dart';
 import 'package:tcc/presentation/widgets/animated_three_dots.dart';
 import 'package:tcc/presentation/widgets/route_itinerary_card.dart';
 
-import '../../../core/di/dependency_injection.dart';
 import '../../../core/routes/indigo_routes.dart';
-import '../../../domain/models/company_entity.dart';
-import '../../../domain/models/route_entity.dart';
-import '../../controllers/company/company_list_viewmodel.dart';
-import '../../controllers/company/company_viewmodel.dart';
-import '../../controllers/route/route_list_viewmodel.dart';
-import '../../controllers/user/user_viewmodel.dart';
+import '../mixins/route_details_logic.dart';
 
 class RouteDetailsView extends StatefulWidget {
   final Map<String, dynamic> route;
@@ -24,234 +18,8 @@ class RouteDetailsView extends StatefulWidget {
   State<RouteDetailsView> createState() => _RouteDetailsViewState();
 }
 
-class _RouteDetailsViewState extends State<RouteDetailsView> {
-  late final RouteListViewModel _routeListViewModel;
-  late final UserViewModel _userViewModel;
-  late final CompanyViewModel _companyViewModel;
-  late final CompanyListViewModel _companyListViewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    _routeListViewModel = injector.get<RouteListViewModel>();
-    _userViewModel = injector.get<UserViewModel>();
-    _companyViewModel = injector.get<CompanyViewModel>();
-    _companyListViewModel = injector.get<CompanyListViewModel>();
-  }
-
-  int? get _routeId => (widget.route['id'] as num?)?.toInt();
-
-  String _cleanDigits(String value) => value.replaceAll(RegExp(r'\D'), '');
-
-  String _currentUserIdentifier() {
-    final loggedUser = _userViewModel.state.user.value;
-    final authUser = FirebaseAuth.instance.currentUser;
-
-    final cpf = loggedUser?.cpf;
-    if (cpf != null && cpf.trim().isNotEmpty) {
-      return cpf.trim();
-    }
-
-    final email = loggedUser?.email;
-    if (email != null && email.trim().isNotEmpty) {
-      return email.trim();
-    }
-
-    return authUser?.email ?? authUser?.uid ?? '';
-  }
-
-  RouteModel? _findReactiveRoute() {
-    final id = _routeId;
-    if (id != null) {
-      for (final r in _routeListViewModel.state.routes.value) {
-        if (r.id == id) return r;
-      }
-      for (final r in _routeListViewModel.state.companyRoutes.value) {
-        if (r.id == id) return r;
-      }
-    }
-    final rawModel = widget.route['routeModel'];
-    return rawModel is RouteModel ? rawModel : null;
-  }
-
-  Future<void> _openCompanyHome(
-    BuildContext context,
-    RouteModel? reactiveRoute,
-  ) async {
-    final rawCnpj =
-        reactiveRoute?.companyCnpj ??
-        (widget.route['companyCnpj'] as String?) ??
-        '';
-    final targetCnpj = _cleanDigits(rawCnpj);
-
-    CompanyModel? company =
-        reactiveRoute?.company ??
-        (widget.route['company'] is CompanyModel
-            ? widget.route['company'] as CompanyModel
-            : null);
-
-    // Procura nas listas de empresas já carregadas caso não venha acoplada na rota
-    if (company == null && targetCnpj.isNotEmpty) {
-      final knownCompanies = [
-        ..._companyListViewModel.state.ownedCompanies.value,
-        ..._companyListViewModel.state.memberCompanies.value,
-      ];
-      for (final c in knownCompanies) {
-        if (_cleanDigits(c.cnpj) == targetCnpj) {
-          company = c;
-          break;
-        }
-      }
-    }
-
-    // Fallback seguro garantindo um CompanyModel válido para a CompanyHomeView
-    company ??= CompanyModel.fromMap({
-      'cnpj': rawCnpj,
-      'name':
-          (widget.route['companyName'] as String?) ?? 'Empresa de Transporte',
-      'email': '',
-      'phone': '',
-      'ownerId': '',
-      'logoUrl': widget.route['image'] as String?,
-    });
-
-    _companyViewModel.state.setSelectedCompany(company);
-
-    await context.pushNamed(
-      IndigoRouteNames.companyHome,
-      extra: company,
-    );
-
-    if (mounted) {
-      await _routeListViewModel.commands.fetchAllRoutes();
-    }
-  }
-
-  void _handleBack(BuildContext context) {
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.goNamed(IndigoRouteNames.home);
-    }
-  }
-
-  void _showTopSnackBar(
-    BuildContext context,
-    String message, {
-    Color backgroundColor = Colors.green,
-    IconData icon = Icons.check_circle_outline_rounded,
-  }) {
-    final mediaQuery = MediaQuery.of(context);
-    final bottomMargin =
-        mediaQuery.size.height - mediaQuery.padding.top - 110;
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: backgroundColor,
-          elevation: 6,
-          duration: const Duration(seconds: 2),
-          margin: EdgeInsets.only(
-            bottom: bottomMargin > 0 ? bottomMargin : 20,
-            left: 20,
-            right: 20,
-          ),
-          shape: const StadiumBorder(),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          content: Row(
-            children: [
-              Icon(icon, color: Colors.white, size: 20),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  message,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-  }
-
-  Future<void> _handleJoinAction(
-    BuildContext context, {
-    required bool isPending,
-    required bool isApproved,
-  }) async {
-    final routeId = _routeId;
-    if (routeId == null) {
-      _showTopSnackBar(
-        context,
-        'Solicitação de vínculo enviada com sucesso!',
-      );
-      return;
-    }
-
-    if (isApproved) {
-      _showTopSnackBar(
-        context,
-        'Você já faz parte desta rota!',
-        backgroundColor: Colors.black87,
-        icon: Icons.verified_rounded,
-      );
-      return;
-    }
-
-    final userId = _currentUserIdentifier();
-    if (userId.isEmpty) {
-      _showTopSnackBar(
-        context,
-        'Faça login para solicitar vínculo com a rota.',
-        backgroundColor: Colors.redAccent,
-        icon: Icons.error_outline_rounded,
-      );
-      return;
-    }
-
-    if (isPending) {
-      final canceled = await _routeListViewModel.commands.cancelJoinRequest(
-        routeId,
-        userId,
-      );
-      if (!context.mounted) return;
-      _showTopSnackBar(
-        context,
-        canceled
-            ? 'Solicitação de vínculo cancelada.'
-            : (_routeListViewModel.state.message.value ??
-                'Erro ao cancelar solicitação.'),
-        backgroundColor: canceled ? Colors.black87 : Colors.redAccent,
-        icon: canceled
-            ? Icons.info_outline_rounded
-            : Icons.error_outline_rounded,
-      );
-    } else {
-      final requested = await _routeListViewModel.commands.requestToJoinRoute(
-        routeId,
-        userId,
-      );
-      if (!context.mounted) return;
-      _showTopSnackBar(
-        context,
-        requested
-            ? 'Solicitação de vínculo enviada com sucesso!'
-            : (_routeListViewModel.state.message.value ??
-                'Erro ao enviar solicitação.'),
-        backgroundColor: requested ? Colors.green : Colors.redAccent,
-        icon: requested
-            ? Icons.check_circle_outline_rounded
-            : Icons.error_outline_rounded,
-      );
-    }
-  }
-
+class _RouteDetailsViewState extends State<RouteDetailsView>
+    with RouteDetailsMixin {
   Widget _buildOuterSectionTitle(BuildContext context, String title) {
     final colorScheme = Theme.of(context).colorScheme;
     return Padding(
@@ -267,23 +35,76 @@ class _RouteDetailsViewState extends State<RouteDetailsView> {
     );
   }
 
+  Widget _buildHeaderImage(String imageUrl, ColorScheme colorScheme) {
+    if (imageUrl.trim().isEmpty) {
+      return Container(
+        color: colorScheme.primary.withOpacity(0.1),
+        child: Icon(
+          Icons.directions_bus_rounded,
+          size: 64,
+          color: colorScheme.primary,
+        ),
+      );
+    }
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        ImageFiltered(
+          imageFilter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              color: colorScheme.primary.withOpacity(0.15),
+            ),
+          ),
+        ),
+        Container(
+          color: Colors.black.withOpacity(0.28),
+        ),
+        Image.network(
+          imageUrl,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => Container(
+            color: colorScheme.primary.withOpacity(0.1),
+            child: Icon(
+              Icons.directions_bus_rounded,
+              size: 64,
+              color: colorScheme.primary,
+            ),
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.black.withOpacity(0.45),
+                Colors.transparent,
+                Colors.black.withOpacity(0.55),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final List<String> shifts = List<String>.from(
-      widget.route['shifts'] ?? ['Manhã (07:00)', 'Noite (18:00)'],
-    );
-
     return Watch((context) {
-      final reactiveRoute = _findReactiveRoute();
-      final routeId = _routeId;
-      final isFavorite = routeId != null
-          ? _routeListViewModel.state.isFavorite(routeId)
+      final reactiveRoute = findReactiveRoute();
+      final id = routeId;
+      final isFavorite = id != null
+          ? routeListViewModel.state.isFavorite(id)
           : ((widget.route['isFavorite'] as bool?) ?? false);
 
-      final userId = _currentUserIdentifier();
+      final userId = currentUserIdentifier();
       final isApproved =
           reactiveRoute != null &&
           userId.isNotEmpty &&
@@ -294,15 +115,43 @@ class _RouteDetailsViewState extends State<RouteDetailsView> {
           reactiveRoute.isUserPending(userId);
 
       final isExecutingAction =
-          _routeListViewModel.requestToJoinRouteCommand.isExecuting.value ||
-          _routeListViewModel.cancelJoinRequestCommand.isExecuting.value;
+          routeListViewModel.requestToJoinRouteCommand.isExecuting.value ||
+          routeListViewModel.cancelJoinRequestCommand.isExecuting.value ||
+          isDeletingRoute.value;
+
+      final hasManageAccess = canManageRoute.value;
+
+      final imageUrl =
+          (reactiveRoute?.imageUrl != null &&
+              reactiveRoute!.imageUrl!.trim().isNotEmpty)
+          ? reactiveRoute.imageUrl!
+          : (widget.route['image'] as String?) ?? '';
+
+      final originText =
+          (reactiveRoute?.originName != null &&
+              reactiveRoute!.originName!.trim().isNotEmpty)
+          ? reactiveRoute.originName!
+          : (widget.route['origin'] as String?) ?? '';
+
+      final destinationText =
+          (reactiveRoute?.destinationName != null &&
+              reactiveRoute!.destinationName!.trim().isNotEmpty)
+          ? reactiveRoute.destinationName!
+          : (widget.route['destination'] as String?) ?? '';
+
+      final operatingDaysText =
+          reactiveRoute?.operatingDaysLabel ??
+          (widget.route['operatingDays'] as String?) ??
+          'Segunda a Sexta';
+
+      final currentShifts = resolveShifts(reactiveRoute);
 
       return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         body: CustomScrollView(
           slivers: [
             SliverAppBar(
-              expandedHeight: 220,
+              expandedHeight: 230,
               pinned: true,
               backgroundColor: colorScheme.primary,
               leading: Padding(
@@ -318,7 +167,7 @@ class _RouteDetailsViewState extends State<RouteDetailsView> {
                       color: Colors.white,
                       size: 20,
                     ),
-                    onPressed: () => _handleBack(context),
+                    onPressed: () => handleBack(context),
                     tooltip: 'Voltar',
                   ),
                 ),
@@ -340,8 +189,8 @@ class _RouteDetailsViewState extends State<RouteDetailsView> {
                         size: 20,
                       ),
                       onPressed: () {
-                        if (routeId != null) {
-                          _routeListViewModel.state.toggleFavorite(routeId);
+                        if (id != null) {
+                          routeListViewModel.state.toggleFavorite(id);
                         } else {
                           setState(() {
                             widget.route['isFavorite'] = !isFavorite;
@@ -354,36 +203,7 @@ class _RouteDetailsViewState extends State<RouteDetailsView> {
                 ),
               ],
               flexibleSpace: FlexibleSpaceBar(
-                background: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.network(
-                      (widget.route['image'] as String?) ?? '',
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: colorScheme.primary.withOpacity(0.1),
-                        child: Icon(
-                          Icons.directions_bus_rounded,
-                          size: 64,
-                          color: colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.black.withOpacity(0.4),
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.6),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                background: _buildHeaderImage(imageUrl, colorScheme),
               ),
             ),
             SliverToBoxAdapter(
@@ -392,7 +212,6 @@ class _RouteDetailsViewState extends State<RouteDetailsView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // CABEÇALHO DA EMPRESA E AVALIAÇÃO
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -457,7 +276,6 @@ class _RouteDetailsViewState extends State<RouteDetailsView> {
                     ),
                     const SizedBox(height: 20),
 
-                    // OPÇÕES PADRONIZADAS (EMPRESA E MAPA)
                     Container(
                       clipBehavior: Clip.antiAlias,
                       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -478,7 +296,7 @@ class _RouteDetailsViewState extends State<RouteDetailsView> {
                             icon: Icons.storefront_rounded,
                             title: 'Visualizar Página da Empresa',
                             trailing: const Icon(Icons.chevron_right_rounded),
-                            onTap: () => _openCompanyHome(
+                            onTap: () => openCompanyHome(
                               context,
                               reactiveRoute,
                             ),
@@ -489,27 +307,88 @@ class _RouteDetailsViewState extends State<RouteDetailsView> {
                             title: 'Visualizar Trajeto no Mapa',
                             trailing: const Icon(Icons.chevron_right_rounded),
                             onTap: () {
+                              final mapPayload = Map<String, dynamic>.from(
+                                widget.route,
+                              );
+                              if (reactiveRoute != null) {
+                                mapPayload['startLatitude'] =
+                                    reactiveRoute.origin.latitude;
+                                mapPayload['startLongitude'] =
+                                    reactiveRoute.origin.longitude;
+                                mapPayload['endLatitude'] =
+                                    reactiveRoute.destination.latitude;
+                                mapPayload['endLongitude'] =
+                                    reactiveRoute.destination.longitude;
+                                mapPayload['origin'] = originText;
+                                mapPayload['destination'] = destinationText;
+                              }
                               context.pushNamed(
                                 IndigoRouteNames.routeMap,
-                                extra: widget.route,
+                                extra: mapPayload,
                               );
                             },
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 28),
 
-                    // ITINERÁRIO E TURNOS
+                    if (hasManageAccess) ...[
+                      const SizedBox(height: 24),
+                      _buildOuterSectionTitle(context, 'Gestão da Rota'),
+                      Container(
+                        clipBehavior: Clip.antiAlias,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: theme.cardColor,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            AccountOption(
+                              icon: Icons.edit_rounded,
+                              title: 'Editar Rota',
+                              trailing: const Icon(
+                                Icons.chevron_right_rounded,
+                              ),
+                              onTap: () => openEditRoute(
+                                context,
+                                reactiveRoute,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            AccountOption(
+                              icon: Icons.delete_outline_rounded,
+                              title: 'Excluir Rota',
+                              iconColor: Colors.redAccent,
+                              textColor: Colors.redAccent,
+                              trailing: const Icon(
+                                Icons.chevron_right_rounded,
+                                color: Colors.redAccent,
+                              ),
+                              onTap: () => confirmAndDeleteRoute(
+                                context,
+                                reactiveRoute,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 28),
                     _buildOuterSectionTitle(context, 'Itinerário e Turnos'),
                     RouteItineraryCard(
-                      origin: (widget.route['origin'] as String?) ?? '',
-                      destination:
-                          (widget.route['destination'] as String?) ?? '',
-                      operatingDays:
-                          (widget.route['operatingDays'] as String?) ??
-                          'Segunda a Sexta',
-                      shifts: shifts,
+                      origin: originText,
+                      destination: destinationText,
+                      operatingDays: operatingDaysText,
+                      shifts: currentShifts,
                     ),
                   ],
                 ),
@@ -532,7 +411,7 @@ class _RouteDetailsViewState extends State<RouteDetailsView> {
               child: ElevatedButton(
                 onPressed: isExecutingAction
                     ? null
-                    : () => _handleJoinAction(
+                    : () => handleJoinAction(
                         context,
                         isPending: isPending,
                         isApproved: isApproved,

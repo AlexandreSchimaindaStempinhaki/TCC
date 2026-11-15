@@ -8,6 +8,7 @@ import '../../domain/models/user_entity.dart';
 import '../../presentation/controllers/user/user_viewmodel.dart';
 import '../../presentation/views/application/configuration/about_view.dart';
 import '../../presentation/views/application/configuration/company_home_view.dart';
+import '../../presentation/views/application/configuration/company_routes_view.dart';
 import '../../presentation/views/application/configuration/create_companion_view.dart';
 import '../../presentation/views/application/configuration/create_route_view.dart';
 import '../../presentation/views/application/configuration/edit_address_view.dart';
@@ -58,6 +59,7 @@ class IndigoRouteNames {
   static const myCompanies = 'my_companies';
   static const companyHome = 'company_home';
   static const createRoute = 'create_route';
+  static const companyRoutes = 'company_routes';
 }
 
 class IndigoPaths {
@@ -86,6 +88,7 @@ class IndigoPaths {
   static const myCompanies = '/my-companies';
   static const companyHome = '/company-home';
   static const createRoute = '/create-route';
+  static const companyRoutes = '/company-routes';
 }
 
 final List<RouteBase> indigoRoutes = [
@@ -312,6 +315,16 @@ final List<RouteBase> indigoRoutes = [
         return CreateRouteView(initialRoute: extra, company: extra.company);
       }
       return CreateRouteView(company: extra is CompanyModel ? extra : null);
+    },
+  ),
+  GoRoute(
+    path: '/company-routes',
+    name: IndigoRouteNames.companyRoutes,
+    builder: (context, state) {
+      final company = state.extra is CompanyModel
+          ? state.extra as CompanyModel
+          : null;
+      return CompanyRoutesView(company: company);
     },
   ),
 ];

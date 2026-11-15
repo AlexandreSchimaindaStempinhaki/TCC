@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart' show GoRouterHelper;
 import 'package:signals_flutter/signals_flutter.dart';
 
+import '../../../../core/routes/indigo_routes.dart';
 import '../../../../domain/models/company_entity.dart';
 import '../../../widgets/account_option.dart';
 import '../../../widgets/animated_three_dots.dart';
@@ -390,11 +392,14 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
 
                             AccountOption(
                               icon: Icons.route_outlined,
-                              title: 'Rotas e Itinerários',
-                              onTap: () => showComingSoon(
-                                context,
-                                'Rotas e Itinerários',
-                              ),
+                              title: 'Rotas da Empresa',
+                              trailing: const SizedBox.shrink(),
+                              onTap: () async {
+                                await context.pushNamed(
+                                  IndigoRouteNames.companyRoutes,
+                                  extra: company,
+                                );
+                              },
                             ),
                             const SizedBox(height: 8),
 
