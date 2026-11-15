@@ -15,8 +15,10 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
   late final CompanyViewModel companyViewModel;
   late final CompanyListViewModel companyListViewModel;
 
-  final isInitialLoading = signal(true);
+  final isInitialLoading = signal(false);
   bool isDeleting = false;
+
+  String _cleanDigits(String value) => value.replaceAll(RegExp(r'\D'), '');
 
   @override
   void initState() {
@@ -28,29 +30,46 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
       companyViewModel.state.setSelectedCompany(widget.initialCompany);
     }
 
-    loadCompanyData();
+    // Só mostra loading de tela cheia se realmente não houver nenhuma empresa em memória
+    final hasCompanyInMemory =
+        companyViewModel.state.selectedCompany.value != null ||
+        widget.initialCompany != null;
+
+    loadCompanyData(showFullScreenLoading: !hasCompanyInMemory);
   }
 
-  Future<void> loadCompanyData() async {
-    isInitialLoading.value = true;
-    await companyListViewModel.commands.fetchOwnedCompanies();
-
-    final targetCnpj =
-        companyViewModel.state.selectedCompany.value?.cnpj ??
-        widget.initialCompany?.cnpj;
-
-    if (targetCnpj != null) {
-      final updatedList = companyListViewModel.state.ownedCompanies.value;
-      for (final comp in updatedList) {
-        if (comp.cnpj == targetCnpj) {
-          companyViewModel.state.setSelectedCompany(comp);
-          break;
-        }
-      }
+  Future<void> loadCompanyData({bool showFullScreenLoading = false}) async {
+    if (showFullScreenLoading) {
+      isInitialLoading.value = true;
     }
 
-    if (mounted) {
-      isInitialLoading.value = false;
+    try {
+      await companyListViewModel.commands.fetchOwnedCompanies();
+
+      final rawTargetCnpj =
+          companyViewModel.state.selectedCompany.value?.cnpj ??
+          widget.initialCompany?.cnpj;
+
+      if (rawTargetCnpj != null) {
+        final targetCnpj = _cleanDigits(rawTargetCnpj);
+        final allKnownCompanies = [
+          ...companyListViewModel.state.ownedCompanies.value,
+          ...companyListViewModel.state.memberCompanies.value,
+        ];
+
+        for (final comp in allKnownCompanies) {
+          if (_cleanDigits(comp.cnpj) == targetCnpj) {
+            companyViewModel.state.setSelectedCompany(comp);
+            break;
+          }
+        }
+      }
+    } catch (_) {
+      // Evita que qualquer falha de rede prenda o isInitialLoading em true
+    } finally {
+      if (mounted) {
+        isInitialLoading.value = false;
+      }
     }
   }
 
@@ -61,13 +80,13 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
   }
 
   String formatCnpj(String cnpj) {
-    final digits = cnpj.replaceAll(RegExp(r'\D'), '');
+    final digits = _cleanDigits(cnpj);
     if (digits.length != 14) return cnpj;
     return '${digits.substring(0, 2)}.${digits.substring(2, 5)}.${digits.substring(5, 8)}/${digits.substring(8, 12)}-${digits.substring(12, 14)}';
   }
 
   String formatPhone(String phone) {
-    final digits = phone.replaceAll(RegExp(r'\D'), '');
+    final digits = _cleanDigits(phone);
     if (digits.length == 11) {
       return '(${digits.substring(0, 2)}) ${digits.substring(2, 7)}-${digits.substring(7, 11)}';
     } else if (digits.length == 10) {
@@ -139,8 +158,13 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
   }
 
   Future<void> openEditCompany(CompanyModel company) async {
-    await context.pushNamed(IndigoRouteNames.createCompany, extra: company);
-    await loadCompanyData();
+    final updated = await context.pushNamed<bool>(
+      IndigoRouteNames.createCompany,
+      extra: company,
+    );
+    if (updated == true && mounted) {
+      await loadCompanyData(showFullScreenLoading: false);
+    }
   }
 
   Future<void> confirmAndDeleteCompany(

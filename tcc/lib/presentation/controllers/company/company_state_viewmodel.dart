@@ -6,10 +6,10 @@ class CompanyState {
   final selectedCompany = signal<CompanyModel?>(null);
   final message = signal<String?>(null);
 
-  bool get hasCompanies => companies.value.isNotEmpty;
+  String _cleanCnpj(String cnpj) => cnpj.replaceAll(RegExp(r'\D'), '');
 
-  void setCompanies(List<CompanyModel> companyList) {
-    companies.value = companyList;
+  void setCompanies(List<CompanyModel> newCompanies) {
+    companies.value = newCompanies;
     message.value = null;
   }
 
@@ -19,33 +19,35 @@ class CompanyState {
 
   void addCompany(CompanyModel company) {
     companies.value = [...companies.value, company];
-    message.value = null;
+    selectedCompany.value = company;
   }
 
   void updateCompanyInList(CompanyModel updatedCompany) {
+    final targetCnpj = _cleanCnpj(updatedCompany.cnpj);
+
     companies.value = companies.value.map((comp) {
-      return comp.cnpj == updatedCompany.cnpj ? updatedCompany : comp;
+      return _cleanCnpj(comp.cnpj) == targetCnpj ? updatedCompany : comp;
     }).toList();
 
-    if (selectedCompany.value?.cnpj == updatedCompany.cnpj) {
+    final currentSelected = selectedCompany.value;
+    if (currentSelected == null ||
+        _cleanCnpj(currentSelected.cnpj) == targetCnpj) {
       selectedCompany.value = updatedCompany;
     }
   }
 
   void removeCompany(String cnpj) {
-    companies.value = companies.value.where((comp) => comp.cnpj != cnpj).toList();
-    if (selectedCompany.value?.cnpj == cnpj) {
+    final targetCnpj = _cleanCnpj(cnpj);
+    companies.value = companies.value
+        .where((comp) => _cleanCnpj(comp.cnpj) != targetCnpj)
+        .toList();
+
+    if (selectedCompany.value != null &&
+        _cleanCnpj(selectedCompany.value!.cnpj) == targetCnpj) {
       selectedCompany.value = null;
     }
   }
 
-  void clearState() {
-    companies.value = [];
-    selectedCompany.value = null;
-    message.value = null;
-  }
-
   void clearMessage() => message.value = null;
-
   void setMessage(String msg) => message.value = msg;
 }

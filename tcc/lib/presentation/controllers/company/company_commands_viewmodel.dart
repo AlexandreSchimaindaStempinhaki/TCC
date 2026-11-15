@@ -2,10 +2,8 @@ import 'dart:io';
 import 'package:signals_flutter/signals_flutter.dart';
 import '../../../../core/failure/failure.dart';
 import '../../../../core/patterns/command.dart';
-import '../../../../core/patterns/result.dart';
 import '../../../core/typedefs/types_defs.dart';
 import '../../../domain/models/company_entity.dart';
-import '../../../domain/usecases/company/i_company_use_cases.dart';
 import '../../commands/company_commands.dart';
 import 'company_state_viewmodel.dart';
 
@@ -183,6 +181,10 @@ class CompanyCommands {
     _observeCommand<void>(
       _updateCompanyCommand,
       onSuccess: (_) {
+        final updatedCompany = _updateCompanyCommand.parameter?.company;
+        if (updatedCompany != null) {
+          state.updateCompanyInList(updatedCompany);
+        }
         state.clearMessage();
       },
     );
@@ -193,13 +195,22 @@ class CompanyCommands {
       _updateCompanyLogoCommand,
       onSuccess: (logoUrl) {
         final targetCnpj = _updateCompanyLogoCommand.parameter?.cnpj;
-        if (targetCnpj != null) {
-          final currentList = untracked(() => state.companies.value);
-          for (final comp in currentList) {
-            if (comp.cnpj == targetCnpj) {
-              state.updateCompanyInList(comp.copyWith(logoUrl: logoUrl));
-              break;
-            }
+        if (targetCnpj == null) return;
+
+        final cleanTarget = targetCnpj.replaceAll(RegExp(r'\D'), '');
+        final currentSelected = untracked(() => state.selectedCompany.value);
+
+        if (currentSelected != null &&
+            currentSelected.cnpj.replaceAll(RegExp(r'\D'), '') == cleanTarget) {
+          state.updateCompanyInList(currentSelected.copyWith(logoUrl: logoUrl));
+          return;
+        }
+
+        final currentList = untracked(() => state.companies.value);
+        for (final comp in currentList) {
+          if (comp.cnpj.replaceAll(RegExp(r'\D'), '') == cleanTarget) {
+            state.updateCompanyInList(comp.copyWith(logoUrl: logoUrl));
+            break;
           }
         }
       },

@@ -15,6 +15,7 @@ import '../../views/application/configuration/create_companion_view.dart';
 
 mixin CreateCompanyMixin on State<CreateCompanyView> {
   late final CompanyViewModel companyViewModel;
+  late final CompanyListViewModel companyListViewModel;
 
   final cnpjController = TextEditingController();
   final nameController = TextEditingController();
@@ -28,10 +29,13 @@ mixin CreateCompanyMixin on State<CreateCompanyView> {
 
   bool get isEditing => widget.initialCompany != null;
 
+  String _cleanDigits(String value) => value.replaceAll(RegExp(r'\D'), '');
+
   @override
   void initState() {
     super.initState();
     companyViewModel = injector.get<CompanyViewModel>();
+    companyListViewModel = injector.get<CompanyListViewModel>();
     companyViewModel.state.clearMessage();
 
     AppFormatters.cnpj.clear();
@@ -68,10 +72,10 @@ mixin CreateCompanyMixin on State<CreateCompanyView> {
   }
 
   bool validateFields() {
-    final rawCnpj = cnpjController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final rawCnpj = _cleanDigits(cnpjController.text);
     final name = nameController.text.trim();
     final email = emailController.text.trim();
-    final rawPhone = phoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final rawPhone = _cleanDigits(phoneController.text);
 
     if (rawCnpj.isEmpty || name.isEmpty || email.isEmpty || rawPhone.isEmpty) {
       errorMessage.value = 'Preencha todos os campos obrigatórios.';
@@ -154,6 +158,39 @@ mixin CreateCompanyMixin on State<CreateCompanyView> {
       );
   }
 
+  void _syncCompanyAcrossStates(CompanyModel finalCompany) {
+    final cleanTarget = _cleanDigits(finalCompany.cnpj);
+
+    // 1. Atualiza imediatamente o estado da CompanyViewModel (CompanyHomeView)
+    companyViewModel.state.setSelectedCompany(finalCompany);
+    companyViewModel.state.updateCompanyInList(finalCompany);
+
+    // 2. Atualiza imediatamente as listas na CompanyListViewModel (MyCompaniesView)
+    final ownedList = companyListViewModel.state.ownedCompanies.value;
+    final existsInOwned = ownedList.any(
+      (c) => _cleanDigits(c.cnpj) == cleanTarget,
+    );
+
+    if (existsInOwned) {
+      companyListViewModel.state.setOwnedCompanies(
+        ownedList
+            .map((c) => _cleanDigits(c.cnpj) == cleanTarget ? finalCompany : c)
+            .toList(),
+      );
+    } else if (!isEditing) {
+      companyListViewModel.state.setOwnedCompanies([...ownedList, finalCompany]);
+    }
+
+    final memberList = companyListViewModel.state.memberCompanies.value;
+    if (memberList.any((c) => _cleanDigits(c.cnpj) == cleanTarget)) {
+      companyListViewModel.state.setMemberCompanies(
+        memberList
+            .map((c) => _cleanDigits(c.cnpj) == cleanTarget ? finalCompany : c)
+            .toList(),
+      );
+    }
+  }
+
   Future<void> submitForm(BuildContext context) async {
     FocusScope.of(context).unfocus();
     companyViewModel.state.clearMessage();
@@ -161,31 +198,30 @@ mixin CreateCompanyMixin on State<CreateCompanyView> {
 
     if (!validateFields()) return;
 
-    final rawCnpj = cnpjController.text.replaceAll(RegExp(r'[^0-9]'), '');
-    final rawPhone = phoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final rawCnpj = _cleanDigits(cnpjController.text);
+    final rawPhone = _cleanDigits(phoneController.text);
 
     try {
       isLoading.value = true;
       bool success = false;
+      late CompanyModel targetCompany;
 
       if (isEditing) {
-        final updatedCompany = widget.initialCompany!.copyWith(
+        targetCompany = widget.initialCompany!.copyWith(
           name: nameController.text.trim(),
           email: emailController.text.trim(),
           phone: rawPhone,
         );
-        success = await companyViewModel.commands.updateCompany(
-          updatedCompany,
-        );
+        success = await companyViewModel.commands.updateCompany(targetCompany);
       } else {
-        final newCompany = CompanyModel(
+        targetCompany = CompanyModel(
           ownerId: '',
           cnpj: rawCnpj,
           name: nameController.text.trim(),
           email: emailController.text.trim(),
           phone: rawPhone,
         );
-        success = await companyViewModel.commands.createCompany(newCompany);
+        success = await companyViewModel.commands.createCompany(targetCompany);
       }
 
       if (!success) {
@@ -203,14 +239,22 @@ mixin CreateCompanyMixin on State<CreateCompanyView> {
             rawCnpj,
             selectedLogoFile!,
           );
+          final logoResult = companyViewModel.updateCompanyLogoCommand.result.value;
+          logoResult?.fold(
+            onSuccess: (newLogoUrl) {
+              targetCompany = targetCompany.copyWith(logoUrl: newLogoUrl);
+            },
+            onFailure: (_) {},
+          );
         } catch (_) {}
       }
 
+      // Sincroniza em memória imediatamente nas duas ViewModels!
+      _syncCompanyAcrossStates(targetCompany);
+
+      // Dispara atualização em background sem travar ou sobrescrever com cache antigo
       try {
-        await injector
-            .get<CompanyListViewModel>()
-            .commands
-            .fetchOwnedCompanies();
+        await companyListViewModel.commands.fetchOwnedCompanies();
       } catch (_) {}
 
       if (!context.mounted) return;
