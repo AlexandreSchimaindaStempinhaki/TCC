@@ -228,7 +228,6 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                             ),
                             const SizedBox(height: 10),
 
-                            // E-mail e Telefone copiáveis
                             _buildCopyableInfoRow(
                               context,
                               icon: Icons.email_outlined,
@@ -247,7 +246,6 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
 
                             const SizedBox(height: 14),
 
-                            // Barra integrada de Equipe e Reputação
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 vertical: 12,
@@ -287,7 +285,7 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 Text(
-                                                  '${company.memberIds.length} ${company.memberIds.length == 1 ? 'membro' : 'membros'}',
+                                                  '${company.memberIds.length}${company.memberIds.length == 1 ? 'membro' : 'membros'}',
                                                   style: TextStyle(
                                                     fontSize: 13,
                                                     fontWeight: FontWeight.bold,
@@ -458,6 +456,19 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                 icon: Icons.add_road_rounded,
                                 title: 'Criar Nova Rota',
                                 onTap: () => openCreateRoute(context, company),
+                              ),
+                              const SizedBox(height: 8),
+
+                              AccountOption(
+                                icon: Icons.how_to_reg_outlined,
+                                title: 'Solicitações de Vínculo',
+                                trailing: const SizedBox.shrink(),
+                                onTap: () async {
+                                  await context.pushNamed(
+                                    IndigoRouteNames.companyRouteRequests,
+                                    extra: company,
+                                  );
+                                },
                               ),
                               const SizedBox(height: 8),
                             ],

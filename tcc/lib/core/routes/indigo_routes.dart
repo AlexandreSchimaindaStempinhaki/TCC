@@ -8,6 +8,7 @@ import '../../domain/models/user_entity.dart';
 import '../../presentation/controllers/user/user_viewmodel.dart';
 import '../../presentation/views/application/configuration/about_view.dart';
 import '../../presentation/views/application/configuration/company_home_view.dart';
+import '../../presentation/views/application/configuration/company_route_request_view.dart';
 import '../../presentation/views/application/configuration/company_routes_view.dart';
 import '../../presentation/views/application/configuration/create_companion_view.dart';
 import '../../presentation/views/application/configuration/create_route_view.dart';
@@ -60,6 +61,7 @@ class IndigoRouteNames {
   static const companyHome = 'company_home';
   static const createRoute = 'create_route';
   static const companyRoutes = 'company_routes';
+  static const companyRouteRequests = '/company_route_requests';
 }
 
 class IndigoPaths {
@@ -89,6 +91,7 @@ class IndigoPaths {
   static const companyHome = '/company-home';
   static const createRoute = '/create-route';
   static const companyRoutes = '/company-routes';
+  static const companyRouteRequests = '/company-route-requests';
 }
 
 final List<RouteBase> indigoRoutes = [
@@ -286,7 +289,7 @@ final List<RouteBase> indigoRoutes = [
     builder: (context, state) => const AboutView(),
   ),
   GoRoute(
-    path: '/create-company',
+    path: IndigoPaths.createCompany,
     name: IndigoRouteNames.createCompany,
     builder: (context, state) {
       final company = state.extra as CompanyModel?;
@@ -294,7 +297,7 @@ final List<RouteBase> indigoRoutes = [
     },
   ),
   GoRoute(
-    path: '/my-companies',
+    path: IndigoPaths.myCompanies,
     name: IndigoRouteNames.myCompanies,
     builder: (context, state) => const MyCompaniesView(),
   ),
@@ -307,7 +310,7 @@ final List<RouteBase> indigoRoutes = [
     },
   ),
   GoRoute(
-    path: '/create-route',
+    path: IndigoPaths.createRoute,
     name: IndigoRouteNames.createRoute,
     builder: (context, state) {
       final extra = state.extra;
@@ -318,7 +321,7 @@ final List<RouteBase> indigoRoutes = [
     },
   ),
   GoRoute(
-    path: '/company-routes',
+    path: IndigoPaths.companyRoutes,
     name: IndigoRouteNames.companyRoutes,
     builder: (context, state) {
       final company = state.extra is CompanyModel
@@ -327,4 +330,14 @@ final List<RouteBase> indigoRoutes = [
       return CompanyRoutesView(company: company);
     },
   ),
+  GoRoute(
+  path: '/company-route-requests',
+  name: IndigoRouteNames.companyRouteRequests,
+  builder: (context, state) {
+    final company = state.extra is CompanyModel
+        ? state.extra as CompanyModel
+        : null;
+    return CompanyRouteRequestsView(company: company);
+  },
+),
 ];
