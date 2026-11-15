@@ -1,20 +1,51 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import '../../../domain/models/route_entity.dart';
 
 class RouteListState {
+  static const String _favoritesPrefsKey = 'indigo_favorite_route_ids';
+
   final routes = signal<List<RouteModel>>([]);
   final companyRoutes = signal<List<RouteModel>>([]);
   final favoriteRouteIds = signal<Set<int>>({});
 
   final message = signal<String?>(null);
 
+  RouteListState() {
+    _loadFavoritesFromStorage();
+  }
+
   bool get hasRoutes => routes.value.isNotEmpty;
   bool get hasCompanyRoutes => companyRoutes.value.isNotEmpty;
 
   // ========================================================
+  //   PERSISTÊNCIA LOCAL DE FAVORITOS (SHARED PREFERENCES)
+  // ========================================================
+  Future<void> _loadFavoritesFromStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedList = prefs.getStringList(_favoritesPrefsKey) ?? [];
+      final parsedIds = savedList
+          .map((e) => int.tryParse(e))
+          .whereType<int>()
+          .toSet();
+      favoriteRouteIds.value = parsedIds;
+    } catch (_) {}
+  }
+
+  Future<void> _saveFavoritesToStorage(Set<int> ids) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(
+        _favoritesPrefsKey,
+        ids.map((id) => id.toString()).toList(),
+      );
+    } catch (_) {}
+  }
+
+  // ========================================================
   //   CONSULTAS REATIVAS DO PASSAGEIRO E MOTORISTA
   // ========================================================
-
   bool isFavorite(int routeId) => favoriteRouteIds.value.contains(routeId);
 
   List<RouteModel> get favoriteRoutes =>
@@ -32,7 +63,6 @@ class RouteListState {
   // ========================================================
   //   MUTAÇÕES EM TEMPO DE EXECUÇÃO
   // ========================================================
-
   void setRoutes(List<RouteModel> list) {
     routes.value = List<RouteModel>.from(list);
     message.value = null;
@@ -44,7 +74,9 @@ class RouteListState {
   }
 
   void setFavoriteRouteIds(Iterable<int> ids) {
-    favoriteRouteIds.value = Set<int>.from(ids);
+    final updated = Set<int>.from(ids);
+    favoriteRouteIds.value = updated;
+    _saveFavoritesToStorage(updated);
   }
 
   void upsertRoute(RouteModel route) {
@@ -81,6 +113,7 @@ class RouteListState {
       updated.add(routeId);
     }
     favoriteRouteIds.value = updated;
+    _saveFavoritesToStorage(updated);
   }
 
   void clearRoutes() {

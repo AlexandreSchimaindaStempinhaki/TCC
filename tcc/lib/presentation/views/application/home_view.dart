@@ -70,7 +70,10 @@ class _HomeViewState extends State<HomeView> {
     return 'Madrugada ($timeStr)';
   }
 
-  Map<String, dynamic> _mapRouteToCardData(RouteModel route) {
+  Map<String, dynamic> _mapRouteToCardData(
+    RouteModel route, {
+    required bool isFavorite,
+  }) {
     final companyName =
         (route.company?.name != null && route.company!.name.trim().isNotEmpty)
         ? route.company!.name
@@ -110,6 +113,7 @@ class _HomeViewState extends State<HomeView> {
     return {
       'id': route.id,
       'routeModel': route,
+      'company': route.company,
       'companyCnpj': route.companyCnpj,
       'companyName': companyName,
       'origin': originText,
@@ -123,7 +127,7 @@ class _HomeViewState extends State<HomeView> {
       'isHomePickup': true,
       'vacancies': vacanciesText,
       'rating': 5.0,
-      'isFavorite': _routeListViewModel.state.isFavorite(route.id),
+      'isFavorite': isFavorite,
       'image': imageUrl,
     };
   }
@@ -136,7 +140,6 @@ class _HomeViewState extends State<HomeView> {
       final origin = _normalizeText(route.originName ?? '');
       final company = _normalizeText(route.company?.name ?? '');
 
-      // Filtro principal por destino (com suporte complementar a origem/empresa)
       final matchesSearch =
           query.isEmpty ||
           destination.contains(query) ||
@@ -145,7 +148,6 @@ class _HomeViewState extends State<HomeView> {
 
       if (!matchesSearch) return false;
 
-      // Filtro opcional por categoria selecionada
       switch (_selectedCategoryIndex) {
         case 1: // Universitários
           return destination.contains('ifpr') ||
@@ -332,8 +334,8 @@ class _HomeViewState extends State<HomeView> {
                     _routeListViewModel.fetchAllRoutesCommand.isExecuting.value;
                 final allRoutes = _routeListViewModel.state.routes.value;
                 final query = _searchQuery.value;
-                // Observa também o conjunto de favoritos para reconstruir ao favoritar
-                _routeListViewModel.state.favoriteRouteIds.value;
+                final favIds =
+                    _routeListViewModel.state.favoriteRouteIds.value;
 
                 final filteredRoutes = _filterRoutes(allRoutes, query);
 
@@ -372,7 +374,7 @@ class _HomeViewState extends State<HomeView> {
                         Text(
                           query.trim().isNotEmpty
                               ? 'Tente pesquisar por outro nome de destino.'
-                              : 'Puxe para baixo para atualizar ou cadastre uma nova rota no painel da empresa.',
+                              : '',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 13,
@@ -393,22 +395,34 @@ class _HomeViewState extends State<HomeView> {
                     itemCount: filteredRoutes.length,
                     itemBuilder: (context, index) {
                       final routeModel = filteredRoutes[index];
-                      final routeCardData = _mapRouteToCardData(routeModel);
 
-                      return CompanyRouteCard(
-                        route: routeCardData,
-                        onTap: () {
-                          context.pushNamed(
-                            IndigoRouteNames.routeDetails,
-                            extra: routeCardData,
-                          );
-                        },
-                        onFavoriteTap: () {
-                          _routeListViewModel.state.toggleFavorite(
-                            routeModel.id,
-                          );
-                        },
-                      );
+                      return Watch((context) {
+                        final isFav = favIds.contains(routeModel.id) ||
+                            _routeListViewModel.state.isFavorite(
+                              routeModel.id,
+                            );
+                        final routeCardData = _mapRouteToCardData(
+                          routeModel,
+                          isFavorite: isFav,
+                        );
+
+                        return CompanyRouteCard(
+                          key: ValueKey('route_${routeModel.id}_fav_$isFav'),
+                          route: routeCardData,
+                          onTap: () {
+                            context.pushNamed(
+                              IndigoRouteNames.routeDetails,
+                              extra: routeCardData,
+                            );
+                          },
+                          onFavoriteTap: () {
+                            _routeListViewModel.state.toggleFavorite(
+                              routeModel.id,
+                            );
+                            setState(() {});
+                          },
+                        );
+                      });
                     },
                   ),
                 );

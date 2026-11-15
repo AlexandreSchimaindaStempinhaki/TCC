@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class CompanyRouteCard extends StatelessWidget {
@@ -16,17 +17,26 @@ class CompanyRouteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final isFavorite = (route['isFavorite'] as bool?) ?? false;
+    final imageUrl = route['image'] as String;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.dividerColor),
+        border: Border.all(
+          color: isDark
+              ? colorScheme.onSurface.withOpacity(0.24)
+              : colorScheme.onSurface.withOpacity(0.16),
+          width: 1.8,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(theme.brightness == Brightness.dark ? 0.3 : 0.04),
+            color: Colors.black.withOpacity(
+              isDark ? 0.3 : 0.04,
+            ),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -42,21 +52,45 @@ class CompanyRouteCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20),
+                    top: Radius.circular(18),
                   ),
-                  child: Image.network(
-                    route['image'] as String,
+                  child: SizedBox(
                     height: 160,
                     width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      height: 160,
-                      color: colorScheme.primary.withOpacity(0.08),
-                      child: Icon(
-                        Icons.directions_bus_rounded,
-                        size: 48,
-                        color: colorScheme.primary,
-                      ),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        ImageFiltered(
+                          imageFilter: ImageFilter.blur(
+                            sigmaX: 16,
+                            sigmaY: 16,
+                          ),
+                          child: Image.network(
+                            imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: colorScheme.primary.withOpacity(0.08),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          color: Colors.black.withOpacity(
+                            isDark ? 0.25 : 0.12,
+                          ),
+                        ),
+                        Image.network(
+                          imageUrl,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: colorScheme.primary.withOpacity(0.08),
+                            child: Icon(
+                              Icons.directions_bus_rounded,
+                              size: 48,
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -104,8 +138,11 @@ class CompanyRouteCard extends StatelessWidget {
                       ),
                       Row(
                         children: [
-                          const Icon(Icons.star_rounded,
-                              color: Colors.amber, size: 16),
+                          const Icon(
+                            Icons.star_rounded,
+                            color: Colors.amber,
+                            size: 16,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '${route['rating']}',
