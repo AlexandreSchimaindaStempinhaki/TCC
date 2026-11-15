@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/utils/app_formatters.dart';
 import '../../../../domain/models/company_entity.dart';
 import '../../../../domain/models/route_entity.dart';
 import '../../../widgets/account_option.dart';
@@ -39,6 +40,156 @@ class _CreateRouteViewState extends State<CreateRouteView>
           color: colorScheme.onSurface,
         ),
       ),
+    );
+  }
+
+  Widget _buildOperatingDaysSection(
+    BuildContext context,
+    List<int> selectedDays,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    final isMonToFri =
+        selectedDays.length == 5 &&
+        selectedDays.every((d) => d >= 1 && d <= 5);
+    final isEveryDay = selectedDays.length == 7;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildOuterFieldLabel(context, 'Dias de Operação'),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Botões dos 7 dias da semana (Seg a Dom)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: CreateRouteMixin.weekDaysList.map((item) {
+                  final dayNum = item['day'] as int;
+                  final shortLabel = item['short'] as String;
+                  final isSelected = selectedDays.contains(dayNum);
+
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 3.0),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () => toggleOperatingDay(dayNum),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? colorScheme.primary
+                                : theme.scaffoldBackgroundColor.withOpacity(
+                                    0.6,
+                                  ),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: isSelected
+                                  ? colorScheme.primary
+                                  : theme.dividerColor.withOpacity(0.5),
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            shortLabel,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: isSelected
+                                  ? Colors.white
+                                  : colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 12),
+              // Atalhos rápidos: Segunda a Sexta / Todos os dias
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: selectMondayToFriday,
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: isMonToFri
+                            ? colorScheme.primary.withOpacity(0.1)
+                            : Colors.transparent,
+                        side: BorderSide(
+                          color: isMonToFri
+                              ? colorScheme.primary
+                              : theme.dividerColor.withOpacity(0.6),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Segunda a Sexta',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: isMonToFri
+                              ? colorScheme.primary
+                              : colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: selectAllWeekDays,
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: isEveryDay
+                            ? colorScheme.primary.withOpacity(0.1)
+                            : Colors.transparent,
+                        side: BorderSide(
+                          color: isEveryDay
+                              ? colorScheme.primary
+                              : theme.dividerColor.withOpacity(0.6),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Todos os dias',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: isEveryDay
+                              ? colorScheme.primary
+                              : colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -256,8 +407,8 @@ class _CreateRouteViewState extends State<CreateRouteView>
                   const SizedBox(height: 8),
                   Text(
                     isEditing
-                        ? 'Atualize os pontos de partida, destino e horários da rota abaixo.'
-                        : 'Configure os pontos no mapa e a grade de horários para registrar uma nova rota no Índigo.',
+                        ? 'Atualize os nomes, localizações no mapa, dias da semana e horários da rota abaixo.'
+                        : 'Defina o ponto de saída, o destino, os dias da semana e os horários para registrar uma nova rota no Índigo.',
                     style: TextStyle(
                       fontSize: 14,
                       color: colorScheme.secondary,
@@ -353,12 +504,20 @@ class _CreateRouteViewState extends State<CreateRouteView>
                       ),
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 24),
 
-                  // COMPONENTE DE PONTO DE PARTIDA (IDA)
+                  // 1. NOME E GEOLOCALIZAÇÃO DO PONTO DE SAÍDA (ORIGEM)
+                  CustomTextField(
+                    label: 'Nome do Ponto de Saída',
+                    hintText: 'Ex: Terminal Central / Av. das Magnólias',
+                    controller: originNameController,
+                    keyboardType: TextInputType.text,
+                    inputFormatters: [AppFormatters.nameLimit(60)],
+                  ),
+                  const SizedBox(height: 16),
                   Watch((context) {
                     return RouteLocationSelector(
-                      label: 'Ponto de Partida (Ida)',
+                      label: 'Localização do Ponto de Saída',
                       geoPoint: originPoint.value,
                       isLoadingGps: isLoadingOriginGps.value,
                       onViewOnMap: () =>
@@ -370,10 +529,18 @@ class _CreateRouteViewState extends State<CreateRouteView>
                   }),
                   const SizedBox(height: 28),
 
-                  // COMPONENTE DE PONTO DE VOLTA (DESTINO)
+                  // 2. NOME E GEOLOCALIZAÇÃO DO DESTINO DA ROTA
+                  CustomTextField(
+                    label: 'Nome do Destino da Rota',
+                    hintText: 'Ex: IFPR Paranaguá / Campus Universitário',
+                    controller: destinationNameController,
+                    keyboardType: TextInputType.text,
+                    inputFormatters: [AppFormatters.nameLimit(60)],
+                  ),
+                  const SizedBox(height: 16),
                   Watch((context) {
                     return RouteLocationSelector(
-                      label: 'Ponto de Volta (Destino)',
+                      label: 'Localização do Destino',
                       geoPoint: destinationPoint.value,
                       isLoadingGps: isLoadingDestGps.value,
                       onViewOnMap: () =>
@@ -384,7 +551,7 @@ class _CreateRouteViewState extends State<CreateRouteView>
                     );
                   }),
 
-                  // OPÇÃO DE VER TRAJETO COMPLETO (APARECE QUANDO AMBOS OS PONTOS EXISTEM)
+                  // OPÇÃO DE VER TRAJETO COMPLETO NO MAPA (ROUTE_MAP_VIEW)
                   Watch((context) {
                     final hasBothPoints =
                         originPoint.value != null &&
@@ -429,7 +596,16 @@ class _CreateRouteViewState extends State<CreateRouteView>
                   }),
                   const SizedBox(height: 28),
 
-                  // HORÁRIOS DE SAÍDA LIMPOS
+                  // 3. DIAS DA SEMANA DE OPERAÇÃO
+                  Watch((context) {
+                    return _buildOperatingDaysSection(
+                      context,
+                      operatingDays.value,
+                    );
+                  }),
+                  const SizedBox(height: 28),
+
+                  // 4. HORÁRIOS DE SAÍDA LIMPOS
                   Watch((context) {
                     return _buildSchedulesSection(
                       context,

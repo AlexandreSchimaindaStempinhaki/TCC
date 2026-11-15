@@ -15,8 +15,8 @@ import '../../../domain/models/route_entity.dart';
 import '../../controllers/company/company_viewmodel.dart';
 import '../../controllers/route/route_list_viewmodel.dart';
 import '../../controllers/route/route_viewmodel.dart';
-import '../../views/application/configuration/create_route_view.dart';
-import '../../views/application/route_map_view.dart';
+import '../application/configuration/create_route_view.dart';
+import '../application/route_map_view.dart';
 
 mixin CreateRouteMixin on State<CreateRouteView> {
   late final RouteViewModel routeViewModel;
@@ -24,6 +24,8 @@ mixin CreateRouteMixin on State<CreateRouteView> {
   late final CompanyViewModel companyViewModel;
 
   final companyNameController = TextEditingController();
+  final originNameController = TextEditingController();
+  final destinationNameController = TextEditingController();
 
   File? selectedImageFile;
 
@@ -31,6 +33,7 @@ mixin CreateRouteMixin on State<CreateRouteView> {
   final destinationPoint = signal<GeoPoint?>(null);
   final isLoadingOriginGps = signal(false);
   final isLoadingDestGps = signal(false);
+  final operatingDays = signal<List<int>>([1, 2, 3, 4, 5]);
   final schedules = signal<List<DateTime>>([]);
 
   final isLoading = signal(false);
@@ -42,6 +45,16 @@ mixin CreateRouteMixin on State<CreateRouteView> {
       widget.company ??
       widget.initialRoute?.company ??
       companyViewModel.state.selectedCompany.value;
+
+  static const List weekDaysList = [
+    {'day': 1, 'short': 'Seg', 'full': 'Segunda'},
+    {'day': 2, 'short': 'Ter', 'full': 'Terça'},
+    {'day': 3, 'short': 'Qua', 'full': 'Quarta'},
+    {'day': 4, 'short': 'Qui', 'full': 'Quinta'},
+    {'day': 5, 'short': 'Sex', 'full': 'Sexta'},
+    {'day': 6, 'short': 'Sáb', 'full': 'Sábado'},
+    {'day': 7, 'short': 'Dom', 'full': 'Domingo'},
+  ];
 
   @override
   void initState() {
@@ -58,8 +71,11 @@ mixin CreateRouteMixin on State<CreateRouteView> {
 
     if (isEditing) {
       final route = widget.initialRoute!;
+      originNameController.text = route.originName ?? '';
+      destinationNameController.text = route.destinationName ?? '';
       originPoint.value = route.origin;
       destinationPoint.value = route.destination;
+      operatingDays.value = List<int>.from(route.operatingDays)..sort();
       schedules.value = List<DateTime>.from(route.schedules);
     }
   }
@@ -67,10 +83,13 @@ mixin CreateRouteMixin on State<CreateRouteView> {
   @override
   void dispose() {
     companyNameController.dispose();
+    originNameController.dispose();
+    destinationNameController.dispose();
     originPoint.dispose();
     destinationPoint.dispose();
     isLoadingOriginGps.dispose();
     isLoadingDestGps.dispose();
+    operatingDays.dispose();
     schedules.dispose();
     isLoading.dispose();
     errorMessage.dispose();
@@ -152,8 +171,8 @@ mixin CreateRouteMixin on State<CreateRouteView> {
         showTopSnackBar(
           context,
           isOrigin
-              ? 'Ponto de partida atualizado via GPS!'
-              : 'Ponto de volta atualizado via GPS!',
+              ? 'Ponto de saída atualizado via GPS!'
+              : 'Ponto de destino atualizado via GPS!',
         );
       }
     } catch (e) {
@@ -201,8 +220,8 @@ mixin CreateRouteMixin on State<CreateRouteView> {
         showTopSnackBar(
           context,
           isOrigin
-              ? 'Ponto de partida escolhido no mapa!'
-              : 'Ponto de volta escolhido no mapa!',
+              ? 'Ponto de saída escolhido no mapa!'
+              : 'Ponto de destino escolhido no mapa!',
         );
       }
     }
@@ -215,12 +234,18 @@ mixin CreateRouteMixin on State<CreateRouteView> {
     final geoPoint = isOrigin ? originPoint.value : destinationPoint.value;
     if (geoPoint == null) return;
 
+    final customTitle = isOrigin
+        ? originNameController.text.trim()
+        : destinationNameController.text.trim();
+
     context.pushNamed(
       IndigoRouteNames.singleLocationMap,
       extra: {
         'latitude': geoPoint.latitude,
         'longitude': geoPoint.longitude,
-        'title': isOrigin ? 'Ponto de Partida (Ida)' : 'Ponto de Volta (Destino)',
+        'title': customTitle.isNotEmpty
+            ? customTitle
+            : (isOrigin ? 'Ponto de Saída' : 'Destino da Rota'),
       },
     );
   }
@@ -230,15 +255,20 @@ mixin CreateRouteMixin on State<CreateRouteView> {
     final end = destinationPoint.value;
     if (start == null || end == null) return;
 
+    final originText = originNameController.text.trim();
+    final destText = destinationNameController.text.trim();
+
     final routeData = <String, dynamic>{
       'startLatitude': start.latitude,
       'startLongitude': start.longitude,
       'endLatitude': end.latitude,
       'endLongitude': end.longitude,
-      'origin':
-          'Lat: ${start.latitude.toStringAsFixed(4)}, Lng: ${start.longitude.toStringAsFixed(4)}',
-      'destination':
-          'Lat: ${end.latitude.toStringAsFixed(4)}, Lng: ${end.longitude.toStringAsFixed(4)}',
+      'origin': originText.isNotEmpty
+          ? originText
+          : 'Lat: ${start.latitude.toStringAsFixed(4)}, Lng:${start.longitude.toStringAsFixed(4)}',
+      'destination': destText.isNotEmpty
+          ? destText
+          : 'Lat: ${end.latitude.toStringAsFixed(4)}, Lng:${end.longitude.toStringAsFixed(4)}',
       'companyName': targetCompany?.name ?? 'Trajeto da Rota',
     };
 
@@ -247,6 +277,33 @@ mixin CreateRouteMixin on State<CreateRouteView> {
         builder: (_) => RouteMapView(route: routeData),
       ),
     );
+  }
+
+  // ========================================================
+  //   GESTÃO DOS DIAS DA SEMANA (OPERATING DAYS)
+  // ========================================================
+  void toggleOperatingDay(int weekday) {
+    final current = Set<int>.from(operatingDays.value);
+    if (current.contains(weekday)) {
+      current.remove(weekday);
+    } else {
+      current.add(weekday);
+    }
+    final sorted = current.toList()..sort();
+    operatingDays.value = sorted;
+    if (sorted.isNotEmpty) {
+      errorMessage.value = null;
+    }
+  }
+
+  void selectMondayToFriday() {
+    operatingDays.value = [1, 2, 3, 4, 5];
+    errorMessage.value = null;
+  }
+
+  void selectAllWeekDays() {
+    operatingDays.value = [1, 2, 3, 4, 5, 6, 7];
+    errorMessage.value = null;
   }
 
   // ========================================================
@@ -353,13 +410,28 @@ mixin CreateRouteMixin on State<CreateRouteView> {
       return false;
     }
 
+    if (originNameController.text.trim().isEmpty) {
+      errorMessage.value = 'Informe o nome do ponto de saída.';
+      return false;
+    }
+
     if (originPoint.value == null) {
-      errorMessage.value = 'Defina o Ponto de Partida (Ida) da rota.';
+      errorMessage.value = 'Selecione a localização do ponto de saída no mapa ou GPS.';
+      return false;
+    }
+
+    if (destinationNameController.text.trim().isEmpty) {
+      errorMessage.value = 'Informe o nome do destino da rota.';
       return false;
     }
 
     if (destinationPoint.value == null) {
-      errorMessage.value = 'Defina o Ponto de Volta (Destino) da rota.';
+      errorMessage.value = 'Selecione a localização do destino no mapa ou GPS.';
+      return false;
+    }
+
+    if (operatingDays.value.isEmpty) {
+      errorMessage.value = 'Selecione pelo menos um dia da semana de operação.';
       return false;
     }
 
@@ -441,6 +513,9 @@ mixin CreateRouteMixin on State<CreateRouteView> {
     final rawCnpj = (company?.cnpj ?? widget.initialRoute?.companyCnpj ?? '')
         .replaceAll(RegExp(r'\D'), '');
 
+    final cleanOriginName = originNameController.text.trim();
+    final cleanDestName = destinationNameController.text.trim();
+
     try {
       isLoading.value = true;
       bool success = false;
@@ -450,6 +525,9 @@ mixin CreateRouteMixin on State<CreateRouteView> {
           companyCnpj: rawCnpj,
           origin: originPoint.value!,
           destination: destinationPoint.value!,
+          originName: cleanOriginName,
+          destinationName: cleanDestName,
+          operatingDays: List<int>.from(operatingDays.value),
           schedules: List<DateTime>.from(schedules.value),
           company: company ?? widget.initialRoute!.company,
         );
@@ -464,6 +542,9 @@ mixin CreateRouteMixin on State<CreateRouteView> {
           companyCnpj: rawCnpj,
           origin: originPoint.value!,
           destination: destinationPoint.value!,
+          originName: cleanOriginName,
+          destinationName: cleanDestName,
+          operatingDays: List<int>.from(operatingDays.value),
           schedules: List<DateTime>.from(schedules.value),
           imageUrl: company?.logoUrl,
           company: company,

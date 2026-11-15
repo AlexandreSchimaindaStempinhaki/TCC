@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:tcc/presentation/widgets/nav_bar.dart';
-import 'package:tcc/presentation/widgets/company_route_card.dart';
-import '../../../core/routes/indigo_routes.dart';
 import 'package:go_router/go_router.dart';
+import 'package:signals_flutter/signals_flutter.dart';
+import 'package:tcc/presentation/widgets/company_route_card.dart';
+import 'package:tcc/presentation/widgets/nav_bar.dart';
+
+import '../../../core/di/dependency_injection.dart';
+import '../../../core/routes/indigo_routes.dart';
+import '../../../domain/models/route_entity.dart';
+import '../../controllers/route/route_list_viewmodel.dart';
+import '../../widgets/animated_three_dots.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -12,8 +18,14 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
+  late final RouteListViewModel _routeListViewModel;
+
   int _selectedCategoryIndex = 0;
   final TextEditingController _searchController = TextEditingController();
+  final Signal<String> _searchQuery = signal('');
+
+  static const String _fallbackRouteImage =
+      'https://ifpr.edu.br/paranagua/wp-content/uploads/sites/20/2021/08/241126748_1632298510296715_3679175102561492871_n.jpg';
 
   final List _categories = [
     {'label': 'Todas', 'icon': Icons.directions_bus_rounded},
@@ -23,49 +35,141 @@ class _HomeViewState extends State<HomeView> {
     {'label': 'Próximas', 'icon': Icons.near_me_rounded},
   ];
 
-  final List _availableRoutes = [
-    {
-      'companyName': 'Associação Estudantil Litoral',
-      'origin': 'Pontal do Sul (R. Barão do Rio Branco, nº 450)',
-      'destination': 'Campus IFPR Paranaguá / UFPR Litoral',
-      'operatingDays': 'Segunda a Sexta-feira',
-      'shifts': ['Manhã (06:30)', 'Tarde (12:15)', 'Noite (18:10)'],
-      'isHomePickup': true,
-      'vacancies': '5 vagas restantes',
-      'rating': 4.9,
-      'isFavorite': false,
-      'image': 'https://ifpr.edu.br/paranagua/wp-content/uploads/sites/20/2021/08/241126748_1632298510296715_3679175102561492871_n.jpg',
-    },
-    {
-      'companyName': 'Expresso Fretamentos Corp',
-      'origin': 'Bairro Santa Rosa (Ponto Central da Praça)',
-      'destination': 'Distrito Industrial Paranaguá (Polos A e B)',
-      'operatingDays': 'Segunda a Sábado',
-      'shifts': ['Turno 1 (05:40)', 'Turno 2 (13:30)', 'Turno 3 (21:40)'],
-      'isHomePickup': false,
-      'vacancies': 'Vagas abertas para colaboradores',
-      'rating': 4.8,
-      'isFavorite': false,
-      'image': 'https://upload.wikimedia.org/wikipedia/commons/7/7d/UFPR_vista_frontal.jpg?utm_source=pt.wikipedia.org&utm_campaign=index&utm_content=original',
-    },
-    {
-      'companyName': 'Viação Universitária Índigo',
-      'origin': 'Praia de Leste (Av. Barão do Rio Branco)',
-      'destination': 'UFPR - Centro Politécnico Curitiba',
-      'operatingDays': 'Segunda, Quarta e Sexta',
-      'shifts': ['Manhã (06:00)', 'Noite (17:30)'],
-      'isHomePickup': false,
-      'vacancies': 'Cadastro reserva',
-      'rating': 4.95,
-      'isFavorite': true,
-      'image': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTCVHV0baSZSxF8qkOJYHX9fKyMuQWhWskNurlEjKM3KnsEtUszJ_ThetA&s=10',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _routeListViewModel = injector.get<RouteListViewModel>();
+    _routeListViewModel.commands.fetchAllRoutes();
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _searchQuery.dispose();
     super.dispose();
+  }
+
+  String _normalizeText(String input) {
+    const withAccents = 'áàâãäéèêëíìîïóòôõöúùûüçñÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ';
+    const withoutAccents = 'aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN';
+    var result = input.trim().toLowerCase();
+    for (int i = 0; i < withAccents.length; i++) {
+      result = result.replaceAll(withAccents[i], withoutAccents[i]);
+    }
+    return result;
+  }
+
+  String _formatShift(DateTime dt) {
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    final timeStr = '$h:$m';
+
+    if (dt.hour >= 5 && dt.hour < 12) return 'Manhã ($timeStr)';
+    if (dt.hour >= 12 && dt.hour < 18) return 'Tarde ($timeStr)';
+    if (dt.hour >= 18) return 'Noite ($timeStr)';
+    return 'Madrugada ($timeStr)';
+  }
+
+  Map<String, dynamic> _mapRouteToCardData(RouteModel route) {
+    final companyName =
+        (route.company?.name != null && route.company!.name.trim().isNotEmpty)
+        ? route.company!.name
+        : 'Empresa (${route.companyCnpj})';
+
+    final originText =
+        (route.originName != null && route.originName!.trim().isNotEmpty)
+        ? route.originName!
+        : 'Lat: ${route.origin.latitude.toStringAsFixed(4)}, Lng: ${route.origin.longitude.toStringAsFixed(4)}';
+
+    final destinationText =
+        (route.destinationName != null &&
+            route.destinationName!.trim().isNotEmpty)
+        ? route.destinationName!
+        : 'Lat: ${route.destination.latitude.toStringAsFixed(4)}, Lng: ${route.destination.longitude.toStringAsFixed(4)}';
+
+    final imageUrl =
+        (route.imageUrl != null && route.imageUrl!.trim().isNotEmpty)
+        ? route.imageUrl!
+        : (route.company?.logoUrl != null &&
+              route.company!.logoUrl!.trim().isNotEmpty)
+        ? route.company!.logoUrl!
+        : _fallbackRouteImage;
+
+    final sortedSchedules = List<DateTime>.from(route.schedules)
+      ..sort(
+        (a, b) => (a.hour * 60 + a.minute).compareTo(b.hour * 60 + b.minute),
+      );
+
+    final shifts = sortedSchedules.map(_formatShift).toList();
+
+    final passengerCount = route.passengerIds.length;
+    final vacanciesText = passengerCount == 0
+        ? 'Vagas abertas'
+        : '$passengerCount ${passengerCount == 1 ? 'passageiro inscrito' : 'passageiros inscritos'}';
+
+    return {
+      'id': route.id,
+      'routeModel': route,
+      'companyCnpj': route.companyCnpj,
+      'companyName': companyName,
+      'origin': originText,
+      'destination': destinationText,
+      'startLatitude': route.origin.latitude,
+      'startLongitude': route.origin.longitude,
+      'endLatitude': route.destination.latitude,
+      'endLongitude': route.destination.longitude,
+      'operatingDays': route.operatingDaysLabel,
+      'shifts': shifts,
+      'isHomePickup': true,
+      'vacancies': vacanciesText,
+      'rating': 5.0,
+      'isFavorite': _routeListViewModel.state.isFavorite(route.id),
+      'image': imageUrl,
+    };
+  }
+
+  List<RouteModel> _filterRoutes(List<RouteModel> allRoutes, String rawQuery) {
+    final query = _normalizeText(rawQuery);
+
+    return allRoutes.where((route) {
+      final destination = _normalizeText(route.destinationName ?? '');
+      final origin = _normalizeText(route.originName ?? '');
+      final company = _normalizeText(route.company?.name ?? '');
+
+      // Filtro principal por destino (com suporte complementar a origem/empresa)
+      final matchesSearch =
+          query.isEmpty ||
+          destination.contains(query) ||
+          origin.contains(query) ||
+          company.contains(query);
+
+      if (!matchesSearch) return false;
+
+      // Filtro opcional por categoria selecionada
+      switch (_selectedCategoryIndex) {
+        case 1: // Universitários
+          return destination.contains('ifpr') ||
+              destination.contains('ufpr') ||
+              destination.contains('faculdade') ||
+              destination.contains('universi') ||
+              destination.contains('campus') ||
+              company.contains('universi') ||
+              company.contains('estudantil');
+        case 2: // Empresas
+          return destination.contains('industrial') ||
+              destination.contains('empresa') ||
+              destination.contains('porto') ||
+              destination.contains('centro') ||
+              company.contains('corp') ||
+              company.contains('fretamento');
+        case 3: // Escolares
+          return destination.contains('escola') ||
+              destination.contains('colegio') ||
+              company.contains('escolar');
+        default:
+          return true;
+      }
+    }).toList();
   }
 
   @override
@@ -81,6 +185,7 @@ class _HomeViewState extends State<HomeView> {
         child: Column(
           children: [
             const SizedBox(height: 12),
+            // BARRA DE PESQUISA POR DESTINO
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Container(
@@ -90,52 +195,78 @@ class _HomeViewState extends State<HomeView> {
                   border: Border.all(color: theme.dividerColor, width: 1),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(theme.brightness == Brightness.dark ? 0.3 : 0.05),
+                      color: Colors.black.withOpacity(
+                        theme.brightness == Brightness.dark ? 0.3 : 0.05,
+                      ),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(color: colorScheme.onSurface),
-                  decoration: InputDecoration(
-                    hintText: 'Buscar empresa, bairro de origem ou destino...',
-                    hintStyle: TextStyle(
-                      fontSize: 13,
-                      color: colorScheme.secondary,
-                      fontWeight: FontWeight.w400,
-                    ),
-                    prefixIcon: Padding(
-                      padding: const EdgeInsets.only(left: 16.0, right: 12.0),
-                      child: Icon(
-                        Icons.search_rounded,
-                        color: colorScheme.primary,
-                        size: 22,
+                child: Watch((context) {
+                  final hasSearchText = _searchQuery.value.trim().isNotEmpty;
+
+                  return TextField(
+                    controller: _searchController,
+                    onChanged: (value) => _searchQuery.value = value,
+                    textInputAction: TextInputAction.search,
+                    style: TextStyle(color: colorScheme.onSurface),
+                    decoration: InputDecoration(
+                      hintText: 'Buscar por destino da rota...',
+                      hintStyle: TextStyle(
+                        fontSize: 13,
+                        color: colorScheme.secondary,
+                        fontWeight: FontWeight.w400,
                       ),
-                    ),
-                    suffixIcon: Container(
-                      margin: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: theme.dividerColor),
-                      ),
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.tune_rounded,
-                          color: colorScheme.onSurface,
-                          size: 16,
+                      prefixIcon: Padding(
+                        padding: const EdgeInsets.only(left: 16.0, right: 12.0),
+                        child: Icon(
+                          Icons.search_rounded,
+                          color: colorScheme.primary,
+                          size: 22,
                         ),
-                        onPressed: () {},
                       ),
+                      suffixIcon: hasSearchText
+                          ? IconButton(
+                              tooltip: 'Limpar busca',
+                              icon: Icon(
+                                Icons.close_rounded,
+                                color: colorScheme.onSurfaceVariant,
+                                size: 20,
+                              ),
+                              onPressed: () {
+                                _searchController.clear();
+                                _searchQuery.value = '';
+                                FocusScope.of(context).unfocus();
+                              },
+                            )
+                          : Container(
+                              margin: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: theme.dividerColor),
+                              ),
+                              child: IconButton(
+                                icon: Icon(
+                                  Icons.refresh_rounded,
+                                  color: colorScheme.onSurface,
+                                  size: 16,
+                                ),
+                                tooltip: 'Atualizar rotas',
+                                onPressed: () => _routeListViewModel.commands
+                                    .fetchAllRoutes(),
+                              ),
+                            ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ),
+                  );
+                }),
               ),
             ),
             const SizedBox(height: 16),
+
+            // CATEGORIAS
             SizedBox(
               height: 78,
               child: ListView.builder(
@@ -193,30 +324,97 @@ class _HomeViewState extends State<HomeView> {
               ),
             ),
             Divider(height: 1, color: theme.dividerColor),
+
+            // LISTA REATIVA DE ROTAS REAIS
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 80),
-                itemCount: _availableRoutes.length,
-                itemBuilder: (context, index) {
-                  final route = _availableRoutes[index];
-                  return CompanyRouteCard(
-                    route: route,
-                    onTap: () {
-                      context.pushNamed(
-                        IndigoRouteNames.routeDetails,
-                        extra: route,
+              child: Watch((context) {
+                final isLoading =
+                    _routeListViewModel.fetchAllRoutesCommand.isExecuting.value;
+                final allRoutes = _routeListViewModel.state.routes.value;
+                final query = _searchQuery.value;
+                // Observa também o conjunto de favoritos para reconstruir ao favoritar
+                _routeListViewModel.state.favoriteRouteIds.value;
+
+                final filteredRoutes = _filterRoutes(allRoutes, query);
+
+                if (isLoading && allRoutes.isEmpty) {
+                  return Center(
+                    child: AnimatedThreeDots(color: colorScheme.primary),
+                  );
+                }
+
+                if (filteredRoutes.isEmpty) {
+                  return RefreshIndicator(
+                    onRefresh: () =>
+                        _routeListViewModel.commands.fetchAllRoutes(),
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(32, 80, 32, 100),
+                      children: [
+                        Icon(
+                          Icons.directions_bus_outlined,
+                          size: 56,
+                          color: colorScheme.secondary.withOpacity(0.5),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          query.trim().isNotEmpty
+                              ? 'Nenhuma rota encontrada para "${query.trim()}"'
+                              : 'Nenhuma rota cadastrada no momento',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          query.trim().isNotEmpty
+                              ? 'Tente pesquisar por outro nome de destino.'
+                              : 'Puxe para baixo para atualizar ou cadastre uma nova rota no painel da empresa.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: colorScheme.secondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return RefreshIndicator(
+                  onRefresh: () =>
+                      _routeListViewModel.commands.fetchAllRoutes(),
+                  child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 80),
+                    itemCount: filteredRoutes.length,
+                    itemBuilder: (context, index) {
+                      final routeModel = filteredRoutes[index];
+                      final routeCardData = _mapRouteToCardData(routeModel);
+
+                      return CompanyRouteCard(
+                        route: routeCardData,
+                        onTap: () {
+                          context.pushNamed(
+                            IndigoRouteNames.routeDetails,
+                            extra: routeCardData,
+                          );
+                        },
+                        onFavoriteTap: () {
+                          _routeListViewModel.state.toggleFavorite(
+                            routeModel.id,
+                          );
+                        },
                       );
                     },
-                    onFavoriteTap: () {
-                      setState(() {
-                        route['isFavorite'] = !(route['isFavorite'] as bool);
-                      });
-                    },
-                  );
-                },
-              ),
+                  ),
+                );
+              }),
             ),
-            SizedBox(height: 5),
+            const SizedBox(height: 5),
           ],
         ),
       ),
