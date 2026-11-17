@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../domain/models/company_entity.dart';
 
@@ -31,6 +32,7 @@ class CompanyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final hasLogo = company.logoUrl != null && company.logoUrl!.isNotEmpty;
 
     return Padding(
@@ -38,7 +40,6 @@ class CompanyCard extends StatelessWidget {
       child: Dismissible(
         key: ValueKey(company.cnpj),
         direction: DismissDirection.horizontal,
-        // Arrastar para a DIREITA (startToEnd) -> Excluir
         background: Container(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           alignment: Alignment.centerLeft,
@@ -61,7 +62,6 @@ class CompanyCard extends StatelessWidget {
             ],
           ),
         ),
-        // Arrastar para a ESQUERDA (endToStart) -> Editar
         secondaryBackground: Container(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           alignment: Alignment.centerRight,
@@ -85,19 +85,32 @@ class CompanyCard extends StatelessWidget {
             ],
           ),
         ),
-        child: Material(
-          color: theme.cardColor,
-          elevation: 0,
-          clipBehavior: Clip.antiAlias,
-          borderRadius: BorderRadius.circular(24),
-          child: InkWell(
-            onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(24),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: theme.dividerColor.withOpacity(0.4)),
+            border: Border.all(
+              color: isDark
+                  ? colorScheme.onSurface.withOpacity(0.24)
+                  : colorScheme.onSurface.withOpacity(0.16),
+              width: 1.8,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.3 : 0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            elevation: 0,
+            clipBehavior: Clip.antiAlias,
+            borderRadius: BorderRadius.circular(22),
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(22),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -107,41 +120,60 @@ class CompanyCard extends StatelessWidget {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        hasLogo
-                            ? Image.network(
-                                company.logoUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Container(
-                                  color: colorScheme.primaryContainer
-                                      .withOpacity(0.3),
-                                  child: Icon(
-                                    Icons.domain_rounded,
-                                    size: 56,
-                                    color: colorScheme.primary,
-                                  ),
-                                ),
-                              )
-                            : Container(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      colorScheme.primaryContainer
-                                          .withOpacity(0.5),
-                                      colorScheme.surfaceContainerHighest
-                                          .withOpacity(0.5),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                ),
-                                child: Icon(
-                                  Icons.domain_rounded,
-                                  size: 64,
-                                  color: colorScheme.primary,
-                                ),
+                        if (hasLogo) ...[
+                          ImageFiltered(
+                            imageFilter: ImageFilter.blur(
+                              sigmaX: 16,
+                              sigmaY: 16,
+                            ),
+                            child: Image.network(
+                              company.logoUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                color: colorScheme.primaryContainer
+                                    .withOpacity(0.3),
                               ),
-                        // Gradiente sutil de sobreposição na base do banner para transição limpa
+                            ),
+                          ),
+                          Container(
+                            color: Colors.black.withOpacity(
+                              isDark ? 0.25 : 0.12,
+                            ),
+                          ),
+                          Image.network(
+                            company.logoUrl!,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                              color: colorScheme.primaryContainer
+                                  .withOpacity(0.3),
+                              child: Icon(
+                                Icons.domain_rounded,
+                                size: 56,
+                                color: colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                        ] else
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  colorScheme.primaryContainer
+                                      .withOpacity(0.5),
+                                  colorScheme.surfaceContainerHighest
+                                      .withOpacity(0.5),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.domain_rounded,
+                              size: 64,
+                              color: colorScheme.primary,
+                            ),
+                          ),
                         Positioned.fill(
                           child: DecoratedBox(
                             decoration: BoxDecoration(
@@ -159,7 +191,6 @@ class CompanyCard extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(

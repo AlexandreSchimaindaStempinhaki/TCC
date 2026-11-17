@@ -6,32 +6,34 @@ import '../../domain/models/company_entity.dart';
 import '../../domain/models/route_entity.dart';
 import '../../domain/models/user_entity.dart';
 import '../../presentation/controllers/user/user_viewmodel.dart';
+import '../../presentation/views/application/company_profile_view.dart';
 import '../../presentation/views/application/configuration/about_view.dart';
+import '../../presentation/views/application/configuration/account_view.dart';
+import '../../presentation/views/application/configuration/change_password_view.dart';
 import '../../presentation/views/application/configuration/company_home_view.dart';
+import '../../presentation/views/application/configuration/company_members_view.dart';
 import '../../presentation/views/application/configuration/company_route_request_view.dart';
 import '../../presentation/views/application/configuration/company_routes_view.dart';
+import '../../presentation/views/application/configuration/confirm_password_view.dart';
 import '../../presentation/views/application/configuration/create_companion_view.dart';
 import '../../presentation/views/application/configuration/create_route_view.dart';
 import '../../presentation/views/application/configuration/edit_address_view.dart';
-import '../../presentation/views/application/configuration/location_map_view.dart';
-import '../../presentation/views/application/configuration/manage_geolocation_view.dart';
-import '../../presentation/views/application/home_view.dart';
-import '../../presentation/views/application/saved_view.dart';
-import '../../presentation/views/application/my_routes_view.dart';
-import '../../presentation/views/application/configuration/account_view.dart';
-import '../../presentation/views/application/route_details_view.dart';
-import '../../presentation/views/application/route_map_view.dart';
-import '../../presentation/views/application/company_profile_view.dart';
-import '../../presentation/views/application/joined_route_detail_view.dart';
+import '../../presentation/views/application/configuration/edit_profile_date_view.dart';
+import '../../presentation/views/application/configuration/edit_profile_filed_view.dart';
+import '../../presentation/views/application/configuration/edit_profile_photo_view.dart';
 import '../../presentation/views/application/configuration/edit_profile_view.dart';
+import '../../presentation/views/application/configuration/location_map_view.dart';
 import '../../presentation/views/application/configuration/location_picker_view.dart';
 import '../../presentation/views/application/configuration/manage_address_view.dart';
-import '../../presentation/views/application/configuration/edit_profile_filed_view.dart';
-import '../../presentation/views/application/configuration/edit_profile_date_view.dart';
-import '../../presentation/views/application/configuration/edit_profile_photo_view.dart';
+import '../../presentation/views/application/configuration/manage_geolocation_view.dart';
+import '../../presentation/views/application/configuration/manage_member_role_view.dart';
 import '../../presentation/views/application/configuration/profile_view.dart';
-import '../../presentation/views/application/configuration/change_password_view.dart';
-import '../../presentation/views/application/configuration/confirm_password_view.dart';
+import '../../presentation/views/application/home_view.dart';
+import '../../presentation/views/application/joined_route_detail_view.dart';
+import '../../presentation/views/application/my_routes_view.dart';
+import '../../presentation/views/application/route_details_view.dart';
+import '../../presentation/views/application/route_map_view.dart';
+import '../../presentation/views/application/saved_view.dart';
 import '../di/dependency_injection.dart';
 
 class IndigoRouteNames {
@@ -61,7 +63,9 @@ class IndigoRouteNames {
   static const companyHome = 'company_home';
   static const createRoute = 'create_route';
   static const companyRoutes = 'company_routes';
-  static const companyRouteRequests = '/company_route_requests';
+  static const companyRouteRequests = 'company_route_requests';
+  static const companyMembers = 'company_members';
+  static const manageMemberRole = 'manage_member_role';
 }
 
 class IndigoPaths {
@@ -92,6 +96,8 @@ class IndigoPaths {
   static const createRoute = '/create-route';
   static const companyRoutes = '/company-routes';
   static const companyRouteRequests = '/company-route-requests';
+  static const companyMembers = '/company-members';
+  static const manageMemberRole = '/manage-member-role';
 }
 
 final List<RouteBase> indigoRoutes = [
@@ -161,7 +167,6 @@ final List<RouteBase> indigoRoutes = [
     name: IndigoRouteNames.locationPicker,
     builder: (context, state) {
       final initialLocation = state.extra as GeoPoint?;
-
       return LocationPickerView(initialLocation: initialLocation);
     },
   ),
@@ -195,7 +200,6 @@ final List<RouteBase> indigoRoutes = [
       return const EditProfileDateView();
     },
   ),
-
   GoRoute(
     name: IndigoRouteNames.editProfilePhoto,
     path: IndigoPaths.editProfilePhoto,
@@ -228,7 +232,6 @@ final List<RouteBase> indigoRoutes = [
       );
     },
   ),
-
   GoRoute(
     name: IndigoRouteNames.changePassword,
     path: IndigoPaths.changePassword,
@@ -237,7 +240,6 @@ final List<RouteBase> indigoRoutes = [
       return ChangePasswordView(extra: extra);
     },
   ),
-  // Em indigo_routes.dart
   GoRoute(
     name: IndigoRouteNames.editAddress,
     path: IndigoPaths.editAddress,
@@ -302,7 +304,7 @@ final List<RouteBase> indigoRoutes = [
     builder: (context, state) => const MyCompaniesView(),
   ),
   GoRoute(
-    path: '/company-home',
+    path: IndigoPaths.companyHome,
     name: IndigoRouteNames.companyHome,
     builder: (context, state) {
       final company = state.extra as CompanyModel?;
@@ -331,13 +333,48 @@ final List<RouteBase> indigoRoutes = [
     },
   ),
   GoRoute(
-  path: '/company-route-requests',
-  name: IndigoRouteNames.companyRouteRequests,
-  builder: (context, state) {
-    final company = state.extra is CompanyModel
-        ? state.extra as CompanyModel
-        : null;
-    return CompanyRouteRequestsView(company: company);
-  },
-),
+    path: IndigoPaths.companyRouteRequests,
+    name: IndigoRouteNames.companyRouteRequests,
+    builder: (context, state) {
+      final company = state.extra is CompanyModel
+          ? state.extra as CompanyModel
+          : null;
+      return CompanyRouteRequestsView(company: company);
+    },
+  ),
+  GoRoute(
+    path: IndigoPaths.companyMembers,
+    name: IndigoRouteNames.companyMembers,
+    builder: (context, state) {
+      final extra = state.extra;
+      if (extra is CompanyModel) {
+        return CompanyMembersView(company: extra);
+      }
+      if (extra is Map<String, dynamic>) {
+        return CompanyMembersView(
+          company: extra['company'] is CompanyModel
+              ? extra['company'] as CompanyModel
+              : null,
+          initialShowPassengers:
+              (extra['initialShowPassengers'] as bool?) ?? false,
+        );
+      }
+      return const CompanyMembersView();
+    },
+  ),
+  GoRoute(
+    path: IndigoPaths.manageMemberRole,
+    name: IndigoRouteNames.manageMemberRole,
+    builder: (context, state) {
+      final args = state.extra as Map<String, dynamic>;
+      return ManageMemberRoleView(
+        company: args['company'] as CompanyModel?,
+        memberId: args['memberId'] as String,
+        userModel: args['userModel'] as UserModel,
+        currentRoleCategory: args['currentRoleCategory'] as String,
+        isCurrentUserOwner: (args['isCurrentUserOwner'] as bool?) ?? false,
+        isCurrentUserManager: (args['isCurrentUserManager'] as bool?) ?? false,
+      );
+    },
+  ),
 ];

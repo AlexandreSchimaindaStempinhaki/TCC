@@ -104,15 +104,22 @@ class _RouteDetailsViewState extends State<RouteDetailsView>
           ? routeListViewModel.state.isFavorite(id)
           : ((widget.route['isFavorite'] as bool?) ?? false);
 
-      final userId = currentUserIdentifier();
-      final isApproved =
+      final userIds = allCurrentUserIdentifiers();
+      final isOwner = isCompanyOwner.value;
+      final isManager = isCompanyManager.value;
+      final isDriver =
+          isCompanyDriver.value ||
+          (reactiveRoute != null &&
+              userIds.any((uid) => reactiveRoute.isUserDriver(uid)));
+      final isPassenger =
           reactiveRoute != null &&
-          userId.isNotEmpty &&
-          reactiveRoute.isUserPassenger(userId);
+          userIds.any((uid) => reactiveRoute.isUserPassenger(uid));
+
+      final isApproved = isOwner || isManager || isDriver || isPassenger;
       final isPending =
+          !isApproved &&
           reactiveRoute != null &&
-          userId.isNotEmpty &&
-          reactiveRoute.isUserPending(userId);
+          userIds.any((uid) => reactiveRoute.isUserPending(uid));
 
       final isExecutingAction =
           routeListViewModel.requestToJoinRouteCommand.isExecuting.value ||
@@ -295,7 +302,7 @@ class _RouteDetailsViewState extends State<RouteDetailsView>
                           AccountOption(
                             icon: Icons.storefront_rounded,
                             title: 'Visualizar Página da Empresa',
-                            trailing: const Icon(Icons.chevron_right_rounded),
+                            trailing: const Icon(Icons.chevron_right_outlined),
                             onTap: () => openCompanyHome(
                               context,
                               reactiveRoute,
@@ -332,9 +339,18 @@ class _RouteDetailsViewState extends State<RouteDetailsView>
                       ),
                     ),
 
+                    const SizedBox(height: 28),
+                    _buildOuterSectionTitle(context, 'Itinerário e Turnos'),
+                    RouteItineraryCard(
+                      origin: originText,
+                      destination: destinationText,
+                      operatingDays: operatingDaysText,
+                      shifts: currentShifts,
+                    ),
+
                     if (hasManageAccess) ...[
-                      const SizedBox(height: 24),
-                      _buildOuterSectionTitle(context, 'Gestão da Rota'),
+                      const SizedBox(height: 28),
+                      _buildOuterSectionTitle(context, 'Administração'),
                       Container(
                         clipBehavior: Clip.antiAlias,
                         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -381,15 +397,6 @@ class _RouteDetailsViewState extends State<RouteDetailsView>
                         ),
                       ),
                     ],
-
-                    const SizedBox(height: 28),
-                    _buildOuterSectionTitle(context, 'Itinerário e Turnos'),
-                    RouteItineraryCard(
-                      origin: originText,
-                      destination: destinationText,
-                      operatingDays: operatingDaysText,
-                      shifts: currentShifts,
-                    ),
                   ],
                 ),
               ),
@@ -413,6 +420,9 @@ class _RouteDetailsViewState extends State<RouteDetailsView>
                     ? null
                     : () => handleJoinAction(
                         context,
+                        isOwner: isOwner,
+                        isManager: isManager,
+                        isDriver: isDriver,
                         isPending: isPending,
                         isApproved: isApproved,
                       ),
@@ -430,7 +440,9 @@ class _RouteDetailsViewState extends State<RouteDetailsView>
                 child: isExecutingAction
                     ? AnimatedThreeDots(color: colorScheme.onSurface)
                     : Text(
-                        isApproved
+                        isOwner
+                            ? 'Você é o dono dessa empresa'
+                            : isApproved
                             ? 'Vinculado a esta Linha'
                             : isPending
                             ? 'Cancelar Solicitação Pendente'

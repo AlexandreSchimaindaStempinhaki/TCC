@@ -86,6 +86,8 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
       final isLoading = isInitialLoading.value;
       final company =
           companyViewModel.state.selectedCompany.value ?? widget.initialCompany;
+      final canManage = canManageCompanyRoutes(company);
+      final isOwner = isCompanyOwner(company);
 
       return AbsorbPointer(
         absorbing: isDeleting,
@@ -265,10 +267,12 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                     Expanded(
                                       child: InkWell(
                                         borderRadius: BorderRadius.circular(12),
-                                        onTap: () => showComingSoon(
-                                          context,
-                                          'Motoristas e Membros',
-                                        ),
+                                        onTap: () async {
+                                          await context.pushNamed(
+                                            IndigoRouteNames.companyMembers,
+                                            extra: company,
+                                          );
+                                        },
                                         child: Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.center,
@@ -285,7 +289,7 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 Text(
-                                                  '${company.memberIds.length}${company.memberIds.length == 1 ? 'membro' : 'membros'}',
+                                                  '${company.memberIds.length}${company.memberIds.length == 1 ? ' membro' : ' membros'}',
                                                   style: TextStyle(
                                                     fontSize: 13,
                                                     fontWeight: FontWeight.bold,
@@ -416,26 +420,19 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                   showComingSoon(context, 'Pontos de Embarque'),
                             ),
 
-                            // --- SEÇÃO: EQUIPE E PASSAGEIROS ---
+                            // --- SEÇÃO: EQUIPE E CLIENTES ---
                             _buildSectionTitle(context, 'Equipe e Clientes'),
 
                             AccountOption(
                               icon: Icons.badge_outlined,
-                              title: 'Motoristas e Membros',
-                              onTap: () => showComingSoon(
-                                context,
-                                'Motoristas e Membros',
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-
-                            AccountOption(
-                              icon: Icons.people_outline_rounded,
-                              title: 'Passageiros Vinculados',
-                              onTap: () => showComingSoon(
-                                context,
-                                'Passageiros Vinculados',
-                              ),
+                              title: 'Membros',
+                              trailing: const SizedBox.shrink(),
+                              onTap: () async {
+                                await context.pushNamed(
+                                  IndigoRouteNames.companyMembers,
+                                  extra: company,
+                                );
+                              },
                             ),
                             const SizedBox(height: 8),
 
@@ -448,10 +445,10 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                               ),
                             ),
 
-                            // --- SEÇÃO: ADMINISTRAÇÃO ---
-                            _buildSectionTitle(context, 'Administração'),
+                            // --- SEÇÃO: ADMINISTRAÇÃO (Apenas CEO ou Gerente) ---
+                            if (canManage) ...[
+                              _buildSectionTitle(context, 'Administração'),
 
-                            if (canManageCompanyRoutes(company)) ...[
                               AccountOption(
                                 icon: Icons.add_road_rounded,
                                 title: 'Criar Nova Rota',
@@ -471,29 +468,33 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                 },
                               ),
                               const SizedBox(height: 8),
-                            ],
 
-                            AccountOption(
-                              icon: Icons.edit_note_rounded,
-                              title: 'Editar Dados da Empresa',
-                              onTap: () => openEditCompany(company),
-                            ),
-                            const SizedBox(height: 8),
+                              AccountOption(
+                                icon: Icons.edit_note_rounded,
+                                title: 'Editar Dados da Empresa',
+                                onTap: () => openEditCompany(company),
+                              ),
+                              const SizedBox(height: 8),
 
-                            AccountOption(
-                              icon: Icons.delete_outline_rounded,
-                              title: 'Excluir Empresa',
-                              iconColor: Colors.redAccent,
-                              textColor: Colors.redAccent,
-                              trailing: isDeleting
-                                  ? const AnimatedThreeDots(
-                                      color: Colors.redAccent,
-                                    )
-                                  : null,
-                              onTap: () =>
-                                  confirmAndDeleteCompany(context, company),
-                            ),
-                            const SizedBox(height: 8),
+                              // --- AÇÃO EXCLUSIVA DO CEO (Dono da Empresa) ---
+                              if (isOwner) ...[
+                                AccountOption(
+                                  icon: Icons.delete_outline_rounded,
+                                  title: 'Excluir Empresa',
+                                  iconColor: Colors.redAccent,
+                                  textColor: Colors.redAccent,
+                                  trailing: isDeleting
+                                      ? const AnimatedThreeDots(
+                                          color: Colors.redAccent,
+                                        )
+                                      : null,
+                                  onTap: () =>
+                                      confirmAndDeleteCompany(context, company),
+                                ),
+                                const SizedBox(height: 8),
+                              ],
+                            ] else
+                              const SizedBox(height: 8),
                           ],
                         ),
                       ),

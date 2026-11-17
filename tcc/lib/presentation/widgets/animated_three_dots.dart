@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 class AnimatedThreeDots extends StatefulWidget {
   final Color color;
-  
+
   const AnimatedThreeDots({
-    super.key, 
+    super.key,
     required this.color,
   });
 
@@ -45,23 +45,29 @@ class _AnimatedThreeDotsState extends State<AnimatedThreeDots>
             if (value < 0) value += 1.0;
 
             final isHighlight = value >= 0.0 && value < 0.4;
-            
-            // Faz o pontinho subir e descer suavemente
-            double y = 0;
+
+            double intensity = 0.0;
             if (isHighlight) {
-              y = -4.0 * (0.2 - (0.2 - value).abs()) / 0.2; 
+              intensity = (0.2 - (0.2 - value).abs()) / 0.2;
             }
+
+            final double y = -4.5 * intensity;
+            final double scale = 0.85 + (0.60 * intensity);
+            final double opacity = 0.3 + (0.7 * intensity);
 
             return Transform.translate(
               offset: Offset(0, y),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2.5),
-                child: Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: isHighlight ? widget.color : widget.color.withOpacity(0.3),
-                    shape: BoxShape.circle,
+              child: Transform.scale(
+                scale: scale,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3.0),
+                  child: Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: widget.color.withOpacity(opacity),
+                      shape: BoxShape.circle,
+                    ),
                   ),
                 ),
               ),

@@ -24,6 +24,9 @@ mixin RouteDetailsMixin on State<RouteDetailsView> {
   late final CompanyListViewModel companyListViewModel;
 
   final canManageRoute = signal<bool>(false);
+  final isCompanyOwner = signal<bool>(false);
+  final isCompanyManager = signal<bool>(false);
+  final isCompanyDriver = signal<bool>(false);
   final isDeletingRoute = signal<bool>(false);
 
   @override
@@ -41,6 +44,9 @@ mixin RouteDetailsMixin on State<RouteDetailsView> {
   @override
   void dispose() {
     canManageRoute.dispose();
+    isCompanyOwner.dispose();
+    isCompanyManager.dispose();
+    isCompanyDriver.dispose();
     isDeletingRoute.dispose();
     super.dispose();
   }
@@ -66,7 +72,7 @@ mixin RouteDetailsMixin on State<RouteDetailsView> {
     return authUser?.email ?? authUser?.uid ?? '';
   }
 
-Set<String> _allCurrentUserIdentifiers() {
+  Set<String> allCurrentUserIdentifiers() {
     final ids = <String>{};
     final authUser = FirebaseAuth.instance.currentUser;
     final loggedUser = userViewModel.state.user.value;
@@ -87,6 +93,12 @@ Set<String> _allCurrentUserIdentifiers() {
       if (cpf != null && cpf.trim().isNotEmpty) {
         ids.add(cpf.trim());
         ids.add(cleanDigits(cpf));
+      }
+
+      final email = loggedUser.email;
+      if (email != null && email.trim().isNotEmpty) {
+        ids.add(email.trim());
+        ids.add(email.trim().toLowerCase());
       }
     }
 
@@ -172,26 +184,45 @@ Set<String> _allCurrentUserIdentifiers() {
     return company;
   }
 
-  bool _isManagerOrOwnerRole(String rawRole) {
+  bool _isOwnerRole(String rawRole) {
     final role = rawRole.trim().toLowerCase();
     return role == 'ceo' ||
         role == 'owner' ||
         role == 'dono' ||
-        role == 'proprietario' ||
-        role == 'manager' ||
+        role == 'proprietario';
+  }
+
+  bool _isManagerRole(String rawRole) {
+    final role = rawRole.trim().toLowerCase();
+    return role == 'manager' ||
         role == 'gerente' ||
         role == 'admin' ||
         role == 'administrador';
   }
 
+  bool _isDriverRole(String rawRole) {
+    final role = rawRole.trim().toLowerCase();
+    return role == 'driver' ||
+        role == 'motorista' ||
+        role == 'condutor';
+  }
+
   Future<void> _checkManagementPermissions() async {
-    final userIds = _allCurrentUserIdentifiers();
+    final userIds = allCurrentUserIdentifiers();
     if (userIds.isEmpty) {
       canManageRoute.value = false;
+      isCompanyOwner.value = false;
+      isCompanyManager.value = false;
+      isCompanyDriver.value = false;
       return;
     }
 
     final reactiveRoute = findReactiveRoute();
+    if (reactiveRoute != null &&
+        userIds.any((id) => reactiveRoute.isUserDriver(id))) {
+      isCompanyDriver.value = true;
+    }
+
     final rawCnpj =
         reactiveRoute?.companyCnpj ??
         (widget.route['companyCnpj'] as String?) ??
@@ -202,6 +233,7 @@ Set<String> _allCurrentUserIdentifiers() {
       final isOwnedInMemory = companyListViewModel.state.ownedCompanies.value
           .any((c) => cleanDigits(c.cnpj) == targetCnpj);
       if (isOwnedInMemory) {
+        isCompanyOwner.value = true;
         canManageRoute.value = true;
         return;
       }
@@ -212,15 +244,15 @@ Set<String> _allCurrentUserIdentifiers() {
       final ownerClean = cleanDigits(company.ownerId);
       if (userIds.contains(company.ownerId.trim()) ||
           (ownerClean.isNotEmpty && userIds.contains(ownerClean))) {
-        canManageRoute.value = true;
+        if (mounted) {
+          isCompanyOwner.value = true;
+          canManageRoute.value = true;
+        }
         return;
       }
     }
 
-    if (targetCnpj.isEmpty) {
-      canManageRoute.value = false;
-      return;
-    }
+    if (targetCnpj.isEmpty) return;
 
     try {
       final snapshot = await FirebaseFirestore.instance
@@ -230,9 +262,10 @@ Set<String> _allCurrentUserIdentifiers() {
 
       for (final doc in snapshot.docs) {
         final data = doc.data();
-        final memberUserId = (data['userId'] ?? data['cpf'] ?? data['email'] ?? '')
-            .toString()
-            .trim();
+        final memberUserId =
+            (data['userId'] ?? data['cpf'] ?? data['email'] ?? '')
+                .toString()
+                .trim();
         final memberClean = cleanDigits(memberUserId);
         final role = (data['role'] ?? data['cargo'] ?? '').toString();
 
@@ -241,9 +274,28 @@ Set<String> _allCurrentUserIdentifiers() {
             userIds.contains(memberUserId.toLowerCase()) ||
             (memberClean.isNotEmpty && userIds.contains(memberClean));
 
-        if (matchesUser && _isManagerOrOwnerRole(role)) {
-          if (mounted) canManageRoute.value = true;
+        if (!matchesUser) continue;
+
+        if (_isOwnerRole(role)) {
+          if (mounted) {
+            isCompanyOwner.value = true;
+            canManageRoute.value = true;
+          }
           return;
+        }
+
+        if (_isManagerRole(role)) {
+          if (mounted) {
+            isCompanyManager.value = true;
+            canManageRoute.value = true;
+          }
+          return;
+        }
+
+        if (_isDriverRole(role)) {
+          if (mounted) {
+            isCompanyDriver.value = true;
+          }
         }
       }
     } catch (_) {}
@@ -518,9 +570,42 @@ Set<String> _allCurrentUserIdentifiers() {
 
   Future<void> handleJoinAction(
     BuildContext context, {
+    required bool isOwner,
+    required bool isManager,
+    required bool isDriver,
     required bool isPending,
     required bool isApproved,
   }) async {
+    if (isOwner) {
+      showTopSnackBar(
+        context,
+        'Você é o dono dessa empresa!',
+        backgroundColor: Colors.black87,
+        icon: Icons.verified_rounded,
+      );
+      return;
+    }
+
+    if (isManager) {
+      showTopSnackBar(
+        context,
+        'Você já está vinculado a esta rota como gerente!',
+        backgroundColor: Colors.black87,
+        icon: Icons.verified_rounded,
+      );
+      return;
+    }
+
+    if (isDriver) {
+      showTopSnackBar(
+        context,
+        'Você já está vinculado a esta rota como motorista!',
+        backgroundColor: Colors.black87,
+        icon: Icons.verified_rounded,
+      );
+      return;
+    }
+
     final id = routeId;
     if (id == null) {
       showTopSnackBar(
