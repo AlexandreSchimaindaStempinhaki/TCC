@@ -1,8 +1,16 @@
 import 'package:auto_injector/auto_injector.dart';
+import 'package:tcc/data/repositories/trip/i_trip_repository.dart';
+import 'package:tcc/domain/usecases/trip/i_trip_usecases.dart';
+import 'package:tcc/domain/usecases/trip/trip_usecases_impl.dart';
 
 import '../../data/repositories/company_member/i_company_member_repository.dart';
 import '../../data/repositories/route/i_route_repository.dart';
+import '../../data/repositories/trip/trip_repository_impl.dart';
 import '../../data/repositories/vehicle/i_vehicle_repository.dart';
+import '../../data/services/trip/i_trip_service.dart';
+import '../../data/services/trip/trip_service_impl.dart';
+import '../../domain/facades/trip/i_trip_facade.dart';
+import '../../domain/facades/trip/trip_facade_impl.dart';
 import '../../domain/facades/user/i_user_use_case_facade.dart';
 import '../../data/repositories/user/i_user_repositoy.dart';
 import '../../data/repositories/user/user_repository_impl.dart';
@@ -11,6 +19,8 @@ import '../../data/services/user/user_firebase_service_impl.dart';
 import '../../domain/facades/user/user_use_case_facade.dart';
 import '../../domain/usecases/user/i_user_usecases.dart';
 import '../../domain/usecases/user/user_use_cases_impl.dart';
+import '../../presentation/controllers/trip/trip_list_viewmodel.dart';
+import '../../presentation/controllers/trip/trip_viewmodel.dart';
 import '../../presentation/controllers/user/user_viewmodel.dart';
 import '../../data/services/company/i_company_firebase_service.dart';
 import '../../data/services/company/company_firebase_service_impl.dart';
@@ -152,6 +162,27 @@ void setupDependencyInjection() {
   injector.addSingleton<ReauthenticateCommand>(ReauthenticateCommand.new);
   injector.addSingleton<IAuthUseCaseFacade>(AuthUseCaseFacadeImpl.new);
 
+  // Trip Module
+  injector.addSingleton<ITripService>(TripServiceImpl.new);
+  injector.addSingleton<ITripRepository>(TripRepositoryImpl.new);
+  injector.addSingleton<IFetchTripsByRouteUseCase>(FetchTripsByRouteUseCaseImpl.new);
+  injector.addSingleton<IFetchTripsByDriverUseCase>(FetchTripsByDriverUseCaseImpl.new);
+  injector.addSingleton<IFetchTripsByCompanyUseCase>(FetchTripsByCompanyUseCaseImpl.new);
+  injector.addSingleton<IGetTripByIdUseCase>(GetTripByIdUseCaseImpl.new);
+  injector.addSingleton<IWatchTripByIdUseCase>(WatchTripByIdUseCaseImpl.new);
+  injector.addSingleton<IWatchActiveTripsByRouteUseCase>(WatchActiveTripsByRouteUseCaseImpl.new);
+  injector.addSingleton<ICreateTripUseCase>(CreateTripUseCaseImpl.new);
+  injector.addSingleton<IGenerateScaledTripsUseCase>(GenerateScaledTripsUseCaseImpl.new);
+  injector.addSingleton<IUpdateTripUseCase>(UpdateTripUseCaseImpl.new);
+  injector.addSingleton<IStartTripUseCase>(StartTripUseCaseImpl.new);
+  injector.addSingleton<IFinishTripUseCase>(FinishTripUseCaseImpl.new);
+  injector.addSingleton<ICancelTripUseCase>(CancelTripUseCaseImpl.new);
+  injector.addSingleton<IUpdateDriverLocationUseCase>(UpdateDriverLocationUseCaseImpl.new);
+  injector.addSingleton<IMarkStopCompletedUseCase>(MarkStopCompletedUseCaseImpl.new);
+  injector.addSingleton<ISetPassengerReadyAtStopUseCase>(SetPassengerReadyAtStopUseCaseImpl.new);
+  injector.addSingleton<IDeleteTripUseCase>(DeleteTripUseCaseImpl.new);
+  injector.addSingleton<ITripFacade>(TripFacadeImpl.new);
+
   // ViewModels
   injector.addSingleton<AuthViewModel>(AuthViewModel.new);
   injector.addSingleton<UserViewModel>(UserViewModel.new);
@@ -162,6 +193,8 @@ void setupDependencyInjection() {
   injector.addSingleton<RouteListViewModel>(RouteListViewModel.new);
   injector.addSingleton<VehicleViewModel>(VehicleViewModel.new);
   injector.addSingleton<VehicleListViewModel>(VehicleListViewModel.new);
+  injector.addSingleton<TripViewModel>(TripViewModel.new);
+  injector.addSingleton<TripListViewModel>(TripListViewModel.new);
 
   injector.commit();
 }
