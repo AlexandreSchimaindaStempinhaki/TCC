@@ -2,6 +2,7 @@ import 'package:auto_injector/auto_injector.dart';
 
 import '../../data/repositories/company_member/i_company_member_repository.dart';
 import '../../data/repositories/route/i_route_repository.dart';
+import '../../data/repositories/vehicle/i_vehicle_repository.dart';
 import '../../domain/facades/user/i_user_use_case_facade.dart';
 import '../../data/repositories/user/i_user_repositoy.dart';
 import '../../data/repositories/user/user_repository_impl.dart';
@@ -52,6 +53,15 @@ import '../../domain/facades/route/i_route_facade.dart';
 import '../../domain/facades/route/route_facade_impl.dart';
 import '../../presentation/controllers/route/route_viewmodel.dart';
 import '../../presentation/controllers/route/route_list_viewmodel.dart';
+import '../../data/services/vehicle/i_vehicle_service.dart';
+import '../../data/services/vehicle/vehicle_service_impl.dart';
+import '../../data/repositories/vehicle/vehicle_repository_impl.dart';
+import '../../domain/usecases/vehicle/i_vehicle_usecases.dart';
+import '../../domain/usecases/vehicle/vehicle_usecases_impl.dart';
+import '../../domain/facades/vehicle/i_vehicle_facade.dart';
+import '../../domain/facades/vehicle/vehicle_facade_impl.dart';
+import '../../presentation/controllers/vehicle/vehicle_viewmodel.dart';
+import '../../presentation/controllers/vehicle/vehicle_list_viewmodel.dart';
 
 final injector = AutoInjector();
 
@@ -110,6 +120,19 @@ void setupDependencyInjection() {
   injector.addSingleton<IFinishRouteTripUseCase>(FinishRouteTripUseCaseImpl.new);
   injector.addSingleton<IRouteUseCaseFacade>(RouteUseCaseFacadeImpl.new);
 
+  // Vehicle Module
+  injector.addSingleton<IVehicleService>(VehicleServiceImpl.new);
+  injector.addSingleton<IVehicleRepository>(VehicleRepositoryImpl.new);
+  injector.addSingleton<IFetchCompanyVehiclesUseCase>(FetchCompanyVehiclesUseCaseImpl.new);
+  injector.addSingleton<IGetVehicleByIdUseCase>(GetVehicleByIdUseCaseImpl.new);
+  injector.addSingleton<IFetchDriverVehiclesUseCase>(FetchDriverVehiclesUseCaseImpl.new);
+  injector.addSingleton<ICreateVehicleUseCase>(CreateVehicleUseCaseImpl.new);
+  injector.addSingleton<IUpdateVehicleUseCase>(UpdateVehicleUseCaseImpl.new);
+  injector.addSingleton<IToggleVehicleStatusUseCase>(ToggleVehicleStatusUseCaseImpl.new);
+  injector.addSingleton<IAssignVehicleDriverUseCase>(AssignVehicleDriverUseCaseImpl.new);
+  injector.addSingleton<IDeleteVehicleUseCase>(DeleteVehicleUseCaseImpl.new);
+  injector.addSingleton<IVehicleFacade>(VehicleFacadeImpl.new);
+
   // Authentication Module
   injector.addSingleton<ILocalSessionStore>(SharedPrefLocalSessionService.new);
   injector.addSingleton<AuthLocalSessionManager>(AuthLocalSessionManager.new);
@@ -137,6 +160,8 @@ void setupDependencyInjection() {
   injector.addSingleton<CompanyMemberViewModel>(CompanyMemberViewModel.new);
   injector.addSingleton<RouteViewModel>(RouteViewModel.new);
   injector.addSingleton<RouteListViewModel>(RouteListViewModel.new);
+  injector.addSingleton<VehicleViewModel>(VehicleViewModel.new);
+  injector.addSingleton<VehicleListViewModel>(VehicleListViewModel.new);
 
   injector.commit();
 }
