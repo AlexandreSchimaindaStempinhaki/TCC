@@ -62,12 +62,10 @@ class _CompanyMembersViewState extends State<CompanyMembersView>
         mainAxisSize: MainAxisSize.min,
         children: List.generate(items.length, (index) {
           final item = items[index];
-          final isLast = index == items.length - 1;
 
           return CompanyMemberCard(
             name: item.name,
             photoUrl: item.photoUrl,
-            showDivider: !isLast,
             onTap: () => handleMemberTap(context, item),
           );
         }),

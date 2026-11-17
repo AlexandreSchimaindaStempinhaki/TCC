@@ -1,93 +1,71 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
-import 'package:tcc/core/di/dependency_injection.dart';
-import 'package:tcc/core/routes/indigo_routes.dart';
-import 'package:tcc/domain/models/company_entity.dart';
-import 'package:tcc/domain/models/route_entity.dart';
-import 'package:tcc/domain/models/user_entity.dart';
-import 'package:tcc/presentation/controllers/company/company_list_viewmodel.dart';
-import 'package:tcc/presentation/controllers/company/company_viewmodel.dart';
-import 'package:tcc/presentation/controllers/route/route_list_viewmodel.dart';
-import 'package:tcc/presentation/controllers/user/user_viewmodel.dart';
-import 'package:tcc/presentation/views/application/configuration/company_members_view.dart';
-import 'package:tcc/presentation/views/application/configuration/manage_member_role_view.dart';
-import 'package:tcc/presentation/widgets/member_action_dialog.dart';
 
-class CompanyMemberItem {
-  final String id;
-  final String name;
-  final String photoUrl;
-  final String roleCategory;
-  final UserModel userModel;
+import '../../../core/di/dependency_injection.dart';
+import '../../../core/routes/indigo_routes.dart';
+import '../../../domain/models/company_entity.dart';
+import '../../controllers/company_member/company_member_state_viewmodel.dart';
+import '../../controllers/company_member/company_member_viewmodel.dart';
+import '../../widgets/account_option.dart';
+import '../application/configuration/company_members_view.dart';
 
-  const CompanyMemberItem({
-    required this.id,
-    required this.name,
-    required this.photoUrl,
-    required this.roleCategory,
-    required this.userModel,
-  });
-}
+export '../../controllers/company_member/company_member_state_viewmodel.dart'
+    show CompanyMemberItem;
 
 mixin CompanyMembersMixin on State<CompanyMembersView> {
-  late final CompanyViewModel companyViewModel;
-  late final CompanyListViewModel companyListViewModel;
-  late final RouteListViewModel routeListViewModel;
-  late final UserViewModel userViewModel;
-
+  late final CompanyMemberViewModel companyMemberViewModel;
   final TextEditingController searchController = TextEditingController();
-  final Signal<String> searchQuery = signal('');
-  final Signal<int> selectedFilterIndex = signal(0);
-  final Signal<bool> isLoading = signal(true);
-  final Signal<bool> canViewPassengers = signal(false);
-  final Signal<bool> isCurrentUserOwner = signal(false);
-  final Signal<bool> isCurrentUserManager = signal(false);
 
-  final Signal<List<CompanyMemberItem>> ownersList = signal([]);
-  final Signal<List<CompanyMemberItem>> managersList = signal([]);
-  final Signal<List<CompanyMemberItem>> driversList = signal([]);
-  final Signal<List<CompanyMemberItem>> passengersList = signal([]);
+  Signal<String> get searchQuery => companyMemberViewModel.state.searchQuery;
+  Signal<int> get selectedFilterIndex =>
+      companyMemberViewModel.state.selectedFilterIndex;
+  Signal<bool> get isLoading => companyMemberViewModel.state.isLoading;
+  Signal<bool> get canViewPassengers =>
+      companyMemberViewModel.state.canViewPassengers;
+  Signal<bool> get isCurrentUserOwner =>
+      companyMemberViewModel.state.isCurrentUserOwner;
+  Signal<bool> get isCurrentUserManager =>
+      companyMemberViewModel.state.isCurrentUserManager;
 
-  final Map<String, Map<String, dynamic>> _userProfilesCache = {};
+  Signal<List<CompanyMemberItem>> get ownersList =>
+      companyMemberViewModel.state.ownersList;
+  Signal<List<CompanyMemberItem>> get managersList =>
+      companyMemberViewModel.state.managersList;
+  Signal<List<CompanyMemberItem>> get driversList =>
+      companyMemberViewModel.state.driversList;
+  Signal<List<CompanyMemberItem>> get passengersList =>
+      companyMemberViewModel.state.passengersList;
 
   CompanyModel? get targetCompany =>
-      widget.company ?? companyViewModel.state.selectedCompany.value;
-
-  String cleanDigits(String value) => value.replaceAll(RegExp(r'\D'), '');
+      companyMemberViewModel.commands.resolveCompany(widget.company);
 
   @override
   void initState() {
     super.initState();
-    companyViewModel = injector.get<CompanyViewModel>();
-    companyListViewModel = injector.get<CompanyListViewModel>();
-    routeListViewModel = injector.get<RouteListViewModel>();
-    userViewModel = injector.get<UserViewModel>();
-
-    if (widget.initialShowPassengers) {
-      selectedFilterIndex.value = 4;
-    }
-
+    companyMemberViewModel = injector.get<CompanyMemberViewModel>();
+    companyMemberViewModel.state.resetFilterState(
+      showPassengers: widget.initialShowPassengers,
+    );
     loadMembersData();
   }
 
   @override
   void dispose() {
     searchController.dispose();
-    searchQuery.dispose();
-    selectedFilterIndex.dispose();
-    isLoading.dispose();
-    canViewPassengers.dispose();
-    isCurrentUserOwner.dispose();
-    isCurrentUserManager.dispose();
-    ownersList.dispose();
-    managersList.dispose();
-    driversList.dispose();
-    passengersList.dispose();
     super.dispose();
   }
+
+  Future<void> loadMembersData() =>
+      companyMemberViewModel.commands.loadCompanyMembersDetailed(widget.company);
+
+  List<CompanyMemberItem> filterItems(
+    List<CompanyMemberItem> items,
+    String rawQuery,
+  ) => companyMemberViewModel.commands.filterItems(items, rawQuery);
+
+  bool canManageMemberRole(CompanyMemberItem item) =>
+      companyMemberViewModel.commands.canManageMemberRole(item);
 
   void handleBack(BuildContext context) {
     if (context.canPop()) {
@@ -101,447 +79,340 @@ mixin CompanyMembersMixin on State<CompanyMembersView> {
     context.pushNamed(IndigoRouteNames.profile, extra: item.userModel);
   }
 
-  Future<void> openManageMemberRole(
-    BuildContext context,
-    CompanyMemberItem item,
-  ) async {
-    final updated = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => ManageMemberRoleView(
-          company: targetCompany,
-          memberId: item.id,
-          userModel: item.userModel,
-          currentRoleCategory: item.roleCategory,
-          isCurrentUserOwner: isCurrentUserOwner.value,
-          isCurrentUserManager: isCurrentUserManager.value,
-        ),
+  Widget _buildSelectedRoleBadge(ColorScheme colorScheme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: colorScheme.primary,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.check_circle_rounded,
+            size: 14,
+            color: Colors.white,
+          ),
+          SizedBox(width: 4),
+          Text(
+            'Selecionado',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
-
-    if (updated == true && mounted) {
-      await loadMembersData();
-    }
-  }
-
-  Future<void> showRoleManagementSheet(
-    BuildContext context,
-    CompanyMemberItem item,
-  ) async {
-    await openManageMemberRole(context, item);
   }
 
   void handleMemberTap(BuildContext context, CompanyMemberItem item) {
-    final canEdit = canManageMemberRole(item);
+    if (!canManageMemberRole(item)) {
+      openMemberProfile(context, item);
+      return;
+    }
 
-    showDialog(
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final borderColor = isDark
+        ? colorScheme.onSurface.withOpacity(0.22)
+        : colorScheme.onSurface.withOpacity(0.14);
+    final surfaceColor = isDark
+        ? const Color(0xFF1E293B)
+        : const Color(0xFFF1F5F9);
+
+    final availableRoles = [
+      if (isCurrentUserOwner.value)
+        {
+          'category': 'manager',
+          'label': 'Gerente',
+          'icon': Icons.manage_accounts_rounded,
+        },
+      {
+        'category': 'driver',
+        'label': 'Motorista',
+        'icon': Icons.directions_bus_rounded,
+      },
+      {
+        'category': 'passenger',
+        'label': 'Passageiro',
+        'icon': Icons.people_alt_rounded,
+      },
+    ];
+
+    showModalBottomSheet(
       context: context,
-      builder: (_) => MemberActionDialog(
-        name: item.name,
-        photoUrl: item.photoUrl,
-        canEditRole: canEdit,
-        onViewProfile: () => openMemberProfile(context, item),
-        onEditRole: () => openManageMemberRole(context, item),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: borderColor,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 24,
+                      backgroundColor: surfaceColor,
+                      backgroundImage: item.photoUrl.trim().isNotEmpty
+                          ? NetworkImage(item.photoUrl.trim())
+                          : null,
+                      child: item.photoUrl.trim().isEmpty
+                          ? Icon(
+                              Icons.person_rounded,
+                              color: colorScheme.onSurface,
+                              size: 24,
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Opções do membro',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: colorScheme.secondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  clipBehavior: Clip.antiAlias,
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: borderColor, width: 1.4),
+                  ),
+                  child: AccountOption(
+                    icon: Icons.person_search_rounded,
+                    title: 'Visualizar Perfil',
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      openMemberProfile(context, item);
+                    },
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, bottom: 10),
+                  child: Text(
+                    'Cargo na Empresa',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                Container(
+                  clipBehavior: Clip.antiAlias,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: borderColor, width: 1.4),
+                  ),
+                  child: Column(
+                    children: List.generate(availableRoles.length, (idx) {
+                      final role = availableRoles[idx];
+                      final category = role['category'] as String;
+                      final label = role['label'] as String;
+                      final icon = role['icon'] as IconData;
+                      final isSelected = item.roleCategory == category;
+
+                      return Column(
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? colorScheme.primary.withOpacity(0.10)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(14),
+                              border: isSelected
+                                  ? Border.all(
+                                      color: colorScheme.primary,
+                                      width: 1.5,
+                                    )
+                                  : null,
+                            ),
+                            child: AccountOption(
+                              icon: icon,
+                              title: label,
+                              iconColor: isSelected
+                                  ? colorScheme.primary
+                                  : colorScheme.onSurface,
+                              textColor: isSelected
+                                  ? colorScheme.primary
+                                  : colorScheme.onSurface,
+                              trailing: isSelected
+                                  ? _buildSelectedRoleBadge(colorScheme)
+                                  : Icon(
+                                      Icons.radio_button_unchecked_rounded,
+                                      size: 20,
+                                      color: colorScheme.secondary,
+                                    ),
+                              onTap: () async {
+                                if (isSelected) return;
+                                Navigator.of(sheetContext).pop();
+                                await _confirmAndChangeRole(
+                                  context,
+                                  item: item,
+                                  newRole: category,
+                                  newRoleLabel: label,
+                                );
+                              },
+                            ),
+                          ),
+                          if (idx < availableRoles.length - 1)
+                            const SizedBox(height: 4),
+                        ],
+                      );
+                    }),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmAndChangeRole(
+    BuildContext context, {
+    required CompanyMemberItem item,
+    required String newRole,
+    required String newRoleLabel,
+  }) async {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(
+              Icons.manage_accounts_rounded,
+              color: colorScheme.primary,
+              size: 26,
+            ),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'Confirmar Cargo?',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Deseja alterar o cargo de "${item.name}" para $newRoleLabel?',
+          style: const TextStyle(fontSize: 15),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text(
+              'Confirmar',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
       ),
     );
-  }
 
-  String _normalizeText(String input) {
-    const withAccents = 'áàâãäéèêëíìîïóòôõöúùûüçñÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ';
-    const withoutAccents = 'aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN';
-    var result = input.trim().toLowerCase();
-    for (int i = 0; i < withAccents.length; i++) {
-      result = result.replaceAll(withAccents[i], withoutAccents[i]);
-    }
-    return result;
-  }
+    if (confirmed != true || !mounted) return;
 
-  Set<String> _allCurrentUserIdentifiers() {
-    final ids = <String>{};
-    final authUser = FirebaseAuth.instance.currentUser;
-    final loggedUser = userViewModel.state.user.value;
+    final success = await companyMemberViewModel.commands
+        .updateMemberRoleDetailed(
+          widgetCompany: widget.company,
+          item: item,
+          newRoleCategory: newRole,
+        );
 
-    if (authUser != null) {
-      if (authUser.uid.trim().isNotEmpty) {
-        ids.add(authUser.uid.trim());
-      }
-      final authEmail = authUser.email;
-      if (authEmail != null && authEmail.trim().isNotEmpty) {
-        ids.add(authEmail.trim());
-        ids.add(authEmail.trim().toLowerCase());
-      }
-    }
+    if (!mounted) return;
 
-    if (loggedUser != null) {
-      final cpf = loggedUser.cpf;
-      if (cpf != null && cpf.trim().isNotEmpty) {
-        ids.add(cpf.trim());
-        ids.add(cleanDigits(cpf));
-      }
-
-      final email = loggedUser.email;
-      if (email != null && email.trim().isNotEmpty) {
-        ids.add(email.trim());
-        ids.add(email.trim().toLowerCase());
-      }
-    }
-
-    return ids;
-  }
-
-  bool _matchesIdentifier(String targetId, Set<String> currentUserIds) {
-    final trimmed = targetId.trim();
-    if (trimmed.isEmpty) return false;
-    final cleaned = cleanDigits(trimmed);
-
-    return currentUserIds.contains(trimmed) ||
-        currentUserIds.contains(trimmed.toLowerCase()) ||
-        (cleaned.isNotEmpty && currentUserIds.contains(cleaned));
-  }
-
-  String _classifyRole(String rawRole) {
-    final role = rawRole.trim().toLowerCase();
-    if (role == 'ceo' ||
-        role == 'owner' ||
-        role == 'dono' ||
-        role == 'proprietario' ||
-        role == 'proprietário') {
-      return 'owner';
-    }
-    if (role == 'manager' ||
-        role == 'gerente' ||
-        role == 'admin' ||
-        role == 'administrador') {
-      return 'manager';
-    }
-    if (role == 'driver' || role == 'motorista' || role == 'condutor') {
-      return 'driver';
-    }
-    return 'passenger';
-  }
-
-  bool canManageMemberRole(CompanyMemberItem item) {
-    if (item.roleCategory == 'owner') return false;
-
-    final currentUserIds = _allCurrentUserIdentifiers();
-    if (_matchesIdentifier(item.id, currentUserIds)) return false;
-
-    if (isCurrentUserOwner.value) {
-      return item.roleCategory == 'manager' ||
-          item.roleCategory == 'driver' ||
-          item.roleCategory == 'passenger';
-    }
-
-    if (isCurrentUserManager.value) {
-      return item.roleCategory == 'driver' || item.roleCategory == 'passenger';
-    }
-
-    return false;
-  }
-
-  Future<void> loadMembersData() async {
-    isLoading.value = true;
-
-    final company = targetCompany;
-    final rawCnpj = cleanDigits(company?.cnpj ?? '');
-    final currentUserIds = _allCurrentUserIdentifiers();
-
-    if (rawCnpj.isNotEmpty) {
-      await routeListViewModel.commands.fetchRoutesByCompany(rawCnpj);
-    } else {
-      await routeListViewModel.commands.fetchAllRoutes();
-    }
-
-    final companyRoutes = _resolveCompanyRoutes(rawCnpj);
-
-    final ownerIds = <String>{};
-    final managerIds = <String>{};
-    final driverIds = <String>{};
-    final passengerIds = <String>{};
-
-    if (company != null && company.ownerId.trim().isNotEmpty) {
-      ownerIds.add(company.ownerId.trim());
-    }
-
-    if (rawCnpj.isNotEmpty) {
-      try {
-        final snapshot = await FirebaseFirestore.instance
-            .collection('company_members')
-            .where('companyCnpj', isEqualTo: rawCnpj)
-            .get();
-
-        for (final doc in snapshot.docs) {
-          final data = doc.data();
-          final memberId =
-              (data['userId'] ?? data['cpf'] ?? data['email'] ?? '')
-                  .toString()
-                  .trim();
-          if (memberId.isEmpty) continue;
-
-          final roleStr = (data['role'] ?? data['cargo'] ?? 'driver')
-              .toString();
-          final category = _classifyRole(roleStr);
-
-          if (category == 'owner') {
-            ownerIds.add(memberId);
-          } else if (category == 'manager') {
-            managerIds.add(memberId);
-          } else if (category == 'driver') {
-            driverIds.add(memberId);
-          } else {
-            passengerIds.add(memberId);
-          }
-        }
-      } catch (_) {}
-    }
-
-    if (company != null) {
-      for (final rawMemberId in company.memberIds) {
-        final id = rawMemberId.trim();
-        if (id.isEmpty) continue;
-        if (!ownerIds.contains(id) &&
-            !managerIds.contains(id) &&
-            !driverIds.contains(id) &&
-            !passengerIds.contains(id)) {
-          driverIds.add(id);
-        }
-      }
-    }
-
-    for (final route in companyRoutes) {
-      final dId = route.driverId?.trim() ?? '';
-      if (dId.isNotEmpty &&
-          !ownerIds.contains(dId) &&
-          !managerIds.contains(dId)) {
-        driverIds.add(dId);
-      }
-
-      for (final pId in route.passengerIds) {
-        final cleanPId = pId.trim();
-        if (cleanPId.isNotEmpty) {
-          passengerIds.add(cleanPId);
-        }
-      }
-    }
-
-    bool loggedOwner = false;
-    bool loggedManager = false;
-    bool loggedDriver = false;
-
-    if (rawCnpj.isNotEmpty &&
-        companyListViewModel.state.ownedCompanies.value.any(
-          (c) => cleanDigits(c.cnpj) == rawCnpj,
-        )) {
-      loggedOwner = true;
-    }
-
-    for (final id in ownerIds) {
-      if (_matchesIdentifier(id, currentUserIds)) {
-        loggedOwner = true;
-        break;
-      }
-    }
-
-    if (!loggedOwner) {
-      for (final id in managerIds) {
-        if (_matchesIdentifier(id, currentUserIds)) {
-          loggedManager = true;
-          break;
-        }
-      }
-    }
-
-    if (!loggedOwner && !loggedManager) {
-      for (final id in driverIds) {
-        if (_matchesIdentifier(id, currentUserIds)) {
-          loggedDriver = true;
-          break;
-        }
-      }
-    }
-
-    isCurrentUserOwner.value = loggedOwner;
-    isCurrentUserManager.value = loggedManager;
-
-    final bool userIsAuthorizedStaff =
-        loggedOwner || loggedManager || loggedDriver;
-    canViewPassengers.value = userIsAuthorizedStaff;
-
-    if (!userIsAuthorizedStaff && selectedFilterIndex.value == 4) {
-      selectedFilterIndex.value = 0;
-    }
-
-    final allIdsToFetch = <String>{
-      ...ownerIds,
-      ...managerIds,
-      ...driverIds,
-      if (userIsAuthorizedStaff) ...passengerIds,
-    };
-
-    await _fetchUserProfiles(allIdsToFetch);
-
-    ownersList.value = ownerIds
-        .map((id) => _buildMemberItem(id: id, roleCategory: 'owner'))
-        .toList();
-
-    managersList.value = managerIds
-        .where((id) => !ownerIds.contains(id))
-        .map((id) => _buildMemberItem(id: id, roleCategory: 'manager'))
-        .toList();
-
-    driversList.value = driverIds
-        .where((id) => !ownerIds.contains(id) && !managerIds.contains(id))
-        .map((id) => _buildMemberItem(id: id, roleCategory: 'driver'))
-        .toList();
-
-    if (userIsAuthorizedStaff) {
-      passengersList.value = passengerIds
-          .where(
-            (id) =>
-                !ownerIds.contains(id) &&
-                !managerIds.contains(id) &&
-                !driverIds.contains(id),
-          )
-          .map((id) => _buildMemberItem(id: id, roleCategory: 'passenger'))
-          .toList();
-    } else {
-      passengersList.value = [];
-    }
-
-    if (mounted) {
-      isLoading.value = false;
-    }
-  }
-
-  List<RouteModel> _resolveCompanyRoutes(String targetCnpj) {
-    final companyRoutes = routeListViewModel.state.companyRoutes.value;
-    final allRoutes = routeListViewModel.state.routes.value;
-    final source = companyRoutes.isNotEmpty ? companyRoutes : allRoutes;
-
-    return source.where((r) {
-      if (targetCnpj.isNotEmpty && cleanDigits(r.companyCnpj) != targetCnpj) {
-        return false;
-      }
-      return true;
-    }).toList();
-  }
-
-  Future<void> _fetchUserProfiles(Set<String> userIds) async {
-    final usersRef = FirebaseFirestore.instance.collection('users');
-
-    for (final rawId in userIds) {
-      final id = rawId.trim();
-      if (id.isEmpty || _userProfilesCache.containsKey(id)) continue;
-
-      try {
-        final cleanCpf = cleanDigits(id);
-        DocumentSnapshot? doc;
-
-        if (cleanCpf.isNotEmpty) {
-          final byCpfDoc = await usersRef.doc(cleanCpf).get();
-          if (byCpfDoc.exists) doc = byCpfDoc;
-        }
-
-        if (doc == null) {
-          final byRawDoc = await usersRef.doc(id).get();
-          if (byRawDoc.exists) doc = byRawDoc;
-        }
-
-        if (doc == null && cleanCpf.isNotEmpty) {
-          final queryByCpf = await usersRef
-              .where('cpf', isEqualTo: cleanCpf)
-              .limit(1)
-              .get();
-          if (queryByCpf.docs.isNotEmpty) {
-            doc = queryByCpf.docs.first;
-          }
-        }
-
-        if (doc == null) {
-          final queryByEmail = await usersRef
-              .where('email', isEqualTo: id)
-              .limit(1)
-              .get();
-          if (queryByEmail.docs.isNotEmpty) {
-            doc = queryByEmail.docs.first;
-          }
-        }
-
-        final rawData = doc?.data();
-        if (rawData is Map) {
-          final mapData = Map<String, dynamic>.from(rawData);
-          mapData['uid'] ??= doc?.id ?? id;
-          _userProfilesCache[id] = mapData;
-        }
-      } catch (_) {}
-    }
-  }
-
-  CompanyMemberItem _buildMemberItem({
-    required String id,
-    required String roleCategory,
-  }) {
-    final profile = _userProfilesCache[id.trim()] ?? <String, dynamic>{};
-
-    final uid = (profile['uid'] ?? id.trim()).toString();
-    final name =
-        (profile['name'] ??
-                (roleCategory == 'owner' ? 'Proprietário' : 'Usuário'))
-            .toString();
-    final email = (profile['email'] ?? '').toString();
-    final rawCpf = (profile['cpf'] ?? cleanDigits(id)).toString().trim();
-    final rawPhone = (profile['phone'] ?? '').toString().trim();
-    final rawPhotoUrl = (profile['photoUrl'] ?? '').toString().trim();
-    final rawDriverLicense = (profile['driverLicense'] ?? '').toString().trim();
-
-    DateTime? birthDate;
-    final rawBirthDate = profile['birthDate'];
-    if (rawBirthDate is Timestamp) {
-      birthDate = rawBirthDate.toDate();
-    } else if (rawBirthDate is DateTime) {
-      birthDate = rawBirthDate;
-    } else if (rawBirthDate is String && rawBirthDate.trim().isNotEmpty) {
-      birthDate = DateTime.tryParse(rawBirthDate.trim());
-    }
-
-    final boardingPoint = profile['boardingPoint'] is GeoPoint
-        ? profile['boardingPoint'] as GeoPoint
-        : null;
-
-    final disembarkationPoint = profile['disembarkationPoint'] is GeoPoint
-        ? profile['disembarkationPoint'] as GeoPoint
-        : null;
-
-    final resolvedUser = UserModel(
-      uid: uid,
-      name: name,
-      email: email,
-      cpf: rawCpf.isNotEmpty ? rawCpf : null,
-      phone: rawPhone.isNotEmpty ? rawPhone : null,
-      birthDate: birthDate,
-      boardingPoint: boardingPoint,
-      disembarkationPoint: disembarkationPoint,
-      driverLicense: rawDriverLicense.isNotEmpty ? rawDriverLicense : null,
-      photoUrl: rawPhotoUrl.isNotEmpty ? rawPhotoUrl : null,
-    );
-
-    return CompanyMemberItem(
-      id: id,
-      name: name,
-      photoUrl: rawPhotoUrl,
-      roleCategory: roleCategory,
-      userModel: resolvedUser,
-    );
-  }
-
-  List<CompanyMemberItem> filterItems(
-    List<CompanyMemberItem> items,
-    String rawQuery,
-  ) {
-    final q = _normalizeText(rawQuery);
-    if (q.isEmpty) return items;
-
-    return items.where((item) {
-      return _normalizeText(item.name).contains(q);
-    }).toList();
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            success
+                ? 'Cargo alterado para $newRoleLabel com sucesso!'
+                : (companyMemberViewModel.state.message.value ??
+                      'Erro ao atualizar o cargo do membro.'),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          backgroundColor: success
+              ? const Color(0xFF15803D)
+              : const Color(0xFFDC2626),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
   }
 }

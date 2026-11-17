@@ -26,7 +26,6 @@ import '../../presentation/views/application/configuration/location_map_view.dar
 import '../../presentation/views/application/configuration/location_picker_view.dart';
 import '../../presentation/views/application/configuration/manage_address_view.dart';
 import '../../presentation/views/application/configuration/manage_geolocation_view.dart';
-import '../../presentation/views/application/configuration/manage_member_role_view.dart';
 import '../../presentation/views/application/configuration/profile_view.dart';
 import '../../presentation/views/application/home_view.dart';
 import '../../presentation/views/application/joined_route_detail_view.dart';
@@ -65,7 +64,6 @@ class IndigoRouteNames {
   static const companyRoutes = 'company_routes';
   static const companyRouteRequests = 'company_route_requests';
   static const companyMembers = 'company_members';
-  static const manageMemberRole = 'manage_member_role';
 }
 
 class IndigoPaths {
@@ -97,7 +95,6 @@ class IndigoPaths {
   static const companyRoutes = '/company-routes';
   static const companyRouteRequests = '/company-route-requests';
   static const companyMembers = '/company-members';
-  static const manageMemberRole = '/manage-member-role';
 }
 
 final List<RouteBase> indigoRoutes = [
@@ -360,21 +357,6 @@ final List<RouteBase> indigoRoutes = [
         );
       }
       return const CompanyMembersView();
-    },
-  ),
-  GoRoute(
-    path: IndigoPaths.manageMemberRole,
-    name: IndigoRouteNames.manageMemberRole,
-    builder: (context, state) {
-      final args = state.extra as Map<String, dynamic>;
-      return ManageMemberRoleView(
-        company: args['company'] as CompanyModel?,
-        memberId: args['memberId'] as String,
-        userModel: args['userModel'] as UserModel,
-        currentRoleCategory: args['currentRoleCategory'] as String,
-        isCurrentUserOwner: (args['isCurrentUserOwner'] as bool?) ?? false,
-        isCurrentUserManager: (args['isCurrentUserManager'] as bool?) ?? false,
-      );
     },
   ),
 ];
