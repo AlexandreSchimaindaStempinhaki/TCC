@@ -3,12 +3,19 @@ import 'package:tcc/data/repositories/trip/i_trip_repository.dart';
 import 'package:tcc/domain/usecases/trip/i_trip_usecases.dart';
 import 'package:tcc/domain/usecases/trip/trip_usecases_impl.dart';
 
+import '../theme/theme_controller.dart';
+import '../../data/repositories/boarding/boarding_repository_impl.dart';
+import '../../data/repositories/boarding/i_boarding_repository.dart';
 import '../../data/repositories/company_member/i_company_member_repository.dart';
 import '../../data/repositories/route/i_route_repository.dart';
 import '../../data/repositories/trip/trip_repository_impl.dart';
 import '../../data/repositories/vehicle/i_vehicle_repository.dart';
+import '../../data/services/boarding/boarding_service_impl.dart';
+import '../../data/services/boarding/i_boarding_service.dart';
 import '../../data/services/trip/i_trip_service.dart';
 import '../../data/services/trip/trip_service_impl.dart';
+import '../../domain/facades/boarding/boarding_facade_impl.dart';
+import '../../domain/facades/boarding/i_boarding_facade.dart';
 import '../../domain/facades/trip/i_trip_facade.dart';
 import '../../domain/facades/trip/trip_facade_impl.dart';
 import '../../domain/facades/user/i_user_use_case_facade.dart';
@@ -17,8 +24,12 @@ import '../../data/repositories/user/user_repository_impl.dart';
 import '../../data/services/user/i_user_firebase_service.dart';
 import '../../data/services/user/user_firebase_service_impl.dart';
 import '../../domain/facades/user/user_use_case_facade.dart';
+import '../../domain/usecases/boarding/boarding_usecases_impl.dart';
+import '../../domain/usecases/boarding/i_boarding_usecases.dart';
 import '../../domain/usecases/user/i_user_usecases.dart';
 import '../../domain/usecases/user/user_use_cases_impl.dart';
+import '../../presentation/controllers/boarding/boarding_list_viewmodel.dart';
+import '../../presentation/controllers/boarding/boarding_viewmodel.dart';
 import '../../presentation/controllers/trip/trip_list_viewmodel.dart';
 import '../../presentation/controllers/trip/trip_viewmodel.dart';
 import '../../presentation/controllers/user/user_viewmodel.dart';
@@ -32,7 +43,6 @@ import '../../domain/facades/company/i_company_use_case_facade.dart';
 import '../../domain/facades/company/company_use_case_facade_impl.dart';
 import '../../presentation/controllers/company/company_viewmodel.dart';
 import '../../presentation/controllers/company/company_list_viewmodel.dart';
-import '../theme/theme_controller.dart';
 import '../../data/repositories/authentication/auth_repository_impl.dart';
 import '../../data/repositories/authentication/i_auth_repository.dart';
 import '../../data/services/authentication/local/auth_local_session_manager.dart';
@@ -183,6 +193,24 @@ void setupDependencyInjection() {
   injector.addSingleton<IDeleteTripUseCase>(DeleteTripUseCaseImpl.new);
   injector.addSingleton<ITripFacade>(TripFacadeImpl.new);
 
+
+  // Boarding Module
+  injector.addSingleton<IBoardingService>(BoardingServiceImpl.new);
+  injector.addSingleton<IBoardingRepository>(BoardingRepositoryImpl.new);
+  injector.addSingleton<IGetOrCreateDailyBoardingUseCase>(GetOrCreateDailyBoardingUseCaseImpl.new);
+  injector.addSingleton<IFetchBoardingsByRouteAndDateUseCase>(FetchBoardingsByRouteAndDateUseCaseImpl.new);
+  injector.addSingleton<IFetchBoardingsByTripUseCase>(FetchBoardingsByTripUseCaseImpl.new);
+  injector.addSingleton<IFetchUserBoardingHistoryUseCase>(FetchUserBoardingHistoryUseCaseImpl.new);
+  injector.addSingleton<IWatchPassengerBoardingUseCase>(WatchPassengerBoardingUseCaseImpl.new);
+  injector.addSingleton<IWatchRouteBoardingsByDateUseCase>(WatchRouteBoardingsByDateUseCaseImpl.new);
+  injector.addSingleton<ISaveBoardingUseCase>(SaveBoardingUseCaseImpl.new);
+  injector.addSingleton<IUpdateBoardingAttendanceUseCase>(UpdateBoardingAttendanceUseCaseImpl.new);
+  injector.addSingleton<ISetReadyForBoardingUseCase>(SetReadyForBoardingUseCaseImpl.new);
+  injector.addSingleton<IMarkBoardingOutcomeUseCase>(MarkBoardingOutcomeUseCaseImpl.new);
+  injector.addSingleton<IRegisterBoardingNotificationUseCase>(RegisterBoardingNotificationUseCaseImpl.new);
+  injector.addSingleton<IDeleteBoardingUseCase>(DeleteBoardingUseCaseImpl.new);
+  injector.addSingleton<IBoardingFacade>(BoardingFacadeImpl.new);
+
   // ViewModels
   injector.addSingleton<AuthViewModel>(AuthViewModel.new);
   injector.addSingleton<UserViewModel>(UserViewModel.new);
@@ -195,6 +223,9 @@ void setupDependencyInjection() {
   injector.addSingleton<VehicleListViewModel>(VehicleListViewModel.new);
   injector.addSingleton<TripViewModel>(TripViewModel.new);
   injector.addSingleton<TripListViewModel>(TripListViewModel.new);
+
+  injector.addSingleton<BoardingViewModel>(BoardingViewModel.new);
+  injector.addSingleton<BoardingListViewModel>(BoardingListViewModel.new);
 
   injector.commit();
 }
