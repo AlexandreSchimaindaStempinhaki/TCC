@@ -7,6 +7,7 @@ import '../../domain/models/user_entity.dart';
 import '../../domain/models/vehicle_entity.dart';
 import '../../presentation/controllers/user/user_viewmodel.dart';
 import '../../presentation/views/application/company/company_profile_view.dart';
+import '../../presentation/views/application/company/company_reviews_view.dart';
 import '../../presentation/views/application/company/vehicle_details_view.dart';
 import '../../presentation/views/application/configuration/about_view.dart';
 import '../../presentation/views/application/configuration/account_view.dart';
@@ -74,6 +75,7 @@ class IndigoRouteNames {
   static const createVehicle = 'create-vehicle';
   static const companyVehicles = 'company-vehicles';
   static const vehicleDetails = 'vehicle_details';
+  static const companyReviews = 'company_reviews';
 }
 
 class IndigoPaths {
@@ -110,6 +112,7 @@ class IndigoPaths {
   static const createVehicle = '/create-vehicle';
   static const companyVehicles = '/company-vehicles';
   static const vehicleDetails = '/vehicle-details';
+  static const companyReviews = '/company-reviews';
 }
 
 Map<String, dynamic> _extractCompanyMap(Object? extra) {
@@ -451,6 +454,16 @@ final List<RouteBase> indigoRoutes = [
         company: map['company'] as CompanyModel?,
         canManage: (map['canManage'] as bool?) ?? false,
       );
+    },
+  ),
+  GoRoute(
+    path: IndigoPaths.companyReviews,
+    name: IndigoRouteNames.companyReviews,
+    builder: (context, state) {
+      final company = state.extra is CompanyModel
+          ? state.extra as CompanyModel
+          : null;
+      return CompanyReviewsView(company: company);
     },
   ),
 ];

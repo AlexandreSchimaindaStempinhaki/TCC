@@ -152,16 +152,35 @@ class CompanyVehicleCard extends StatelessWidget {
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Text(
-                          vehicle.model,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onSurface,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Modelo em cima
+                            Text(
+                              vehicle.model,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onSurface,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            // Marca embaixo
+                            if (vehicle.brand.trim().isNotEmpty)
+                              Text(
+                                vehicle.brand,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: colorScheme.secondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                          ],
                         ),
                       ),
                       Container(
@@ -188,15 +207,9 @@ class CompanyVehicleCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
-                      Icon(
-                        Icons.pin_drop_rounded,
-                        size: 15,
-                        color: colorScheme.primary,
-                      ),
-                      const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           'Placa: ${_formatPlate(vehicle.plate)}',

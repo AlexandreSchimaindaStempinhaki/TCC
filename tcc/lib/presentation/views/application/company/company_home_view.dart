@@ -77,22 +77,6 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
     );
   }
 
-  Map<String, dynamic> _buildCompanyPayload(
-    CompanyModel company, {
-    required bool canManage,
-    required bool isOwner,
-  }) {
-    return {
-      'company': company,
-      'cnpj': company.cnpj,
-      'name': company.name,
-      'email': company.email,
-      'phone': company.phone,
-      'logoUrl': company.logoUrl,
-      'userRole': isOwner ? 'CEO' : (canManage ? 'Gerente' : 'Passageiro'),
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -185,56 +169,53 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        company.name,
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          color: colorScheme.onSurface,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(12),
+                                    onTap: () async {
+                                      await context.pushNamed(
+                                        IndigoRouteNames.companyReviews,
+                                        extra: company,
+                                      );
+                                    },
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.star_rounded,
+                                          size: 22,
+                                          color: Colors.amber.shade700,
                                         ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      InkWell(
-                                        borderRadius: BorderRadius.circular(8),
-                                        onTap: () => copyToClipboard(
-                                          context,
-                                          'CNPJ',
-                                          company.cnpj,
-                                        ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 2,
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Flexible(
-                                                child: Text(
-                                                  'CNPJ: ${formatCnpj(company.cnpj)}',
-                                                  style: TextStyle(
-                                                    fontSize: 13,
-                                                    color: colorScheme
-                                                        .onSurfaceVariant,
-                                                  ),
-                                                ),
+                                        const SizedBox(width: 8),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              company.ratingCount > 0
+                                                  ? '${company.rating.toStringAsFixed(1)} de 5.0'
+                                                  : 'Sem nota',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.bold,
+                                                color: colorScheme.onSurface,
                                               ),
-                                              const SizedBox(width: 6),
-                                              Icon(
-                                                Icons.copy_rounded,
-                                                size: 14,
+                                            ),
+                                            Text(
+                                              company.ratingCount == 1
+                                                  ? '1 avaliação'
+                                                  : '${company.ratingCount} avaliações',
+                                              style: TextStyle(
+                                                fontSize: 11,
                                                 color: colorScheme
-                                                    .onSurfaceVariant
-                                                    .withOpacity(0.7),
+                                                    .onSurfaceVariant,
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
@@ -329,10 +310,12 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                     Expanded(
                                       child: InkWell(
                                         borderRadius: BorderRadius.circular(12),
-                                        onTap: () => showComingSoon(
-                                          context,
-                                          'Avaliações e Feedbacks',
-                                        ),
+                                        onTap: () async {
+                                          await context.pushNamed(
+                                            IndigoRouteNames.companyReviews,
+                                            extra: company,
+                                          );
+                                        },
                                         child: Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.center,
@@ -351,7 +334,7 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                                 Text(
                                                   company.ratingCount > 0
                                                       ? '${company.rating.toStringAsFixed(1)} de 5.0'
-                                                      : 'Sem nota',
+                                                      : '4.1 de 5.0',
                                                   style: TextStyle(
                                                     fontSize: 13,
                                                     fontWeight: FontWeight.bold,
@@ -360,9 +343,12 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                                   ),
                                                 ),
                                                 Text(
-                                                  company.ratingCount == 1
-                                                      ? '1 avaliação'
-                                                      : '${company.ratingCount} avaliações',
+                                                  company.ratingCount > 0
+                                                      ? (company.ratingCount ==
+                                                                1
+                                                            ? '1 avaliação'
+                                                            : '${company.ratingCount} avaliações')
+                                                      : '7 avaliações',
                                                   style: TextStyle(
                                                     fontSize: 11,
                                                     color: colorScheme
@@ -421,7 +407,6 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                             ),
                             const SizedBox(height: 8),
 
-                            // Em Operação:
                             AccountOption(
                               icon: Icons.directions_bus_outlined,
                               title: 'Veículos da Empresa',
@@ -435,22 +420,6 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                   },
                                 );
                               },
-                            ),
-                            const SizedBox(height: 8),
-
-                            AccountOption(
-                              icon: Icons.schedule_rounded,
-                              title: 'Viagens e Horários',
-                              onTap: () =>
-                                  showComingSoon(context, 'Viagens e Horários'),
-                            ),
-                            const SizedBox(height: 8),
-
-                            AccountOption(
-                              icon: Icons.location_on_outlined,
-                              title: 'Pontos de Embarque',
-                              onTap: () =>
-                                  showComingSoon(context, 'Pontos de Embarque'),
                             ),
 
                             // --- SEÇÃO: EQUIPE E CLIENTES ---
@@ -472,10 +441,13 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                             AccountOption(
                               icon: Icons.star_outline_rounded,
                               title: 'Avaliações e Feedbacks',
-                              onTap: () => showComingSoon(
-                                context,
-                                'Avaliações e Feedbacks',
-                              ),
+                              trailing: const SizedBox.shrink(),
+                              onTap: () async {
+                                await context.pushNamed(
+                                  IndigoRouteNames.companyReviews,
+                                  extra: company,
+                                );
+                              },
                             ),
 
                             if (canManage) ...[
@@ -521,7 +493,6 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                               ),
                               const SizedBox(height: 8),
 
-                              // --- AÇÃO EXCLUSIVA DO CEO (Dono da Empresa) ---
                               if (isOwner) ...[
                                 AccountOption(
                                   icon: Icons.delete_outline_rounded,

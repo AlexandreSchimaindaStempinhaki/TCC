@@ -117,54 +117,26 @@ class _VehicleDetailsViewState extends State<VehicleDetailsView>
     );
   }
 
-  Widget _buildSpecItem(
+  Widget _buildSpecOption(
     BuildContext context, {
     required IconData icon,
-    required String label,
+    required String title,
     required String value,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: colorScheme.onSurface.withOpacity(0.06),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              icon,
-              size: 20,
-              color: colorScheme.onSurface,
-            ),
+    return IgnorePointer(
+      child: AccountOption(
+        icon: icon,
+        title: title,
+        trailing: Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: colorScheme.onSurfaceVariant,
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
+        onTap: () {},
       ),
     );
   }
@@ -324,14 +296,14 @@ class _VehicleDetailsViewState extends State<VehicleDetailsView>
                         const SizedBox(height: 28),
                       ],
 
-                      // Especificações e Ficha Técnica
+                      // Especificações no mesmo padrão de AccountOption do botão acima
                       _buildOuterSectionTitle(
                         context,
                         'Especificações do Veículo',
                       ),
                       Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(20),
+                        clipBehavior: Clip.antiAlias,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
                         decoration: BoxDecoration(
                           color: theme.cardColor,
                           borderRadius: BorderRadius.circular(24),
@@ -345,42 +317,32 @@ class _VehicleDetailsViewState extends State<VehicleDetailsView>
                         ),
                         child: Column(
                           children: [
-                            _buildSpecItem(
+                            _buildSpecOption(
                               context,
-                              icon: Icons.pin_outlined,
-                              label: 'Placa de Identificação',
+                              icon: Icons.credit_card_rounded,
+                              title: 'Placa',
                               value: formatPlate(currentVehicle.plate),
                             ),
-                            Divider(
-                              color: theme.dividerColor.withOpacity(0.45),
-                              height: 16,
-                            ),
-                            _buildSpecItem(
+                            const SizedBox(height: 8),
+                            _buildSpecOption(
                               context,
                               icon: Icons.directions_bus_outlined,
-                              label: 'Marca e Modelo',
+                              title: 'Marca e Modelo',
                               value:
                                   '${currentVehicle.brand} ${currentVehicle.model}',
                             ),
-                            Divider(
-                              color: theme.dividerColor.withOpacity(0.45),
-                              height: 16,
-                            ),
-                            _buildSpecItem(
+                            const SizedBox(height: 8),
+                            _buildSpecOption(
                               context,
                               icon: Icons.event_seat_outlined,
-                              label: 'Capacidade de Lotação',
-                              value:
-                                  '${currentVehicle.capacity} passageiros sentados',
+                              title: 'Capacidade',
+                              value: '${currentVehicle.capacity} lugares',
                             ),
-                            Divider(
-                              color: theme.dividerColor.withOpacity(0.45),
-                              height: 16,
-                            ),
-                            _buildSpecItem(
+                            const SizedBox(height: 8),
+                            _buildSpecOption(
                               context,
                               icon: Icons.palette_outlined,
-                              label: 'Cor Predominante',
+                              title: 'Cor Predominante',
                               value: (currentVehicle.color != null &&
                                       currentVehicle.color!.trim().isNotEmpty)
                                   ? currentVehicle.color!
