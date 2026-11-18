@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../domain/models/company_entity.dart';
 import '../../domain/models/route_entity.dart';
 import '../../domain/models/user_entity.dart';
+import '../../domain/models/vehicle_entity.dart';
 import '../../presentation/controllers/user/user_viewmodel.dart';
 import '../../presentation/views/application/company/company_profile_view.dart';
+import '../../presentation/views/application/company/vehicle_details_view.dart';
 import '../../presentation/views/application/configuration/about_view.dart';
 import '../../presentation/views/application/configuration/account_view.dart';
 import '../../presentation/views/application/configuration/profile/change_password_view.dart';
@@ -13,8 +15,10 @@ import '../../presentation/views/application/company/company_home_view.dart';
 import '../../presentation/views/application/company/company_members_view.dart';
 import '../../presentation/views/application/company/company_route_request_view.dart';
 import '../../presentation/views/application/company/company_routes_view.dart';
+import '../../presentation/views/application/company/company_vehicles_view.dart';
 import '../../presentation/views/application/configuration/profile/confirm_password_view.dart';
 import '../../presentation/views/application/company/create_companion_view.dart';
+import '../../presentation/views/application/company/create_vehicle_view.dart';
 import '../../presentation/views/application/routes/create_route_view.dart';
 import '../../presentation/views/application/configuration/address/edit_address_view.dart';
 import '../../presentation/views/application/configuration/profile/edit_profile_date_view.dart';
@@ -67,6 +71,9 @@ class IndigoRouteNames {
   static const companyMembers = 'company_members';
   static const linkedCompanies = 'linked-companies';
   static const helpAndSupport = 'help-and-support';
+  static const createVehicle = 'create-vehicle';
+  static const companyVehicles = 'company-vehicles';
+  static const vehicleDetails = 'vehicle_details';
 }
 
 class IndigoPaths {
@@ -100,6 +107,27 @@ class IndigoPaths {
   static const companyMembers = '/company-members';
   static const linkedCompanies = '/linked-companies';
   static const helpAndSupport = '/help-and-support';
+  static const createVehicle = '/create-vehicle';
+  static const companyVehicles = '/company-vehicles';
+  static const vehicleDetails = '/vehicle-details';
+}
+
+Map<String, dynamic> _extractCompanyMap(Object? extra) {
+  if (extra is Map<String, dynamic>) {
+    return extra;
+  }
+  if (extra is CompanyModel) {
+    return {
+      'company': extra,
+      'cnpj': extra.cnpj,
+      'name': extra.name,
+      'email': extra.email,
+      'phone': extra.phone,
+      'logoUrl': extra.logoUrl,
+      'userRole': 'CEO',
+    };
+  }
+  return {};
 }
 
 final List<RouteBase> indigoRoutes = [
@@ -368,5 +396,61 @@ final List<RouteBase> indigoRoutes = [
     path: IndigoPaths.helpAndSupport,
     name: IndigoRouteNames.helpAndSupport,
     builder: (context, state) => const HelpAndSupportView(),
+  ),
+  GoRoute(
+    path: IndigoPaths.createVehicle,
+    name: IndigoRouteNames.createVehicle,
+    builder: (context, state) {
+      final extra = state.extra;
+      if (extra is VehicleModel) {
+        return CreateVehicleView(initialVehicle: extra);
+      }
+      if (extra is Map<String, dynamic>) {
+        return CreateVehicleView(
+          initialVehicle: extra['vehicle'] is VehicleModel
+              ? extra['vehicle'] as VehicleModel
+              : null,
+          company: extra['company'] is CompanyModel
+              ? extra['company'] as CompanyModel
+              : null,
+        );
+      }
+      return CreateVehicleView(company: extra is CompanyModel ? extra : null);
+    },
+  ),
+  GoRoute(
+    path: IndigoPaths.companyVehicles,
+    name: IndigoRouteNames.companyVehicles,
+    builder: (context, state) {
+      final extra = state.extra;
+      if (extra is CompanyModel) {
+        return CompanyVehiclesView(company: extra);
+      }
+      if (extra is Map<String, dynamic>) {
+        return CompanyVehiclesView(
+          company: extra['company'] is CompanyModel
+              ? extra['company'] as CompanyModel
+              : null,
+          canManage: (extra['canManage'] as bool?) ?? false,
+        );
+      }
+      return const CompanyVehiclesView();
+    },
+  ),
+  GoRoute(
+    path: IndigoPaths.vehicleDetails,
+    name: IndigoRouteNames.vehicleDetails,
+    builder: (context, state) {
+      final extra = state.extra;
+      if (extra is VehicleModel) {
+        return VehicleDetailsView(vehicle: extra);
+      }
+      final map = extra as Map<String, dynamic>;
+      return VehicleDetailsView(
+        vehicle: map['vehicle'] as VehicleModel,
+        company: map['company'] as CompanyModel?,
+        canManage: (map['canManage'] as bool?) ?? false,
+      );
+    },
   ),
 ];

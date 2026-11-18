@@ -77,6 +77,22 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
     );
   }
 
+  Map<String, dynamic> _buildCompanyPayload(
+    CompanyModel company, {
+    required bool canManage,
+    required bool isOwner,
+  }) {
+    return {
+      'company': company,
+      'cnpj': company.cnpj,
+      'name': company.name,
+      'email': company.email,
+      'phone': company.phone,
+      'logoUrl': company.logoUrl,
+      'userRole': isOwner ? 'CEO' : (canManage ? 'Gerente' : 'Passageiro'),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -405,8 +421,25 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                             ),
                             const SizedBox(height: 8),
 
+                            // Em Operação:
                             AccountOption(
                               icon: Icons.directions_bus_outlined,
+                              title: 'Veículos da Empresa',
+                              trailing: const SizedBox.shrink(),
+                              onTap: () async {
+                                await context.pushNamed(
+                                  IndigoRouteNames.companyVehicles,
+                                  extra: {
+                                    'company': company,
+                                    'canManage': canManage,
+                                  },
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 8),
+
+                            AccountOption(
+                              icon: Icons.schedule_rounded,
                               title: 'Viagens e Horários',
                               onTap: () =>
                                   showComingSoon(context, 'Viagens e Horários'),
@@ -445,7 +478,6 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                               ),
                             ),
 
-                            // --- SEÇÃO: ADMINISTRAÇÃO (Apenas CEO ou Gerente) ---
                             if (canManage) ...[
                               _buildSectionTitle(context, 'Administração'),
 
@@ -453,6 +485,19 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                 icon: Icons.add_road_rounded,
                                 title: 'Criar Nova Rota',
                                 onTap: () => openCreateRoute(context, company),
+                              ),
+                              const SizedBox(height: 8),
+
+                              AccountOption(
+                                icon: Icons.directions_bus_filled_outlined,
+                                title: 'Criar Novo Veículo',
+                                trailing: const SizedBox.shrink(),
+                                onTap: () async {
+                                  await context.pushNamed(
+                                    IndigoRouteNames.createVehicle,
+                                    extra: company,
+                                  );
+                                },
                               ),
                               const SizedBox(height: 8),
 
