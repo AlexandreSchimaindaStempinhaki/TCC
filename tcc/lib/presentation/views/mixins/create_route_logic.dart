@@ -15,8 +15,8 @@ import '../../../domain/models/route_entity.dart';
 import '../../controllers/company/company_viewmodel.dart';
 import '../../controllers/route/route_list_viewmodel.dart';
 import '../../controllers/route/route_viewmodel.dart';
-import '../application/configuration/create_route_view.dart';
-import '../application/route_map_view.dart';
+import '../application/routes/create_route_view.dart';
+import '../application/routes/route_map_view.dart';
 
 mixin CreateRouteMixin on State<CreateRouteView> {
   late final RouteViewModel routeViewModel;

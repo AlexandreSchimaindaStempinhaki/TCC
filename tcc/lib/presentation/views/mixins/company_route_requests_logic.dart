@@ -9,7 +9,7 @@ import '../../../domain/models/company_entity.dart';
 import '../../../domain/models/route_entity.dart';
 import '../../controllers/company/company_viewmodel.dart';
 import '../../controllers/route/route_list_viewmodel.dart';
-import '../application/configuration/company_route_request_view.dart';
+import '../application/company/company_route_request_view.dart';
 
 mixin CompanyRouteRequestsMixin on State<CompanyRouteRequestsView> {
   late final RouteListViewModel routeListViewModel;

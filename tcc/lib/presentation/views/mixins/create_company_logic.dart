@@ -11,7 +11,7 @@ import '../../../../core/utils/app_formatters.dart';
 import '../../../../domain/models/company_entity.dart';
 import '../../controllers/company/company_list_viewmodel.dart';
 import '../../controllers/company/company_viewmodel.dart';
-import '../../views/application/configuration/create_companion_view.dart';
+import '../application/company/create_companion_view.dart';
 
 mixin CreateCompanyMixin on State<CreateCompanyView> {
   late final CompanyViewModel companyViewModel;

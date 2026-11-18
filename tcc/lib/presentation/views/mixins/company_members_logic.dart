@@ -8,7 +8,7 @@ import '../../../domain/models/company_entity.dart';
 import '../../controllers/company_member/company_member_state_viewmodel.dart';
 import '../../controllers/company_member/company_member_viewmodel.dart';
 import '../../widgets/account_option.dart';
-import '../application/configuration/company_members_view.dart';
+import '../application/company/company_members_view.dart';
 
 export '../../controllers/company_member/company_member_state_viewmodel.dart'
     show CompanyMemberItem;

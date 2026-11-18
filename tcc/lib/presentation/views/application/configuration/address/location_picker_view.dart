@@ -6,7 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 
-import '../../../widgets/animated_three_dots.dart';
+import '../../../../widgets/animated_three_dots.dart';
 
 class LocationPickerView extends StatefulWidget {
   final GeoPoint? initialLocation;

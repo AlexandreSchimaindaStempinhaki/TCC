@@ -6,11 +6,11 @@ import 'package:signals_flutter/signals_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tcc/presentation/widgets/animated_three_dots.dart';
 
-import '../../../../core/di/dependency_injection.dart';
-import '../../../../core/routes/indigo_routes.dart';
-import '../../../controllers/user/user_viewmodel.dart';
-import '../../../widgets/account_option.dart';
-import '../../../widgets/location_card.dart';
+import '../../../../../core/di/dependency_injection.dart';
+import '../../../../../core/routes/indigo_routes.dart';
+import '../../../../controllers/user/user_viewmodel.dart';
+import '../../../../widgets/account_option.dart';
+import '../../../../widgets/location_card.dart';
 
 class ManageGeolocationView extends StatefulWidget {
   // Flag para saber se estamos editando o Embarque (true) ou o Desembarque (false)

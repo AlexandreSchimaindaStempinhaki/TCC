@@ -11,8 +11,8 @@ import '../../../domain/models/company_entity.dart';
 import '../../controllers/company/company_list_viewmodel.dart';
 import '../../controllers/company/company_viewmodel.dart';
 import '../../controllers/user/user_viewmodel.dart';
-import '../application/configuration/company_home_view.dart';
-import '../application/configuration/create_route_view.dart';
+import '../application/company/company_home_view.dart';
+import '../application/routes/create_route_view.dart';
 
 mixin CompanyHomeMixin on State<CompanyHomeView> {
   late final CompanyViewModel companyViewModel;

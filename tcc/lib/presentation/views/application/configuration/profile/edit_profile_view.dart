@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
-import '../../../../core/di/dependency_injection.dart';
-import '../../../../core/routes/auth_routes.dart';
-import '../../../../core/routes/indigo_routes.dart';
-import '../../../../core/utils/app_formatters.dart';
-import '../../../controllers/user/user_viewmodel.dart';
-import '../../../widgets/account_option.dart';
-import '../../../widgets/profile_header_card.dart';
-import '../../../widgets/animated_three_dots.dart';
-import '../../../controllers/authentication/auth_session_viewmodel.dart';
+import '../../../../../core/di/dependency_injection.dart';
+import '../../../../../core/routes/auth_routes.dart';
+import '../../../../../core/routes/indigo_routes.dart';
+import '../../../../../core/utils/app_formatters.dart';
+import '../../../../controllers/user/user_viewmodel.dart';
+import '../../../../widgets/account_option.dart';
+import '../../../../widgets/profile_header_card.dart';
+import '../../../../widgets/animated_three_dots.dart';
+import '../../../../controllers/authentication/auth_session_viewmodel.dart';
 
 class EditProfileView extends StatefulWidget {
   const EditProfileView({super.key});

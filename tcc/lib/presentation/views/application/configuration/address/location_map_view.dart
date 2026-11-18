@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../widgets/animated_three_dots.dart';
+import '../../../../widgets/animated_three_dots.dart';
 
 class SingleLocationMapView extends StatefulWidget {
   final double latitude;

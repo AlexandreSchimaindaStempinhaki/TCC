@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/routes/indigo_routes.dart';
-import '../../widgets/nav_bar.dart';
+import '../../../../core/routes/indigo_routes.dart';
+import '../../../widgets/nav_bar.dart';
 
 class MyRoutesView extends StatelessWidget {
   const MyRoutesView({super.key});

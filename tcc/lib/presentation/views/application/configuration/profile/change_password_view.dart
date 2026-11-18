@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/di/dependency_injection.dart';
-import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/typedefs/types_defs.dart';
-import '../../../controllers/authentication/auth_session_viewmodel.dart';
-import '../../../widgets/animated_three_dots.dart';
-import '../../../widgets/header_background.dart';
-import '../../../widgets/password_checklist.dart';
-import '../../../widgets/text_field.dart';
+import '../../../../../core/di/dependency_injection.dart';
+import '../../../../../core/extensions/context_extensions.dart';
+import '../../../../../core/typedefs/types_defs.dart';
+import '../../../../controllers/authentication/auth_session_viewmodel.dart';
+import '../../../../widgets/animated_three_dots.dart';
+import '../../../../widgets/header_background.dart';
+import '../../../../widgets/password_checklist.dart';
+import '../../../../widgets/text_field.dart';
 
 class ChangePasswordView extends StatefulWidget {
   final Map<String, dynamic>? extra;

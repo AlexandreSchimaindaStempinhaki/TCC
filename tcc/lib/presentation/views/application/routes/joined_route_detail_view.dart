@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import '../../widgets/live_route_tracking_card.dart';
-import '../../widgets/monthly_schedule_card.dart';
+import '../../../widgets/live_route_tracking_card.dart';
+import '../../../widgets/monthly_schedule_card.dart';
 
 class JoinedRouteDetailView extends StatefulWidget {
   final Map<String, dynamic> route;

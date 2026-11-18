@@ -6,8 +6,8 @@ import 'package:tcc/presentation/widgets/account_option.dart';
 import 'package:tcc/presentation/widgets/animated_three_dots.dart';
 import 'package:tcc/presentation/widgets/route_itinerary_card.dart';
 
-import '../../../core/routes/indigo_routes.dart';
-import '../mixins/route_details_logic.dart';
+import '../../../../core/routes/indigo_routes.dart';
+import '../../mixins/route_details_logic.dart';
 
 class RouteDetailsView extends StatefulWidget {
   final Map<String, dynamic> route;

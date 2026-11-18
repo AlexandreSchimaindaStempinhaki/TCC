@@ -4,11 +4,11 @@ import 'package:signals_flutter/signals_flutter.dart';
 import 'package:tcc/presentation/widgets/company_route_card.dart';
 import 'package:tcc/presentation/widgets/nav_bar.dart';
 
-import '../../../core/di/dependency_injection.dart';
-import '../../../core/routes/indigo_routes.dart';
-import '../../../domain/models/route_entity.dart';
-import '../../controllers/route/route_list_viewmodel.dart';
-import '../../widgets/animated_three_dots.dart';
+import '../../../../core/di/dependency_injection.dart';
+import '../../../../core/routes/indigo_routes.dart';
+import '../../../../domain/models/route_entity.dart';
+import '../../../controllers/route/route_list_viewmodel.dart';
+import '../../../widgets/animated_three_dots.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});

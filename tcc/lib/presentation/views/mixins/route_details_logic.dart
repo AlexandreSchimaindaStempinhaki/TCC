@@ -13,8 +13,8 @@ import '../../controllers/company/company_viewmodel.dart';
 import '../../controllers/route/route_list_viewmodel.dart';
 import '../../controllers/route/route_viewmodel.dart';
 import '../../controllers/user/user_viewmodel.dart';
-import '../application/configuration/create_route_view.dart';
-import '../application/route_details_view.dart';
+import '../application/routes/create_route_view.dart';
+import '../application/routes/route_details_view.dart';
 
 mixin RouteDetailsMixin on State<RouteDetailsView> {
   late final RouteListViewModel routeListViewModel;

@@ -6,11 +6,11 @@ import 'package:tcc/presentation/widgets/animated_three_dots.dart';
 import 'package:tcc/presentation/widgets/nav_bar.dart';
 import 'package:tcc/presentation/widgets/saved_route_card.dart';
 
-import '../../../core/di/dependency_injection.dart';
-import '../../../core/routes/indigo_routes.dart';
-import '../../../domain/models/route_entity.dart';
-import '../../controllers/route/route_list_viewmodel.dart';
-import '../../controllers/user/user_viewmodel.dart';
+import '../../../../core/di/dependency_injection.dart';
+import '../../../../core/routes/indigo_routes.dart';
+import '../../../../domain/models/route_entity.dart';
+import '../../../controllers/route/route_list_viewmodel.dart';
+import '../../../controllers/user/user_viewmodel.dart';
 
 class SavedView extends StatefulWidget {
   const SavedView({super.key});
