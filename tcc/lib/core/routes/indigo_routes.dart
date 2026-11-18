@@ -21,6 +21,7 @@ import '../../presentation/views/application/configuration/edit_profile_date_vie
 import '../../presentation/views/application/configuration/edit_profile_filed_view.dart';
 import '../../presentation/views/application/configuration/edit_profile_photo_view.dart';
 import '../../presentation/views/application/configuration/edit_profile_view.dart';
+import '../../presentation/views/application/configuration/help_and_support_view.dart';
 import '../../presentation/views/application/configuration/linked_companies_view.dart';
 import '../../presentation/views/application/configuration/location_map_view.dart';
 import '../../presentation/views/application/configuration/location_picker_view.dart';
@@ -65,6 +66,7 @@ class IndigoRouteNames {
   static const companyRouteRequests = 'company_route_requests';
   static const companyMembers = 'company_members';
   static const linkedCompanies = 'linked-companies';
+  static const helpAndSupport = 'help-and-support';
 }
 
 class IndigoPaths {
@@ -97,6 +99,7 @@ class IndigoPaths {
   static const companyRouteRequests = '/company-route-requests';
   static const companyMembers = '/company-members';
   static const linkedCompanies = '/linked-companies';
+  static const helpAndSupport = '/help-and-support';
 }
 
 final List<RouteBase> indigoRoutes = [
@@ -360,5 +363,10 @@ final List<RouteBase> indigoRoutes = [
     path: IndigoPaths.linkedCompanies,
     name: IndigoRouteNames.linkedCompanies,
     builder: (context, state) => const LinkedCompaniesView(),
+  ),
+  GoRoute(
+    path: IndigoPaths.helpAndSupport,
+    name: IndigoRouteNames.helpAndSupport,
+    builder: (context, state) => const HelpAndSupportView(),
   ),
 ];

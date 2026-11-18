@@ -305,7 +305,11 @@ class _AccountViewState extends State<AccountView> {
                           AccountOption(
                             icon: Icons.help_outline_rounded,
                             title: 'Ajuda e Suporte',
-                            onTap: () {},
+                            onTap: () {
+                              context.pushNamed(
+                                IndigoRouteNames.helpAndSupport,
+                              );
+                            },
                           ),
                           const SizedBox(height: 8),
 
