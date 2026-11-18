@@ -4,7 +4,7 @@ import '../../../../core/patterns/command.dart';
 import '../../../../core/patterns/result.dart';
 import '../../domain/facades/company/i_company_use_case_facade.dart';
 import '../../domain/models/company_entity.dart';
-import '../../domain/usecases/company/i_company_use_cases.dart';
+import '../../domain/models/company_review_entity.dart';
 
 final class CreateCompanyCommand
     extends ParameterizedCommand<void, Failure, CreateCompanyParams> {
@@ -24,7 +24,12 @@ final class CreateCompanyCommand
 }
 
 final class FetchCompaniesByOwnerCommand
-    extends ParameterizedCommand<List<CompanyModel>, Failure, FetchCompaniesByOwnerParams> {
+    extends
+        ParameterizedCommand<
+          List<CompanyModel>,
+          Failure,
+          FetchCompaniesByOwnerParams
+        > {
   final ICompanyUseCaseFacade _companyUseCaseFacade;
 
   FetchCompaniesByOwnerCommand(this._companyUseCaseFacade);
@@ -33,7 +38,9 @@ final class FetchCompaniesByOwnerCommand
   Future<Result<List<CompanyModel>, Failure>> execute() async {
     if (parameter == null) {
       return Error(
-        InvalidInputFailure('Parâmetros inválidos para buscar empresas do proprietário.'),
+        InvalidInputFailure(
+          'Parâmetros inválidos para buscar empresas do proprietário.',
+        ),
       );
     }
     return await _companyUseCaseFacade.fetchCompaniesByOwner(parameter!);
@@ -41,7 +48,12 @@ final class FetchCompaniesByOwnerCommand
 }
 
 final class FetchCompaniesByMemberCommand
-    extends ParameterizedCommand<List<CompanyModel>, Failure, FetchCompaniesByMemberParams> {
+    extends
+        ParameterizedCommand<
+          List<CompanyModel>,
+          Failure,
+          FetchCompaniesByMemberParams
+        > {
   final ICompanyUseCaseFacade _companyUseCaseFacade;
 
   FetchCompaniesByMemberCommand(this._companyUseCaseFacade);
@@ -50,7 +62,9 @@ final class FetchCompaniesByMemberCommand
   Future<Result<List<CompanyModel>, Failure>> execute() async {
     if (parameter == null) {
       return Error(
-        InvalidInputFailure('Parâmetros inválidos para buscar empresas do membro.'),
+        InvalidInputFailure(
+          'Parâmetros inválidos para buscar empresas do membro.',
+        ),
       );
     }
     return await _companyUseCaseFacade.fetchCompaniesByMember(parameter!);
@@ -105,5 +119,84 @@ final class DeleteCompanyCommand
       );
     }
     return await _companyUseCaseFacade.deleteCompany(parameter!);
+  }
+}
+
+final class FetchCompanyReviewsCommand
+    extends
+        ParameterizedCommand<
+          List<CompanyReviewModel>,
+          Failure,
+          FetchCompanyReviewsParams
+        > {
+  final ICompanyUseCaseFacade _companyUseCaseFacade;
+
+  FetchCompanyReviewsCommand(this._companyUseCaseFacade);
+
+  @override
+  Future<Result<List<CompanyReviewModel>, Failure>> execute() async {
+    if (parameter == null) {
+      return Error(
+        InvalidInputFailure('CNPJ inválido para buscar avaliações.'),
+      );
+    }
+    return await _companyUseCaseFacade.fetchCompanyReviews(parameter!);
+  }
+}
+
+final class ShouldPromptFirstTripReviewCommand
+    extends ParameterizedCommand<bool, Failure, CheckFirstTripReviewParams> {
+  final ICompanyUseCaseFacade _companyUseCaseFacade;
+
+  ShouldPromptFirstTripReviewCommand(this._companyUseCaseFacade);
+
+  @override
+  Future<Result<bool, Failure>> execute() async {
+    if (parameter == null) {
+      return Error(
+        InvalidInputFailure(
+          'Parâmetros inválidos para verificar primeira avaliação.',
+        ),
+      );
+    }
+    return await _companyUseCaseFacade.shouldPromptFirstTripReview(parameter!);
+  }
+}
+
+final class DismissFirstTripReviewPromptCommand
+    extends ParameterizedCommand<void, Failure, CheckFirstTripReviewParams> {
+  final ICompanyUseCaseFacade _companyUseCaseFacade;
+
+  DismissFirstTripReviewPromptCommand(this._companyUseCaseFacade);
+
+  @override
+  Future<VoidResult> execute() async {
+    if (parameter == null) {
+      return Error(
+        InvalidInputFailure(
+          'Parâmetros inválidos para dispensar convite de avaliação.',
+        ),
+      );
+    }
+    return await _companyUseCaseFacade.dismissFirstTripReviewPrompt(
+      parameter!,
+    );
+  }
+}
+
+final class RateCompanyCommand
+    extends ParameterizedCommand<CompanyModel, Failure, RateCompanyParams> {
+  final ICompanyUseCaseFacade _companyUseCaseFacade;
+
+  RateCompanyCommand(this._companyUseCaseFacade);
+
+  @override
+  Future<Result<CompanyModel, Failure>> execute() async {
+    if (parameter == null) {
+      return Error(
+        InvalidInputFailure('Parâmetros inválidos para avaliar a empresa.'),
+      );
+    }
+    return await _companyUseCaseFacade.rateCompany(parameter!);
   }
 }

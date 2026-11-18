@@ -96,20 +96,14 @@ class CreateRouteParams {
   final RouteModel route;
   final File? imageFile;
 
-  const CreateRouteParams({
-    required this.route,
-    this.imageFile,
-  });
+  const CreateRouteParams({required this.route, this.imageFile});
 }
 
 class UpdateRouteParams {
   final RouteModel route;
   final File? imageFile;
 
-  const UpdateRouteParams({
-    required this.route,
-    this.imageFile,
-  });
+  const UpdateRouteParams({required this.route, this.imageFile});
 }
 
 class UpdateRouteImageParams {
@@ -119,6 +113,35 @@ class UpdateRouteImageParams {
   const UpdateRouteImageParams({
     required this.routeId,
     required this.imageFile,
+  });
+}
+
+class FetchCompanyReviewsParams {
+  final String cnpj;
+  const FetchCompanyReviewsParams({required this.cnpj});
+}
+
+class CheckFirstTripReviewParams {
+  final String cnpj;
+  final String userId;
+  const CheckFirstTripReviewParams({required this.cnpj, required this.userId});
+}
+
+class RateCompanyParams {
+  final String cnpj;
+  final String userId;
+  final String userName;
+  final String? userPhotoUrl;
+  final double rating;
+  final String? description;
+
+  const RateCompanyParams({
+    required this.cnpj,
+    required this.userId,
+    required this.userName,
+    this.userPhotoUrl,
+    required this.rating,
+    this.description,
   });
 }
 

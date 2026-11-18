@@ -300,7 +300,7 @@ class _RouteDetailsViewState extends State<RouteDetailsView>
                       child: Column(
                         children: [
                           AccountOption(
-                            icon: Icons.storefront_rounded,
+                            icon: Icons.storefront,
                             title: 'Visualizar Página da Empresa',
                             trailing: const Icon(Icons.chevron_right_outlined),
                             onTap: () => openCompanyHome(

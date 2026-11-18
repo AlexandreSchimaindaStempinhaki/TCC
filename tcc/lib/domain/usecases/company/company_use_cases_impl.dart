@@ -2,6 +2,7 @@ import '../../../../../core/typedefs/types_defs.dart';
 import '../../../../core/failure/failure.dart' show Failure, DefaultFailure;
 import '../../../../core/patterns/result.dart';
 import '../../models/company_entity.dart';
+import '../../models/company_review_entity.dart';
 import '../../../data/repositories/company/i_company_repository.dart';
 import 'i_company_use_cases.dart';
 
@@ -17,7 +18,8 @@ final class CreateCompanyUseCase implements ICreateCompanyUseCase {
   }
 }
 
-final class FetchCompaniesByOwnerUseCase implements IFetchCompaniesByOwnerUseCase {
+final class FetchCompaniesByOwnerUseCase
+    implements IFetchCompaniesByOwnerUseCase {
   final ICompanyRepository _companyRepository;
 
   FetchCompaniesByOwnerUseCase({required ICompanyRepository companyRepository})
@@ -31,7 +33,8 @@ final class FetchCompaniesByOwnerUseCase implements IFetchCompaniesByOwnerUseCas
   }
 }
 
-final class FetchCompaniesByMemberUseCase implements IFetchCompaniesByMemberUseCase {
+final class FetchCompaniesByMemberUseCase
+    implements IFetchCompaniesByMemberUseCase {
   final ICompanyRepository _companyRepository;
 
   FetchCompaniesByMemberUseCase({required ICompanyRepository companyRepository})
@@ -83,5 +86,77 @@ final class DeleteCompanyUseCase implements IDeleteCompanyUseCase {
   @override
   Future<VoidResult> call(DeleteCompanyParams params) async {
     return _companyRepository.deleteCompany(params.cnpj);
+  }
+}
+
+final class FetchCompanyReviewsUseCase implements IFetchCompanyReviewsUseCase {
+  final ICompanyRepository _companyRepository;
+
+  FetchCompanyReviewsUseCase({required ICompanyRepository companyRepository})
+    : _companyRepository = companyRepository;
+
+  @override
+  Future<Result<List<CompanyReviewModel>, Failure>> call(
+    FetchCompanyReviewsParams params,
+  ) async {
+    return _companyRepository.fetchCompanyReviews(params.cnpj);
+  }
+}
+
+final class ShouldPromptFirstTripReviewUseCase
+    implements IShouldPromptFirstTripReviewUseCase {
+  final ICompanyRepository _companyRepository;
+
+  ShouldPromptFirstTripReviewUseCase({
+    required ICompanyRepository companyRepository,
+  }) : _companyRepository = companyRepository;
+
+  @override
+  Future<Result<bool, Failure>> call(CheckFirstTripReviewParams params) async {
+    return _companyRepository.shouldPromptFirstTripReview(
+      cnpj: params.cnpj,
+      userId: params.userId,
+    );
+  }
+}
+
+final class DismissFirstTripReviewPromptUseCase
+    implements IDismissFirstTripReviewPromptUseCase {
+  final ICompanyRepository _companyRepository;
+
+  DismissFirstTripReviewPromptUseCase({
+    required ICompanyRepository companyRepository,
+  }) : _companyRepository = companyRepository;
+
+  @override
+  Future<VoidResult> call(CheckFirstTripReviewParams params) async {
+    return _companyRepository.dismissFirstTripReviewPrompt(
+      cnpj: params.cnpj,
+      userId: params.userId,
+    );
+  }
+}
+
+final class RateCompanyUseCase implements IRateCompanyUseCase {
+  final ICompanyRepository _companyRepository;
+
+  RateCompanyUseCase({required ICompanyRepository companyRepository})
+    : _companyRepository = companyRepository;
+
+  @override
+  Future<Result<CompanyModel, Failure>> call(RateCompanyParams params) async {
+    if (params.rating < 1.0 || params.rating > 5.0) {
+      return Error(
+        DefaultFailure('A nota da avaliação deve ser entre 1 e 5 estrelas.'),
+      );
+    }
+    return _companyRepository.rateCompany(
+      cnpj: params.cnpj,
+      userId: params.userId,
+      userName: params.userName,
+      userPhotoUrl: params.userPhotoUrl,
+      rating: params.rating,
+      description: params.description,
+    );
   }
 }

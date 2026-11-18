@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tcc/presentation/views/application/configuration/my_companies_view.dart';
 import '../../domain/models/company_entity.dart';
 import '../../domain/models/route_entity.dart';
 import '../../domain/models/user_entity.dart';
@@ -22,6 +21,7 @@ import '../../presentation/views/application/configuration/edit_profile_date_vie
 import '../../presentation/views/application/configuration/edit_profile_filed_view.dart';
 import '../../presentation/views/application/configuration/edit_profile_photo_view.dart';
 import '../../presentation/views/application/configuration/edit_profile_view.dart';
+import '../../presentation/views/application/configuration/linked_companies_view.dart';
 import '../../presentation/views/application/configuration/location_map_view.dart';
 import '../../presentation/views/application/configuration/location_picker_view.dart';
 import '../../presentation/views/application/configuration/manage_address_view.dart';
@@ -64,6 +64,7 @@ class IndigoRouteNames {
   static const companyRoutes = 'company_routes';
   static const companyRouteRequests = 'company_route_requests';
   static const companyMembers = 'company_members';
+  static const linkedCompanies = 'linked-companies';
 }
 
 class IndigoPaths {
@@ -95,6 +96,7 @@ class IndigoPaths {
   static const companyRoutes = '/company-routes';
   static const companyRouteRequests = '/company-route-requests';
   static const companyMembers = '/company-members';
+  static const linkedCompanies = '/linked-companies';
 }
 
 final List<RouteBase> indigoRoutes = [
@@ -296,11 +298,6 @@ final List<RouteBase> indigoRoutes = [
     },
   ),
   GoRoute(
-    path: IndigoPaths.myCompanies,
-    name: IndigoRouteNames.myCompanies,
-    builder: (context, state) => const MyCompaniesView(),
-  ),
-  GoRoute(
     path: IndigoPaths.companyHome,
     name: IndigoRouteNames.companyHome,
     builder: (context, state) {
@@ -358,5 +355,10 @@ final List<RouteBase> indigoRoutes = [
       }
       return const CompanyMembersView();
     },
+  ),
+  GoRoute(
+    path: IndigoPaths.linkedCompanies,
+    name: IndigoRouteNames.linkedCompanies,
+    builder: (context, state) => const LinkedCompaniesView(),
   ),
 ];

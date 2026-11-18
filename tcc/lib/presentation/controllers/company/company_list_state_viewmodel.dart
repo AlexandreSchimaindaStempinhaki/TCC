@@ -13,6 +13,8 @@ class CompanyListState {
   bool get hasOwnedCompanies => ownedCompanies.value.isNotEmpty;
   bool get hasMemberCompanies => memberCompanies.value.isNotEmpty;
 
+  String _cleanCnpj(String cnpj) => cnpj.replaceAll(RegExp(r'\D'), '');
+
   void setCompanies(List<CompanyModel> list) {
     companies.value = list;
     message.value = null;
@@ -30,12 +32,30 @@ class CompanyListState {
     message.value = null;
   }
 
+  void updateCompanyInList(CompanyModel updatedCompany) {
+    final target = _cleanCnpj(updatedCompany.cnpj);
+    companies.value = companies.value
+        .map((c) => _cleanCnpj(c.cnpj) == target ? updatedCompany : c)
+        .toList();
+    ownedCompanies.value = ownedCompanies.value
+        .map((c) => _cleanCnpj(c.cnpj) == target ? updatedCompany : c)
+        .toList();
+    memberCompanies.value = memberCompanies.value
+        .map((c) => _cleanCnpj(c.cnpj) == target ? updatedCompany : c)
+        .toList();
+  }
+
   void removeCompanyFromList(String cnpj) {
-    companies.value = companies.value.where((c) => c.cnpj != cnpj).toList();
-    ownedCompanies.value =
-        ownedCompanies.value.where((c) => c.cnpj != cnpj).toList();
-    memberCompanies.value =
-        memberCompanies.value.where((c) => c.cnpj != cnpj).toList();
+    final target = _cleanCnpj(cnpj);
+    companies.value = companies.value
+        .where((c) => _cleanCnpj(c.cnpj) != target)
+        .toList();
+    ownedCompanies.value = ownedCompanies.value
+        .where((c) => _cleanCnpj(c.cnpj) != target)
+        .toList();
+    memberCompanies.value = memberCompanies.value
+        .where((c) => _cleanCnpj(c.cnpj) != target)
+        .toList();
   }
 
   void clearList() {

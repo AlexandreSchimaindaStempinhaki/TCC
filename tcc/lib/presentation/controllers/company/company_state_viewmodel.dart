@@ -1,9 +1,11 @@
 import 'package:signals_flutter/signals_flutter.dart';
 import '../../../domain/models/company_entity.dart';
+import '../../../domain/models/company_review_entity.dart';
 
 class CompanyState {
   final companies = signal<List<CompanyModel>>([]);
   final selectedCompany = signal<CompanyModel?>(null);
+  final companyReviews = signal<List<CompanyReviewModel>>([]);
   final message = signal<String?>(null);
 
   String _cleanCnpj(String cnpj) => cnpj.replaceAll(RegExp(r'\D'), '');
@@ -15,6 +17,20 @@ class CompanyState {
 
   void setSelectedCompany(CompanyModel? company) {
     selectedCompany.value = company;
+  }
+
+  void setCompanyReviews(List<CompanyReviewModel> reviews) {
+    companyReviews.value = reviews;
+    message.value = null;
+  }
+
+  CompanyReviewModel? getReviewByUser(String userId) {
+    final trimmed = userId.trim();
+    if (trimmed.isEmpty) return null;
+    for (final review in companyReviews.value) {
+      if (review.userId.trim() == trimmed) return review;
+    }
+    return null;
   }
 
   void addCompany(CompanyModel company) {

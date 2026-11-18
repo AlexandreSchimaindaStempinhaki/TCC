@@ -45,6 +45,7 @@ class _AccountViewState extends State<AccountView> {
     await Future.wait([
       _userViewModel.commands.fetchUser(),
       _companyListViewModel.commands.fetchOwnedCompanies(),
+      _companyListViewModel.commands.fetchMemberCompanies(),
     ]);
     if (mounted) {
       _isInitialLoading.value = false;
@@ -282,34 +283,21 @@ class _AccountViewState extends State<AccountView> {
                               );
                               _companyListViewModel.commands
                                   .fetchOwnedCompanies();
+                              _companyListViewModel.commands
+                                  .fetchMemberCompanies();
                             },
                           ),
 
-                          Watch((context) {
-                            final ownedCompanies = _companyListViewModel
-                                .state
-                                .ownedCompanies
-                                .value;
-
-                            if (ownedCompanies.isEmpty) {
-                              return const SizedBox.shrink();
-                            }
-
-                            return Column(
-                              children: [
-                                const SizedBox(height: 8),
-                                AccountOption(
-                                  icon: Icons.domain_rounded,
-                                  title: 'Minhas Empresas',
-                                  onTap: () {
-                                    context.pushNamed(
-                                      IndigoRouteNames.myCompanies,
-                                    );
-                                  },
-                                ),
-                              ],
-                            );
-                          }),
+                          const SizedBox(height: 8),
+                          AccountOption(
+                            icon: Icons.badge_outlined,
+                            title: 'Empresas Vinculadas',
+                            onTap: () {
+                              context.pushNamed(
+                                IndigoRouteNames.linkedCompanies,
+                              );
+                            },
+                          ),
 
                           // ================= SEÇÃO: SUPORTE =================
                           _buildSectionTitle(context, 'Suporte'),

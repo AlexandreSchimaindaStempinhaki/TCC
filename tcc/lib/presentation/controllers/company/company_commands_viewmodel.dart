@@ -4,6 +4,7 @@ import '../../../../core/failure/failure.dart';
 import '../../../../core/patterns/command.dart';
 import '../../../core/typedefs/types_defs.dart';
 import '../../../domain/models/company_entity.dart';
+import '../../../domain/models/company_review_entity.dart';
 import '../../commands/company_commands.dart';
 import 'company_state_viewmodel.dart';
 
@@ -15,6 +16,11 @@ class CompanyCommands {
   final UpdateCompanyCommand _updateCompanyCommand;
   final UpdateCompanyLogoCommand _updateCompanyLogoCommand;
   final DeleteCompanyCommand _deleteCompanyCommand;
+  final FetchCompanyReviewsCommand _fetchCompanyReviewsCommand;
+  final ShouldPromptFirstTripReviewCommand _shouldPromptFirstTripReviewCommand;
+  final DismissFirstTripReviewPromptCommand
+      _dismissFirstTripReviewPromptCommand;
+  final RateCompanyCommand _rateCompanyCommand;
 
   CompanyCommands({
     required this.state,
@@ -24,18 +30,32 @@ class CompanyCommands {
     required UpdateCompanyCommand updateCompanyCommand,
     required UpdateCompanyLogoCommand updateCompanyLogoCommand,
     required DeleteCompanyCommand deleteCompanyCommand,
+    required FetchCompanyReviewsCommand fetchCompanyReviewsCommand,
+    required ShouldPromptFirstTripReviewCommand
+        shouldPromptFirstTripReviewCommand,
+    required DismissFirstTripReviewPromptCommand
+        dismissFirstTripReviewPromptCommand,
+    required RateCompanyCommand rateCompanyCommand,
   }) : _createCompanyCommand = createCompanyCommand,
        _fetchCompaniesByOwnerCommand = fetchCompaniesByOwnerCommand,
        _fetchCompaniesByMemberCommand = fetchCompaniesByMemberCommand,
        _updateCompanyCommand = updateCompanyCommand,
        _updateCompanyLogoCommand = updateCompanyLogoCommand,
-       _deleteCompanyCommand = deleteCompanyCommand {
+       _deleteCompanyCommand = deleteCompanyCommand,
+       _fetchCompanyReviewsCommand = fetchCompanyReviewsCommand,
+       _shouldPromptFirstTripReviewCommand =
+           shouldPromptFirstTripReviewCommand,
+       _dismissFirstTripReviewPromptCommand =
+           dismissFirstTripReviewPromptCommand,
+       _rateCompanyCommand = rateCompanyCommand {
     _observeCreateCompany();
     _observeFetchCompaniesByOwner();
     _observeFetchCompaniesByMember();
     _observeUpdateCompany();
     _observeUpdateCompanyLogo();
     _observeDeleteCompany();
+    _observeFetchCompanyReviews();
+    _observeRateCompany();
   }
 
   // ========================================================
@@ -50,6 +70,14 @@ class CompanyCommands {
   UpdateCompanyLogoCommand get updateCompanyLogoCommand =>
       _updateCompanyLogoCommand;
   DeleteCompanyCommand get deleteCompanyCommand => _deleteCompanyCommand;
+  FetchCompanyReviewsCommand get fetchCompanyReviewsCommand =>
+      _fetchCompanyReviewsCommand;
+  ShouldPromptFirstTripReviewCommand get shouldPromptFirstTripReviewCommand =>
+      _shouldPromptFirstTripReviewCommand;
+  DismissFirstTripReviewPromptCommand
+      get dismissFirstTripReviewPromptCommand =>
+          _dismissFirstTripReviewPromptCommand;
+  RateCompanyCommand get rateCompanyCommand => _rateCompanyCommand;
 
   // ========================================================
   //   MÉTODOS PÚBLICOS (CHAMADOS PELOS WIDGETS)
@@ -113,6 +141,62 @@ class CompanyCommands {
 
     if (result.isSuccess) {
       state.removeCompany(cnpj);
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> fetchCompanyReviews(String cnpj) async {
+    state.clearMessage();
+    await _fetchCompanyReviewsCommand.executeWith(
+      FetchCompanyReviewsParams(cnpj: cnpj),
+    );
+  }
+
+  Future<bool> shouldPromptFirstTripReview({
+    required String cnpj,
+    required String userId,
+  }) async {
+    final result = await _shouldPromptFirstTripReviewCommand.executeWith(
+      CheckFirstTripReviewParams(cnpj: cnpj, userId: userId),
+    );
+    return result.fold(
+      onSuccess: (shouldPrompt) => shouldPrompt,
+      onFailure: (_) => false,
+    );
+  }
+
+  Future<void> dismissFirstTripReviewPrompt({
+    required String cnpj,
+    required String userId,
+  }) async {
+    await _dismissFirstTripReviewPromptCommand.executeWith(
+      CheckFirstTripReviewParams(cnpj: cnpj, userId: userId),
+    );
+  }
+
+  Future<bool> rateCompany({
+    required String cnpj,
+    required String userId,
+    required String userName,
+    String? userPhotoUrl,
+    required double rating,
+    String? description,
+  }) async {
+    state.clearMessage();
+    final result = await _rateCompanyCommand.executeWith(
+      RateCompanyParams(
+        cnpj: cnpj,
+        userId: userId,
+        userName: userName,
+        userPhotoUrl: userPhotoUrl,
+        rating: rating,
+        description: description,
+      ),
+    );
+
+    if (result.isSuccess) {
+      await fetchCompanyReviews(cnpj);
       return true;
     }
     return false;
@@ -222,6 +306,24 @@ class CompanyCommands {
       _deleteCompanyCommand,
       onSuccess: (_) {
         state.clearMessage();
+      },
+    );
+  }
+
+  void _observeFetchCompanyReviews() {
+    _observeCommand<List<CompanyReviewModel>>(
+      _fetchCompanyReviewsCommand,
+      onSuccess: (reviews) {
+        state.setCompanyReviews(reviews);
+      },
+    );
+  }
+
+  void _observeRateCompany() {
+    _observeCommand<CompanyModel>(
+      _rateCompanyCommand,
+      onSuccess: (updatedCompany) {
+        state.updateCompanyInList(updatedCompany);
       },
     );
   }
