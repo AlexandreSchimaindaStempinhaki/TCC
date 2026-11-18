@@ -169,53 +169,56 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(12),
-                                    onTap: () async {
-                                      await context.pushNamed(
-                                        IndigoRouteNames.companyReviews,
-                                        extra: company,
-                                      );
-                                    },
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.star_rounded,
-                                          size: 22,
-                                          color: Colors.amber.shade700,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        company.name,
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: colorScheme.onSurface,
                                         ),
-                                        const SizedBox(width: 8),
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              company.ratingCount > 0
-                                                  ? '${company.rating.toStringAsFixed(1)} de 5.0'
-                                                  : 'Sem nota',
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.bold,
-                                                color: colorScheme.onSurface,
+                                      ),
+                                      const SizedBox(height: 6),
+                                      InkWell(
+                                        borderRadius: BorderRadius.circular(8),
+                                        onTap: () => copyToClipboard(
+                                          context,
+                                          'CNPJ',
+                                          company.cnpj,
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 2,
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Flexible(
+                                                child: Text(
+                                                  'CNPJ: ${formatCnpj(company.cnpj)}',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: colorScheme
+                                                        .onSurfaceVariant,
+                                                  ),
+                                                ),
                                               ),
-                                            ),
-                                            Text(
-                                              company.ratingCount == 1
-                                                  ? '1 avaliação'
-                                                  : '${company.ratingCount} avaliações',
-                                              style: TextStyle(
-                                                fontSize: 11,
+                                              const SizedBox(width: 6),
+                                              Icon(
+                                                Icons.copy_rounded,
+                                                size: 14,
                                                 color: colorScheme
-                                                    .onSurfaceVariant,
+                                                    .onSurfaceVariant
+                                                    .withOpacity(0.7),
                                               ),
-                                            ),
-                                          ],
+                                            ],
+                                          ),
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
@@ -333,8 +336,9 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                               children: [
                                                 Text(
                                                   company.ratingCount > 0
-                                                      ? '${company.rating.toStringAsFixed(1)} de 5.0'
-                                                      : '4.1 de 5.0',
+                                                      ? company.rating
+                                                            .toStringAsFixed(1)
+                                                      : 'Sem nota',
                                                   style: TextStyle(
                                                     fontSize: 13,
                                                     fontWeight: FontWeight.bold,
@@ -343,12 +347,9 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                                   ),
                                                 ),
                                                 Text(
-                                                  company.ratingCount > 0
-                                                      ? (company.ratingCount ==
-                                                                1
-                                                            ? '1 avaliação'
-                                                            : '${company.ratingCount} avaliações')
-                                                      : '7 avaliações',
+                                                  company.ratingCount == 1
+                                                      ? '1 avaliação'
+                                                      : '${company.ratingCount} avaliações',
                                                   style: TextStyle(
                                                     fontSize: 11,
                                                     color: colorScheme
