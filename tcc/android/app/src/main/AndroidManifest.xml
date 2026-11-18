@@ -58,6 +58,4 @@
             <data android:scheme="mailto" />
         </intent>
     </queries>
-    
-</queries>
 </manifest>
