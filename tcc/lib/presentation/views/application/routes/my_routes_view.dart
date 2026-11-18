@@ -1,165 +1,200 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import '../../../../core/routes/indigo_routes.dart';
-import '../../../widgets/nav_bar.dart';
+import 'package:signals_flutter/signals_flutter.dart';
 
-class MyRoutesView extends StatelessWidget {
+import '../../../widgets/animated_three_dots.dart';
+import '../../../widgets/my_route_card.dart';
+import '../../../widgets/nav_bar.dart';
+import '../../mixins/my_routes_logic.dart';
+
+class MyRoutesView extends StatefulWidget {
   const MyRoutesView({super.key});
 
+  @override
+  State<MyRoutesView> createState() => _MyRoutesViewState();
+}
+
+class _MyRoutesViewState extends State<MyRoutesView> with MyRoutesMixin {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final List myJoinedRoutes = [
-      {
-        'id': 'joined_1',
-        'companyName': 'TransLitoral Executivo',
-        'routeName': 'Linha Universitária - IFPR',
-        'origin': 'Av. das Magnólias, 58',
-        'destination': 'IFPR - Campus Paranaguá',
-        'driverName': 'Sr. Carlos Andrade',
-        'vehicleInfo': 'Mercedes-Benz Sprinter • ABC-1D23',
-        'isHomePickup': true,
-        'nextTrip': 'Hoje às 18:00',
-        'status': 'Em Operação',
-        'etaMinutes': 12,
-      },
-      {
-        'id': 'joined_2',
-        'companyName': 'Viação Índigo Urbano',
-        'routeName': 'Rota Centro - Zona Sul',
-        'origin': 'Rua das Palmeiras, 120',
-        'destination': 'Terminal Central',
-        'driverName': 'Dra. Márcia Santos',
-        'vehicleInfo': 'Volare Fly 10 • XYZ-9876',
-        'isHomePickup': false,
-        'nextTrip': 'Amanhã às 07:00',
-        'status': 'Programada',
-        'etaMinutes': null,
-      },
-    ];
+    return Watch((context) {
+      final loading = isLoading.value;
+      final routes = filteredJoinedRoutes;
+      final query = searchQuery.value;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: theme.cardColor,
-        elevation: 0,
-        title: Text(
-          'Minhas Rotas',
-          style: TextStyle(
-            color: colorScheme.onSurface,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
+      return Scaffold(
+        extendBody: true,
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          elevation: 0,
+          centerTitle: true,
+          title: Text(
+            'Minhas Rotas',
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
           ),
         ),
-      ),
-      body: myJoinedRoutes.isEmpty
-          ? Center(
-              child: Text(
-                'Você ainda não possui vínculo com nenhuma rota.',
-                style: TextStyle(color: colorScheme.secondary),
-              ),
-            )
-          : ListView.separated(
-              padding: const EdgeInsets.all(20),
-              itemCount: myJoinedRoutes.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 14),
-              itemBuilder: (context, index) {
-                final item = myJoinedRoutes[index];
-                return InkWell(
-                  onTap: () {
-                    context.pushNamed(
-                      IndigoRouteNames.joinedRouteDetail,
-                      extra: item,
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: theme.cardColor,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: theme.dividerColor),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              item['companyName'] as String,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.primary,
-                              ),
-                            ),
-                            Text(
-                              item['status'] as String,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.primary,
-                              ),
-                            ),
-                          ],
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              // BARRA DE PESQUISA IDÊNTICA À DA HOME VIEW
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: theme.dividerColor, width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(
+                          theme.brightness == Brightness.dark ? 0.3 : 0.05,
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          item['routeName'] as String,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onSurface,
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Watch((context) {
+                    final hasSearchText = searchQuery.value.trim().isNotEmpty;
+
+                    return TextField(
+                      controller: searchController,
+                      onChanged: (value) => searchQuery.value = value,
+                      textInputAction: TextInputAction.search,
+                      style: TextStyle(color: colorScheme.onSurface),
+                      decoration: InputDecoration(
+                        hintText: 'Buscar por destino da rota...',
+                        hintStyle: TextStyle(
+                          fontSize: 13,
+                          color: colorScheme.secondary,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        prefixIcon: Padding(
+                          padding: const EdgeInsets.only(left: 16.0, right: 12.0),
+                          child: Icon(
+                            Icons.search_rounded,
+                            color: colorScheme.primary,
+                            size: 22,
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.schedule_rounded,
-                              size: 16,
-                              color: colorScheme.secondary,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Próxima viagem: ${item['nextTrip']}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: colorScheme.onSurface,
-                                fontWeight: FontWeight.w500,
+                        suffixIcon: hasSearchText
+                            ? IconButton(
+                                tooltip: 'Limpar busca',
+                                icon: Icon(
+                                  Icons.close_rounded,
+                                  color: colorScheme.onSurfaceVariant,
+                                  size: 20,
+                                ),
+                                onPressed: () {
+                                  searchController.clear();
+                                  searchQuery.value = '';
+                                  FocusScope.of(context).unfocus();
+                                },
+                              )
+                            : Container(
+                                margin: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: theme.dividerColor),
+                                ),
+                                child: IconButton(
+                                  icon: Icon(
+                                    Icons.refresh_rounded,
+                                    color: colorScheme.onSurface,
+                                    size: 16,
+                                  ),
+                                  tooltip: 'Atualizar rotas',
+                                  onPressed: loadMyRoutes,
+                                ),
                               ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // LISTA REATIVA DE ROTAS
+              Expanded(
+                child: loading
+                    ? Center(
+                        child: AnimatedThreeDots(color: colorScheme.primary),
+                      )
+                    : routes.isEmpty
+                        ? RefreshIndicator(
+                            color: colorScheme.onSurface,
+                            onRefresh: loadMyRoutes,
+                            child: ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(32, 80, 32, 100),
+                              children: [
+                                Icon(
+                                  Icons.directions_bus_outlined,
+                                  size: 56,
+                                  color: colorScheme.secondary.withOpacity(0.5),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  query.trim().isNotEmpty
+                                      ? 'Nenhuma rota encontrada para "${query.trim()}"'
+                                      : 'Você ainda não está vinculado a nenhuma rota',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  query.trim().isNotEmpty
+                                      ? 'Tente pesquisar por outro nome de destino.'
+                                      : 'Suas rotas como passageiro, motorista, gerente ou CEO aparecerão aqui.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: colorScheme.secondary,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        Divider(height: 20, color: theme.dividerColor),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Gerenciar embarque e rastreamento',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: colorScheme.secondary,
-                                fontWeight: FontWeight.w500,
-                              ),
+                          )
+                        : RefreshIndicator(
+                            color: colorScheme.onSurface,
+                            onRefresh: loadMyRoutes,
+                            child: ListView.builder(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(20, 16, 20, 80),
+                              itemCount: routes.length,
+                              itemBuilder: (context, index) {
+                                final item = routes[index];
+                                return MyRouteCard(
+                                  key: ValueKey('my_route_${item.route.id}'),
+                                  route: item.route,
+                                  company: item.company,
+                                  userRoleBadge: item.roleBadge,
+                                  onTap: () => openRouteDetails(context, item),
+                                );
+                              },
                             ),
-                            Icon(
-                              Icons.chevron_right_rounded,
-                              size: 18,
-                              color: colorScheme.secondary,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 2),
-    );
+                          ),
+              ),
+            ],
+          ),
+        ),
+        bottomNavigationBar: const BottomNavBar(currentIndex: 2),
+      );
+    });
   }
 }

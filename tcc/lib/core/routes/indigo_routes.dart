@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/models/company_entity.dart';
 import '../../domain/models/route_entity.dart';
+import '../../domain/models/trip_entity.dart' show TripModel, TripStopPoint;
 import '../../domain/models/user_entity.dart';
 import '../../domain/models/vehicle_entity.dart';
 import '../../presentation/controllers/user/user_viewmodel.dart';
@@ -34,9 +35,11 @@ import '../../presentation/views/application/configuration/address/manage_addres
 import '../../presentation/views/application/configuration/address/manage_geolocation_view.dart';
 import '../../presentation/views/application/configuration/profile/profile_view.dart';
 import '../../presentation/views/application/home/home_view.dart';
+import '../../presentation/views/application/routes/driver_live_map_view.dart' show DriverLiveMapView;
 import '../../presentation/views/application/routes/joined_route_detail_view.dart';
 import '../../presentation/views/application/routes/my_routes_view.dart';
 import '../../presentation/views/application/routes/route_details_view.dart';
+import '../../presentation/views/application/routes/route_entered_view.dart';
 import '../../presentation/views/application/routes/route_map_view.dart';
 import '../../presentation/views/application/home/saved_view.dart';
 import '../di/dependency_injection.dart';
@@ -76,6 +79,8 @@ class IndigoRouteNames {
   static const companyVehicles = 'company-vehicles';
   static const vehicleDetails = 'vehicle_details';
   static const companyReviews = 'company_reviews';
+  static const routeEntered = 'route_entered';
+  static const driverLiveMap = 'driver_live_map';
 }
 
 class IndigoPaths {
@@ -113,24 +118,8 @@ class IndigoPaths {
   static const companyVehicles = '/company-vehicles';
   static const vehicleDetails = '/vehicle-details';
   static const companyReviews = '/company-reviews';
-}
-
-Map<String, dynamic> _extractCompanyMap(Object? extra) {
-  if (extra is Map<String, dynamic>) {
-    return extra;
-  }
-  if (extra is CompanyModel) {
-    return {
-      'company': extra,
-      'cnpj': extra.cnpj,
-      'name': extra.name,
-      'email': extra.email,
-      'phone': extra.phone,
-      'logoUrl': extra.logoUrl,
-      'userRole': 'CEO',
-    };
-  }
-  return {};
+  static const routeEntered = '/route-entered';
+  static const driverLiveMap = '/driver-live-map';
 }
 
 final List<RouteBase> indigoRoutes = [
@@ -466,4 +455,32 @@ final List<RouteBase> indigoRoutes = [
       return CompanyReviewsView(company: company);
     },
   ),
+  GoRoute(
+  path: '/route-entered',
+  name: IndigoRouteNames.routeEntered,
+  builder: (context, state) {
+    final extra = state.extra;
+    if (extra is Map<String, dynamic>) {
+      return RouteEnteredView(
+        route: extra['route'] as RouteModel,
+        company: extra['company'] as CompanyModel?,
+        roleBadge: extra['roleBadge'] as String?,
+      );
+    }
+    return RouteEnteredView(route: extra as RouteModel);
+  },
+),
+GoRoute(
+  path: '/driver-live-map',
+  name: IndigoRouteNames.driverLiveMap,
+  builder: (context, state) {
+    final extra = state.extra as Map<String, dynamic>;
+    return DriverLiveMapView(
+      route: extra['route'] as RouteModel,
+      company: extra['company'] as CompanyModel?,
+      trip: extra['trip'] as TripModel?,
+      stops: (extra['stops'] as List<TripStopPoint>?) ?? const [],
+    );
+  },
+),
 ];
