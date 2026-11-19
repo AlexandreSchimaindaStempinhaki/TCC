@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
-import '../../../../core/routes/indigo_routes.dart';
 import '../../../../domain/models/company_entity.dart';
 import '../../../../domain/models/route_entity.dart';
 import '../../../widgets/account_option.dart';
@@ -78,6 +77,46 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
     );
   }
 
+  Future<void> _confirmStopRoute(BuildContext context) async {
+    final colorScheme = Theme.of(context).colorScheme;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Parar rota ativa?'),
+        content: const Text(
+          'Ao encerrar a viagem, o rastreamento ao vivo será interrompido e a rota ficará inativa para os passageiros.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(color: colorScheme.onSurfaceVariant),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              elevation: 0,
+            ),
+            child: const Text(
+              'Parar Rota',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await finishActiveRouteTrip();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -96,6 +135,9 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
       final canDrive = canDriveRoute;
       final isPassenger = isPassengerInRoute;
 
+      // Motorista/gestor nunca confirma a própria presença como passageiro
+      final isPurePassenger = isPassenger && !staff;
+
       final currentBoarding = boardingViewModel.state.currentBoarding.value;
       final isReady = currentBoarding?.isReadyForBoarding ?? false;
       final myStop = currentUserStop;
@@ -103,8 +145,9 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
       final imageUrl =
           (route.imageUrl != null && route.imageUrl!.trim().isNotEmpty)
               ? route.imageUrl!.trim()
-              : ((company?.logoUrl != null && company!.logoUrl!.trim().isNotEmpty)
-                  ? company!.logoUrl!.trim()
+              : ((company?.logoUrl != null &&
+                      company!.logoUrl!.trim().isNotEmpty)
+                  ? company.logoUrl!.trim()
                   : '');
 
       final companyName = (company?.name.trim().isNotEmpty == true)
@@ -116,10 +159,10 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
               ? route.originName!
               : 'Local de Partida';
 
-      final destinationText =
-          (route.destinationName != null && route.destinationName!.trim().isNotEmpty)
-              ? route.destinationName!
-              : 'Local de Destino';
+      final destinationText = (route.destinationName != null &&
+              route.destinationName!.trim().isNotEmpty)
+          ? route.destinationName!
+          : 'Local de Destino';
 
       final operatingDaysText = route.operatingDaysLabel;
       final currentShifts = _resolveShifts(route);
@@ -161,7 +204,7 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ================= CARD DA ROTA (COM IMAGEM, BLUR E NOME DA EMPRESA) =================
+                      // ================= CARD DA ROTA =================
                       Container(
                         decoration: BoxDecoration(
                           color: theme.cardColor,
@@ -174,7 +217,8 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
+                              color: Colors.black
+                                  .withOpacity(isDark ? 0.3 : 0.04),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -194,7 +238,8 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                     width: double.infinity,
                                     child: imageUrl.isEmpty
                                         ? Container(
-                                            color: colorScheme.primary.withOpacity(0.08),
+                                            color: colorScheme.primary
+                                                .withOpacity(0.08),
                                             alignment: Alignment.center,
                                             child: Icon(
                                               Icons.route_rounded,
@@ -268,10 +313,15 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                       color: colorScheme.onSurface,
                                     ),
                                   ),
-                                  
+
                                   // ================= 1. STATUS PARA PASSAGEIRO =================
-                                  if (isPassenger) ...[
-                                    const SizedBox(height: 16),
+                                  if (isPurePassenger) ...[
+                                    const SizedBox(height: 14),
+                                    Divider(
+                                      color:
+                                          theme.dividerColor.withOpacity(0.5),
+                                      height: 1,
+                                    ),
                                     const SizedBox(height: 14),
                                     Row(
                                       children: [
@@ -316,9 +366,10 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
 
                                   // ================= 2. PAINEL DO MOTORISTA / GESTOR =================
                                   if (staff) ...[
-                                    const SizedBox(height: 16),
+                                    const SizedBox(height: 14),
                                     Divider(
-                                      color: theme.dividerColor.withOpacity(0.5),
+                                      color:
+                                          theme.dividerColor.withOpacity(0.5),
                                       height: 1,
                                     ),
                                     const SizedBox(height: 14),
@@ -328,7 +379,8 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                         padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
                                           color: Colors.amber.withOpacity(0.12),
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
                                           border: Border.all(
                                             color: Colors.amber.shade700
                                                 .withOpacity(0.4),
@@ -363,9 +415,10 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                           onPressed: executing
                                               ? null
                                               : (routeActive
-                                                  ? () {
-                                                      openLiveMap(context);
-                                                    }
+                                                  ? () => openLiveMap(
+                                                        context,
+                                                        isDriver: true,
+                                                      )
                                                   : startOptimizedRouteTrip),
                                           icon: Icon(
                                             routeActive
@@ -375,7 +428,7 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                           ),
                                           label: Text(
                                             routeActive
-                                                ? 'Abrir Rota Ativa (Modo Uber)'
+                                                ? 'Abrir Mapa em Tempo Real'
                                                 : 'Iniciar a Rota',
                                             style: const TextStyle(
                                               color: Colors.white,
@@ -395,6 +448,41 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                           ),
                                         ),
                                       ),
+                                      if (routeActive) ...[
+                                        const SizedBox(height: 10),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          height: 46,
+                                          child: OutlinedButton.icon(
+                                            onPressed: executing
+                                                ? null
+                                                : () =>
+                                                    _confirmStopRoute(context),
+                                            icon: const Icon(
+                                              Icons.stop_circle_outlined,
+                                              color: Colors.redAccent,
+                                            ),
+                                            label: const Text(
+                                              'Parar Rota',
+                                              style: TextStyle(
+                                                color: Colors.redAccent,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            style: OutlinedButton.styleFrom(
+                                              side: const BorderSide(
+                                                color: Colors.redAccent,
+                                                width: 1.5,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ],
                                   ],
                                 ],
@@ -405,7 +493,7 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                       ),
                       const SizedBox(height: 16),
 
-                      // ================= ITINERÁRIO CARD TOPZERA =================
+                      // ================= CARD DE ITINERÁRIO =================
                       RouteItineraryCard(
                         origin: originText,
                         destination: destinationText,
@@ -431,13 +519,14 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                         ),
                         child: Column(
                           children: [
-                            if (isPassenger && routeActive) ...[
+                            // Apenas passageiro (nunca motorista/equipe) confirma presença no ponto
+                            if (isPurePassenger && routeActive) ...[
                               Padding(
                                 padding: const EdgeInsets.fromLTRB(
                                   16,
                                   8,
                                   16,
-                                  4,
+                                  8,
                                 ),
                                 child: SizedBox(
                                   width: double.infinity,
@@ -468,29 +557,38 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                           : colorScheme.primary,
                                       elevation: 0,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(14),
+                                        borderRadius: BorderRadius.circular(14),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
                             ],
+
+                            // Acesso à tela de mapa em tempo real
                             AccountOption(
-                              icon: Icons.calendar_month_outlined,
-                              title: 'Calendário de Presença',
-                              trailing: const SizedBox.shrink(),
-                              onTap: () async {
-                                // await context.pushNamed(
-                                //   IndigoRouteNames.routeCalendar,
-                                //   extra: {
-                                //     'route': route,
-                                //     'company': company,
-                                //   },
-                                // );
-                              },
+                              icon: Icons.navigation_outlined,
+                              title: staff
+                                  ? 'Mapa da Rota em Tempo Real'
+                                  : 'Acompanhar Motorista ao Vivo',
+                              trailing: const Icon(Icons.chevron_right_rounded),
+                              onTap: () => openLiveMap(
+                                context,
+                                isDriver: canDrive,
+                              ),
                             ),
                             const SizedBox(height: 8),
+
+                            // Acesso ao Calendário de Presença
+                            AccountOption(
+                              icon: Icons.calendar_month_outlined,
+                              title: staff
+                                  ? 'Presenças Confirmadas (Calendário)'
+                                  : 'Calendário de Presença',
+                              trailing: const Icon(Icons.chevron_right_rounded),
+                              onTap: () => openAttendanceCalendar(context),
+                            ),
+                            const SizedBox(height: 4),
                           ],
                         ),
                       ),

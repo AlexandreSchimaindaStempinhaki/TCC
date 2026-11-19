@@ -155,8 +155,9 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
     }
 
     for (final t in tripListViewModel.state.routeTrips.value) {
-      if (t.status == TripStatus.inProgress ||
-          t.status == TripStatus.boarding) {
+      if (t.routeId == routeIdStr &&
+          (t.status == TripStatus.inProgress ||
+              t.status == TripStatus.boarding)) {
         return t;
       }
     }
@@ -225,9 +226,10 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
     companyListViewModel = injector.get<CompanyListViewModel>();
     userViewModel = injector.get<UserViewModel>();
 
-    _setupRealtimeNotificationsMonitor();
-
+    // Adiado para após o primeiro frame para evitar acesso ao ScaffoldMessenger no initState
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _setupRealtimeNotificationsMonitor();
       loadInitialData();
     });
   }
@@ -248,6 +250,7 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
   }
 
   Future<void> loadInitialData() async {
+    if (!mounted) return;
     isLoading.value = true;
     try {
       if (userViewModel.state.user.value == null) {
@@ -296,12 +299,16 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
         tripViewModel.commands.startWatchingTrip(active.id);
       }
     } finally {
-      isLoading.value = false;
+      if (mounted) {
+        isLoading.value = false;
+      }
     }
   }
 
   void _setupRealtimeNotificationsMonitor() {
+    _tripMonitorCleanup?.call();
     _tripMonitorCleanup = effect(() {
+      if (!mounted) return;
       final trip = currentActiveTrip;
       final routeActive = currentRoute.isTripActive || trip != null;
       final boarding = boardingViewModel.state.currentBoarding.value;
@@ -564,15 +571,18 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
 
   Future<void> togglePassengerReady() async {
     final uid = currentUserId;
-    if (uid.isEmpty) return;
+    if (uid.isEmpty || isStaffRole) return;
 
     isActionExecuting.value = true;
     try {
+      final now = DateTime.now();
+      final normalizedToday = DateTime(now.year, now.month, now.day);
+
       var boarding = boardingViewModel.state.currentBoarding.value;
       boarding ??= await boardingViewModel.commands.loadDailyBoarding(
         routeId: routeIdStr,
         userId: uid,
-        date: DateTime.now(),
+        date: normalizedToday,
       );
 
       if (boarding == null) return;
@@ -600,7 +610,9 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
         );
       }
     } finally {
-      isActionExecuting.value = false;
+      if (mounted) {
+        isActionExecuting.value = false;
+      }
     }
   }
 
@@ -626,7 +638,7 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
   }
 
   Future<void> startOptimizedRouteTrip() async {
-    if (!canDriveRoute) return;
+    if (!canDriveRoute || isActionExecuting.value) return;
 
     isActionExecuting.value = true;
     try {
@@ -686,15 +698,22 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
       }
 
       await routeViewModel.commands.startRouteTrip(currentRoute.id, driverId);
-
+      await routeViewModel.commands.fetchRouteById(
+        currentRoute.id,
+        loadMembers: true,
+      );
       await tripListViewModel.commands.fetchTripsByRoute(
         routeId: routeIdStr,
         date: todayDate,
       );
 
       _showSnackBar('Rota iniciada com sucesso!');
+    } catch (e) {
+      _showSnackBar('Erro ao iniciar a rota: $e', isError: true);
     } finally {
-      isActionExecuting.value = false;
+      if (mounted) {
+        isActionExecuting.value = false;
+      }
     }
   }
 
@@ -721,24 +740,66 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
   }
 
   Future<void> finishActiveRouteTrip() async {
+    if (isActionExecuting.value) return;
     isActionExecuting.value = true;
+
     try {
-      _driverPositionSub?.cancel();
+      await _driverPositionSub?.cancel();
       _driverPositionSub = null;
 
-      final active = currentActiveTrip;
-      if (active != null) {
-        await tripViewModel.commands.finishTrip(active.id);
+      // Encerra TODAS as viagens ativas/embarcando vinculadas a esta rota
+      final activeTripIds = <String>{};
+      final watched = tripViewModel.state.activeTrip.value;
+      if (watched != null &&
+          watched.routeId == routeIdStr &&
+          (watched.status == TripStatus.inProgress ||
+              watched.status == TripStatus.boarding)) {
+        activeTripIds.add(watched.id);
       }
+
+      for (final t in tripListViewModel.state.routeTrips.value) {
+        if (t.routeId == routeIdStr &&
+            (t.status == TripStatus.inProgress ||
+                t.status == TripStatus.boarding)) {
+          activeTripIds.add(t.id);
+        }
+      }
+
+      for (final tripId in activeTripIds) {
+        await tripViewModel.commands.finishTrip(tripId);
+      }
+
+      // Desativa isTripActive da rota no Firestore
       await routeViewModel.commands.finishRouteTrip(currentRoute.id);
+
+      // Para o watcher da viagem encerrada e limpa referência ativa em memória
+      tripViewModel.commands.stopWatchingTrip();
+      tripViewModel.state.activeTrip.value = null;
+
+      final now = DateTime.now();
+      final normalizedToday = DateTime(now.year, now.month, now.day);
+
+      // Recarrega rota e lista de viagens com a data normalizada
+      await routeViewModel.commands.fetchRouteById(
+        currentRoute.id,
+        loadMembers: true,
+      );
       await tripListViewModel.commands.fetchTripsByRoute(
         routeId: routeIdStr,
-        date: DateTime.now(),
+        date: normalizedToday,
       );
 
+      _hasNotifiedStartInSession = false;
+      _notifiedThresholdsInSession.clear();
+      liveNotificationBanner.value = null;
+
       _showSnackBar('Rota finalizada!');
+    } catch (e) {
+      _showSnackBar('Erro ao encerrar a rota: $e', isError: true);
     } finally {
-      isActionExecuting.value = false;
+      if (mounted) {
+        isActionExecuting.value = false;
+      }
     }
   }
 
@@ -753,22 +814,30 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
     );
   }
 
-  void openLiveMap(BuildContext context) {
-    context.pushNamed(
+  Future<void> openLiveMap(BuildContext context, {bool? isDriver}) async {
+    await context.pushNamed(
       IndigoRouteNames.driverLiveMap,
       extra: {
         'route': currentRoute,
         'company': currentCompany,
         'trip': currentActiveTrip,
         'stops': optimizedStopsForCurrentState,
+        'isDriver': isDriver ?? canDriveRoute,
       },
     );
+    if (mounted) {
+      await loadInitialData();
+    }
   }
 
   Future<void> openAttendanceCalendar(BuildContext context) async {
     await context.pushNamed(
-      IndigoRouteNames.about,
-      extra: {'route': currentRoute, 'company': currentCompany},
+      IndigoRouteNames.routeCalendar,
+      extra: {
+        'route': currentRoute,
+        'company': currentCompany,
+        'isStaff': isStaffRole,
+      },
     );
     if (mounted) {
       await loadInitialData();
@@ -776,25 +845,28 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
-    if (!mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.clearSnackBars();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 13.5,
-            fontWeight: FontWeight.w600,
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      if (messenger == null) return;
+      messenger.clearSnackBars();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+            ),
           ),
+          backgroundColor: isError
+              ? const Color(0xFFDC2626)
+              : const Color(0xFF16A34A),
+          behavior: SnackBarBehavior.fixed,
+          duration: const Duration(seconds: 3),
         ),
-        backgroundColor: isError
-            ? const Color(0xFFDC2626)
-            : const Color(0xFF16A34A),
-        behavior: SnackBarBehavior.fixed,
-        duration: const Duration(seconds: 3),
-      ),
-    );
+      );
+    });
   }
 }
