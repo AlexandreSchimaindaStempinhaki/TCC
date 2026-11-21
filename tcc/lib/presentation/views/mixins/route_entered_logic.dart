@@ -21,6 +21,7 @@ import '../../controllers/trip/trip_list_viewmodel.dart';
 import '../../controllers/trip/trip_viewmodel.dart';
 import '../../controllers/user/user_viewmodel.dart';
 import '../application/routes/route_entered_view.dart';
+import '../../widgets/calendar/route_schedule_resolver.dart';
 
 mixin RouteEnteredMixin on State<RouteEnteredView> {
   late final RouteViewModel routeViewModel;
@@ -412,11 +413,32 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
     return null;
   }
 
+  /// Determina automaticamente o horário mais próximo da viagem atual (Ida ou Volta)
+  /// e inclui somente passageiros com presença ativa para esse trecho/horário no Firestore.
   List<TripStopPoint> _buildOptimizedStopsFromTodayBoardings({
     required double startLat,
     required double startLng,
+    String? targetSlotTime,
   }) {
     final isOutbound = selectedDirection.value == TripDirection.outbound;
+    final resolved = RouteScheduleResolver.resolve(currentRoute);
+    final slots = isOutbound ? resolved.outboundSlots : resolved.returnSlots;
+
+    String? effectiveSlot = targetSlotTime;
+    if (effectiveSlot == null && slots.isNotEmpty) {
+      final nowMin = DateTime.now().hour * 60 + DateTime.now().minute;
+      effectiveSlot = slots.first.time;
+      int bestDiff = 10000;
+      for (final s in slots) {
+        final diff = (s.minutesFromMidnight - nowMin).abs();
+        if (diff < bestDiff) {
+          bestDiff = diff;
+          effectiveSlot = s.time;
+        }
+      }
+    }
+
+    final allTodayBoardings = boardingListViewModel.state.routeBoardings.value;
     final confirmedBoardings = isOutbound
         ? boardingListViewModel.state.confirmedOutboundList.value
         : boardingListViewModel.state.confirmedReturnList.value;
@@ -425,7 +447,32 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
     final rawStops = <TripStopPoint>[];
     final addedIds = <String>{};
 
+    // IDs de passageiros que já registraram decisão explícita hoje no Firestore
+    // (impede que alguém que cancelou a volta às 13:00 volte a entrar por fallback)
+    final explicitUserIds = allTodayBoardings
+        .map(
+          (b) => _cleanDigits(b.userId).isNotEmpty
+              ? _cleanDigits(b.userId)
+              : b.userId.trim(),
+        )
+        .toSet();
+
     for (final b in confirmedBoardings) {
+      final chosenSlot = isOutbound
+          ? (b.selectedDepartureTime?.trim().isNotEmpty == true
+                ? b.selectedDepartureTime!.trim()
+                : (slots.isNotEmpty ? slots.first.time : null))
+          : (b.selectedReturnTime?.trim().isNotEmpty == true
+                ? b.selectedReturnTime!.trim()
+                : resolved.defaultReturnForOutbound(b.selectedDepartureTime));
+
+      // Se o passageiro mudou a volta para outro horário (ex.: 18:30), não entra na rota das 13:15
+      if (effectiveSlot != null &&
+          chosenSlot != null &&
+          chosenSlot != effectiveSlot) {
+        continue;
+      }
+
       final profile = _findPassengerProfile(b.userId);
       final geo = isOutbound
           ? (profile?.boardingPoint ?? currentRoute.origin)
@@ -453,12 +500,12 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
       );
     }
 
-    if (rawStops.isEmpty && passengers.isNotEmpty) {
+    if (allTodayBoardings.isEmpty && passengers.isNotEmpty) {
       for (final p in passengers) {
         final id = (p.cpf != null && p.cpf!.trim().isNotEmpty)
             ? _cleanDigits(p.cpf!)
             : p.uid;
-        if (addedIds.contains(id)) continue;
+        if (addedIds.contains(id) || explicitUserIds.contains(id)) continue;
         addedIds.add(id);
 
         final geo = isOutbound

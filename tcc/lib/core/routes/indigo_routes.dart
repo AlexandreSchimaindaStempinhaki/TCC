@@ -35,11 +35,11 @@ import '../../presentation/views/application/configuration/address/manage_addres
 import '../../presentation/views/application/configuration/address/manage_geolocation_view.dart';
 import '../../presentation/views/application/configuration/profile/profile_view.dart';
 import '../../presentation/views/application/home/home_view.dart';
-import '../../presentation/views/application/routes/driver_live_map_view.dart'
-    show DriverLiveMapView;
+import '../../presentation/views/application/routes/driver_live_map_view.dart';
 import '../../presentation/views/application/routes/joined_route_detail_view.dart';
 import '../../presentation/views/application/routes/my_routes_view.dart';
 import '../../presentation/views/application/routes/route_attendance_calendar_view.dart';
+import '../../presentation/views/application/routes/route_day_schedule_view.dart';
 import '../../presentation/views/application/routes/route_details_view.dart';
 import '../../presentation/views/application/routes/route_entered_view.dart';
 import '../../presentation/views/application/routes/route_map_view.dart';
@@ -84,6 +84,7 @@ class IndigoRouteNames {
   static const routeEntered = 'route_entered';
   static const driverLiveMap = 'driver_live_map';
   static const routeCalendar = 'route_calendar';
+  static const routeDaySchedule = 'route_day_schedule';
 }
 
 class IndigoPaths {
@@ -124,6 +125,7 @@ class IndigoPaths {
   static const routeEntered = '/route-entered';
   static const driverLiveMap = '/driver-live-map';
   static const routeCalendarPath = '/route-calendar';
+  static const routeDaySchedule = '/route-day-schedule';
 }
 
 final List<RouteBase> indigoRoutes = [
@@ -487,17 +489,32 @@ final List<RouteBase> indigoRoutes = [
     },
   ),
   GoRoute(
-  path: IndigoPaths.driverLiveMap,
-  name: IndigoRouteNames.driverLiveMap,
-  builder: (context, state) {
-    final extra = state.extra as Map<String, dynamic>? ?? {};
-    return DriverLiveMapView(
-      route: extra['route'] as RouteModel,
-      company: extra['company'] as CompanyModel?,
-      trip: extra['trip'] as TripModel?,
-      stops: (extra['stops'] as List<TripStopPoint>?) ?? const [],
-      isDriver: (extra['isDriver'] as bool?) ?? false,
-    );
-  },
-),
+    path: IndigoPaths.driverLiveMap,
+    name: IndigoRouteNames.driverLiveMap,
+    builder: (context, state) {
+      final extra = state.extra as Map<String, dynamic>? ?? {};
+      return DriverLiveMapView(
+        route: extra['route'] as RouteModel,
+        company: extra['company'] as CompanyModel?,
+        trip: extra['trip'] as TripModel?,
+        stops: (extra['stops'] as List<TripStopPoint>?) ?? const [],
+        isDriver: (extra['isDriver'] as bool?) ?? false,
+      );
+    },
+  ),
+  GoRoute(
+    path: IndigoPaths.routeDaySchedule,
+    name: IndigoRouteNames.routeDaySchedule,
+    builder: (context, state) {
+      final extra = state.extra as Map<String, dynamic>? ?? {};
+      return RouteDayScheduleView(
+        route: extra['route'] as RouteModel,
+        company: extra['company'] as CompanyModel?,
+        selectedDate: (extra['selectedDate'] as DateTime?) ?? DateTime.now(),
+        isStaff: (extra['isStaff'] as bool?) ?? false,
+        isDefaultPattern: (extra['isDefaultPattern'] as bool?) ?? false,
+        monthLabel: extra['monthLabel'] as String?,
+      );
+    },
+  ),
 ];
