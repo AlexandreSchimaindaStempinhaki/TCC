@@ -55,6 +55,7 @@ class _RouteDayScheduleViewState extends State<RouteDayScheduleView>
       final selectedSlot = staffSelectedSlotTime.value;
       final slotCounts = buildStaffCountsBySlot(isReturn: viewingReturn);
       final slotPassengers = buildStaffPassengersForSelectedSlot();
+      final isStaffView = widget.isStaff && !widget.isDefaultPattern;
 
       final appBarTitle = widget.isDefaultPattern
           ? 'Padrão da Semana'
@@ -90,7 +91,7 @@ class _RouteDayScheduleViewState extends State<RouteDayScheduleView>
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
                   child: DayAttendancePanelCard(
-                    isStaff: widget.isStaff && !widget.isDefaultPattern,
+                    isStaff: isStaffView,
                     isDefaultPattern: widget.isDefaultPattern,
                     patternMonthLabel: widget.monthLabel ?? formattedWeekRange,
                     preserveCustomizedDays: preserveCustomizedDays.value,
@@ -99,8 +100,6 @@ class _RouteDayScheduleViewState extends State<RouteDayScheduleView>
                     formattedDate: formattedDateBr,
                     selectedDraft: selectedDraft,
                     schedules: resolvedSchedules,
-                    hasUnsavedChange:
-                        !widget.isDefaultPattern && override != null,
                     isSaving: isSaving.value,
                     isLoadingStaff: isLoadingStaffDay.value,
                     outboundCount: outboundCount,

@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:signals_flutter/signals_flutter.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/di/dependency_injection.dart';
 import '../../../domain/models/boarding_entity.dart';
@@ -55,7 +56,9 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
           ? DayAttendanceDraft(
               status: DayAttendanceStatus.both,
               departureTime: defaultOut,
-              returnTime: resolvedSchedules.defaultReturnForOutbound(defaultOut),
+              returnTime: resolvedSchedules.defaultReturnForOutbound(
+                defaultOut,
+              ),
             )
           : null,
     );
@@ -182,18 +185,20 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
       final defaultOut = resolvedSchedules.outboundSlots.isNotEmpty
           ? resolvedSchedules.outboundSlots.first.time
           : null;
-      final outTime = (status == DayAttendanceStatus.both ||
+      final outTime =
+          (status == DayAttendanceStatus.both ||
               status == DayAttendanceStatus.outboundOnly)
           ? (saved.selectedDepartureTime?.trim().isNotEmpty == true
-              ? saved.selectedDepartureTime!.trim()
-              : defaultOut)
+                ? saved.selectedDepartureTime!.trim()
+                : defaultOut)
           : null;
 
-      final retTime = (status == DayAttendanceStatus.both ||
+      final retTime =
+          (status == DayAttendanceStatus.both ||
               status == DayAttendanceStatus.returnOnly)
           ? (saved.selectedReturnTime?.trim().isNotEmpty == true
-              ? saved.selectedReturnTime!.trim()
-              : resolvedSchedules.defaultReturnForOutbound(outTime))
+                ? saved.selectedReturnTime!.trim()
+                : resolvedSchedules.defaultReturnForOutbound(outTime))
           : null;
 
       return DayAttendanceDraft(
@@ -267,15 +272,19 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
       draftOverride.value,
     );
 
-    final defaultOut = current.departureTime ??
+    final defaultOut =
+        current.departureTime ??
         (resolvedSchedules.outboundSlots.isNotEmpty
             ? resolvedSchedules.outboundSlots.first.time
             : null);
 
     switch (status) {
       case DayAttendanceStatus.both:
-        final validReturns = resolvedSchedules.validReturnsForOutbound(defaultOut);
-        final keepReturn = current.returnTime != null &&
+        final validReturns = resolvedSchedules.validReturnsForOutbound(
+          defaultOut,
+        );
+        final keepReturn =
+            current.returnTime != null &&
             validReturns.any((r) => r.time == current.returnTime);
         draftOverride.value = DayAttendanceDraft(
           status: DayAttendanceStatus.both,
@@ -293,7 +302,8 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
         );
         break;
       case DayAttendanceStatus.returnOnly:
-        final defaultRet = current.returnTime ??
+        final defaultRet =
+            current.returnTime ??
             (resolvedSchedules.returnSlots.isNotEmpty
                 ? resolvedSchedules.returnSlots.first.time
                 : null);
@@ -322,7 +332,8 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
       draftOverride.value,
     );
 
-    final nextStatus = current.status == DayAttendanceStatus.none ||
+    final nextStatus =
+        current.status == DayAttendanceStatus.none ||
             current.status == DayAttendanceStatus.absent ||
             current.status == DayAttendanceStatus.returnOnly
         ? DayAttendanceStatus.both
@@ -353,18 +364,20 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
       draftOverride.value,
     );
 
-    final nextStatus = current.status == DayAttendanceStatus.none ||
+    final nextStatus =
+        current.status == DayAttendanceStatus.none ||
             current.status == DayAttendanceStatus.absent ||
             current.status == DayAttendanceStatus.outboundOnly
         ? (current.departureTime != null
-            ? DayAttendanceStatus.both
-            : DayAttendanceStatus.returnOnly)
+              ? DayAttendanceStatus.both
+              : DayAttendanceStatus.returnOnly)
         : current.status;
 
     draftOverride.value = DayAttendanceDraft(
       status: nextStatus,
-      departureTime:
-          nextStatus == DayAttendanceStatus.both ? current.departureTime : null,
+      departureTime: nextStatus == DayAttendanceStatus.both
+          ? current.departureTime
+          : null,
       returnTime: time,
     );
   }
@@ -377,13 +390,15 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
       draftOverride.value,
     );
 
-    final hadOutbound = current.status == DayAttendanceStatus.both ||
+    final hadOutbound =
+        current.status == DayAttendanceStatus.both ||
         current.status == DayAttendanceStatus.outboundOnly;
 
     draftOverride.value = hadOutbound
         ? DayAttendanceDraft(
             status: DayAttendanceStatus.outboundOnly,
-            departureTime: current.departureTime ??
+            departureTime:
+                current.departureTime ??
                 (resolvedSchedules.outboundSlots.isNotEmpty
                     ? resolvedSchedules.outboundSlots.first.time
                     : null),
@@ -423,20 +438,23 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
       return;
     }
 
-    final willGoOutbound = draft.status == DayAttendanceStatus.both ||
+    final willGoOutbound =
+        draft.status == DayAttendanceStatus.both ||
         draft.status == DayAttendanceStatus.outboundOnly;
-    final willGoReturn = draft.status == DayAttendanceStatus.both ||
+    final willGoReturn =
+        draft.status == DayAttendanceStatus.both ||
         draft.status == DayAttendanceStatus.returnOnly;
 
     final depTime = willGoOutbound
         ? (draft.departureTime ??
-            (resolvedSchedules.outboundSlots.isNotEmpty
-                ? resolvedSchedules.outboundSlots.first.time
-                : null))
+              (resolvedSchedules.outboundSlots.isNotEmpty
+                  ? resolvedSchedules.outboundSlots.first.time
+                  : null))
         : null;
 
     final retTime = willGoReturn
-        ? (draft.returnTime ?? resolvedSchedules.defaultReturnForOutbound(depTime))
+        ? (draft.returnTime ??
+              resolvedSchedules.defaultReturnForOutbound(depTime))
         : null;
 
     if (widget.isDefaultPattern) {
@@ -470,14 +488,17 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
         final detailParts = <String>[];
         if (willGoOutbound && depTime != null) detailParts.add('Ida $depTime');
         if (willGoReturn && retTime != null) detailParts.add('Volta ~$retTime');
-        final suffix =
-            detailParts.isNotEmpty ? ' (${detailParts.join(' • ')})' : '';
+        final suffix = detailParts.isNotEmpty
+            ? ' (${detailParts.join(' • ')})'
+            : '';
 
         _showSnackBar(
           'Presença de $formattedDateBr atualizada: ${draft.status.label}$suffix',
         );
+        if (context.canPop()) context.pop();
       } else {
-        final err = boardingViewModel.state.message.value ??
+        final err =
+            boardingViewModel.state.message.value ??
             'Não foi possível salvar sua presença.';
         _showSnackBar(err, isError: true);
       }
@@ -542,8 +563,9 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
 
       if (!mounted) return;
       _showSnackBar(
-        'Padrão aplicado em $updatedCount${updatedCount == 1 ? 'dia útil' : 'dias úteis'} dessa semana!',
+        'Padrão aplicado em $updatedCount ${updatedCount == 1 ? 'dia útil' : 'dias úteis'} dessa semana!',
       );
+      if (context.canPop()) context.pop();
     } catch (e) {
       _showSnackBar('Erro ao aplicar padrão: $e', isError: true);
     } finally {
@@ -553,7 +575,9 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
 
   void setStaffDirection(bool viewingReturn) {
     staffViewingReturn.value = viewingReturn;
-    staffSelectedSlotTime.value = _pickUpcomingSlotTime(isReturn: viewingReturn);
+    staffSelectedSlotTime.value = _pickUpcomingSlotTime(
+      isReturn: viewingReturn,
+    );
   }
 
   void setStaffSlotTime(String? time) {
@@ -590,11 +614,13 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
     for (final b in list) {
       final chosen = isReturn
           ? (b.selectedReturnTime?.trim().isNotEmpty == true
-              ? b.selectedReturnTime!.trim()
-              : resolvedSchedules.defaultReturnForOutbound(b.selectedDepartureTime))
+                ? b.selectedReturnTime!.trim()
+                : resolvedSchedules.defaultReturnForOutbound(
+                    b.selectedDepartureTime,
+                  ))
           : (b.selectedDepartureTime?.trim().isNotEmpty == true
-              ? b.selectedDepartureTime!.trim()
-              : fallbackSlot);
+                ? b.selectedDepartureTime!.trim()
+                : fallbackSlot);
 
       if (chosen != null && counts.containsKey(chosen)) {
         counts[chosen] = counts[chosen]! + 1;
@@ -622,8 +648,8 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
       final depTime = b.selectedDepartureTime?.trim().isNotEmpty == true
           ? b.selectedDepartureTime!.trim()
           : (resolvedSchedules.outboundSlots.isNotEmpty
-              ? resolvedSchedules.outboundSlots.first.time
-              : null);
+                ? resolvedSchedules.outboundSlots.first.time
+                : null);
       final retTime = b.selectedReturnTime?.trim().isNotEmpty == true
           ? b.selectedReturnTime!.trim()
           : resolvedSchedules.defaultReturnForOutbound(depTime);
@@ -649,27 +675,26 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final messenger = ScaffoldMessenger.maybeOf(context);
-      if (messenger == null) return;
-      messenger.clearSnackBars();
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            message,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 13.5,
-              fontWeight: FontWeight.w600,
-            ),
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 13.5,
+            fontWeight: FontWeight.w600,
           ),
-          backgroundColor:
-              isError ? const Color(0xFFDC2626) : const Color(0xFF16A34A),
-          behavior: SnackBarBehavior.fixed,
-          duration: const Duration(seconds: 3),
         ),
-      );
-    });
+        backgroundColor: isError
+            ? const Color(0xFFDC2626)
+            : const Color(0xFF16A34A),
+        behavior: SnackBarBehavior.fixed,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 }
