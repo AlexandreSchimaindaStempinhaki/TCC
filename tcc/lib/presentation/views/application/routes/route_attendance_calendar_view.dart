@@ -42,10 +42,10 @@ class _RouteAttendanceCalendarViewState
 
     final imageUrl =
         (route.imageUrl != null && route.imageUrl!.trim().isNotEmpty)
-            ? route.imageUrl!.trim()
-            : ((company?.logoUrl != null && company!.logoUrl!.trim().isNotEmpty)
-                ? company.logoUrl!.trim()
-                : '');
+        ? route.imageUrl!.trim()
+        : ((company?.logoUrl != null && company!.logoUrl!.trim().isNotEmpty)
+              ? company.logoUrl!.trim()
+              : '');
 
     final companyName = (company?.name.trim().isNotEmpty == true)
         ? company!.name.trim()
@@ -53,10 +53,11 @@ class _RouteAttendanceCalendarViewState
 
     final originText =
         (route.originName != null && route.originName!.trim().isNotEmpty)
-            ? route.originName!.trim()
-            : 'Partida';
+        ? route.originName!.trim()
+        : 'Partida';
 
-    final destinationText = (route.destinationName != null &&
+    final destinationText =
+        (route.destinationName != null &&
             route.destinationName!.trim().isNotEmpty)
         ? route.destinationName!.trim()
         : 'Destino';
@@ -117,6 +118,9 @@ class _RouteAttendanceCalendarViewState
                         statusBuilder: (date) => widget.isStaff
                             ? DayAttendanceStatus.none
                             : resolveDisplayStatus(date, savedMap),
+                        isCompletedBuilder: (date) => widget.isStaff
+                            ? false
+                            : isAttendanceFulfilled(date, savedMap),
                         onPreviousMonth: () => changeMonth(-1),
                         onNextMonth: () => changeMonth(1),
                         onSelectDate: selectDate,

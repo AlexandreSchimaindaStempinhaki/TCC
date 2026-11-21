@@ -220,6 +220,17 @@ mixin RouteAttendanceCalendarMixin on State<RouteAttendanceCalendarView> {
     return '$d/$m';
   }
 
+  bool isAttendanceFulfilled(
+    DateTime date,
+    Map<String, BoardingModel> savedMap,
+  ) {
+    if (!isOperatingDay(date)) return false;
+    final saved = savedMap[dateKey(date)];
+    if (saved == null) return false;
+    return saved.present &&
+        saved.attendanceStatus == BoardingAttendanceStatus.boarded;
+  }
+
   Future<void> openDefaultSchedule() async {
     if (widget.isStaff) return;
 
