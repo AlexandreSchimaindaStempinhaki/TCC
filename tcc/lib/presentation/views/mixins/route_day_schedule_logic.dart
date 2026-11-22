@@ -1,7 +1,6 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:signals_flutter/signals_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../core/di/dependency_injection.dart';
 import '../../../domain/models/boarding_entity.dart';
@@ -31,6 +30,10 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
   late final Signal<bool> staffViewingReturn;
   late final Signal<String?> staffSelectedSlotTime;
 
+  late final Signal extraUsersById;
+  final Set<String> _requestedUserIds = <String>{};
+  VoidCallback? _boardingsUsersEffect;
+
   @override
   void initState() {
     super.initState();
@@ -50,15 +53,12 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
         ? resolvedSchedules.outboundSlots.first.time
         : null;
 
-    // No modo padrão semanal, já inicia pré-selecionado em "Ida e Volta" no primeiro turno
     draftOverride = signal<DayAttendanceDraft?>(
       widget.isDefaultPattern
           ? DayAttendanceDraft(
               status: DayAttendanceStatus.both,
               departureTime: defaultOut,
-              returnTime: resolvedSchedules.defaultReturnForOutbound(
-                defaultOut,
-              ),
+              returnTime: resolvedSchedules.defaultReturnForOutbound(defaultOut),
             )
           : null,
     );
@@ -67,6 +67,7 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
     isInitialLoading = signal(true);
     isSaving = signal(false);
     isLoadingStaffDay = signal(false);
+    extraUsersById = signal({});
 
     final nowMin = DateTime.now().hour * 60 + DateTime.now().minute;
     final lastOutMin = resolvedSchedules.outboundSlots.isNotEmpty
@@ -78,6 +79,14 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
       _pickUpcomingSlotTime(isReturn: startOnReturn),
     );
 
+    if (widget.isStaff && !widget.isDefaultPattern) {
+      _boardingsUsersEffect = effect(() {
+        final boardings = boardingListViewModel.state.routeBoardings.value;
+        if (boardings.isEmpty) return;
+        untracked(() => _fetchMissingBoardingUsers(boardings));
+      });
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       loadDayData();
@@ -86,6 +95,7 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
 
   @override
   void dispose() {
+    _boardingsUsersEffect?.call();
     boardingViewModel.commands.stopWatchingPassengerBoarding();
     boardingListViewModel.commands.stopWatchingRouteBoardings();
     draftOverride.dispose();
@@ -95,6 +105,7 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
     isLoadingStaffDay.dispose();
     staffViewingReturn.dispose();
     staffSelectedSlotTime.dispose();
+    extraUsersById.dispose();
     super.dispose();
   }
 
@@ -140,7 +151,7 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
         '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}';
     return operating.first == operating.last
         ? fmt(operating.first)
-        : '${fmt(operating.first)} a${fmt(operating.last)}';
+        : '${fmt(operating.first)} a ${fmt(operating.last)}';
   }
 
   String get currentUserId {
@@ -150,7 +161,7 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
     if (loggedUser != null && loggedUser.uid.trim().isNotEmpty) {
       return loggedUser.uid.trim();
     }
-    return FirebaseAuth.instance.currentUser?.uid ?? '';
+    return '';
   }
 
   DayAttendanceStatus _statusFromBoarding(BoardingModel boarding) {
@@ -185,20 +196,18 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
       final defaultOut = resolvedSchedules.outboundSlots.isNotEmpty
           ? resolvedSchedules.outboundSlots.first.time
           : null;
-      final outTime =
-          (status == DayAttendanceStatus.both ||
+      final outTime = (status == DayAttendanceStatus.both ||
               status == DayAttendanceStatus.outboundOnly)
           ? (saved.selectedDepartureTime?.trim().isNotEmpty == true
-                ? saved.selectedDepartureTime!.trim()
-                : defaultOut)
+              ? saved.selectedDepartureTime!.trim()
+              : defaultOut)
           : null;
 
-      final retTime =
-          (status == DayAttendanceStatus.both ||
+      final retTime = (status == DayAttendanceStatus.both ||
               status == DayAttendanceStatus.returnOnly)
           ? (saved.selectedReturnTime?.trim().isNotEmpty == true
-                ? saved.selectedReturnTime!.trim()
-                : resolvedSchedules.defaultReturnForOutbound(outTime))
+              ? saved.selectedReturnTime!.trim()
+              : resolvedSchedules.defaultReturnForOutbound(outTime))
           : null;
 
       return DayAttendanceDraft(
@@ -225,9 +234,16 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
             widget.route.id,
             loadMembers: true,
           );
+          if (routeViewModel.state.passengers.value.isEmpty &&
+              widget.route.passengerIds.isNotEmpty) {
+            await routeViewModel.commands.loadRouteMembersDetails(widget.route);
+          }
           await boardingListViewModel.commands.fetchByRouteAndDate(
             routeId: routeIdStr,
             date: targetDate,
+          );
+          await _fetchMissingBoardingUsers(
+            boardingListViewModel.state.routeBoardings.value,
           );
           boardingListViewModel.commands.watchRouteBoardingsByDate(
             routeId: routeIdStr,
@@ -272,19 +288,15 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
       draftOverride.value,
     );
 
-    final defaultOut =
-        current.departureTime ??
+    final defaultOut = current.departureTime ??
         (resolvedSchedules.outboundSlots.isNotEmpty
             ? resolvedSchedules.outboundSlots.first.time
             : null);
 
     switch (status) {
       case DayAttendanceStatus.both:
-        final validReturns = resolvedSchedules.validReturnsForOutbound(
-          defaultOut,
-        );
-        final keepReturn =
-            current.returnTime != null &&
+        final validReturns = resolvedSchedules.validReturnsForOutbound(defaultOut);
+        final keepReturn = current.returnTime != null &&
             validReturns.any((r) => r.time == current.returnTime);
         draftOverride.value = DayAttendanceDraft(
           status: DayAttendanceStatus.both,
@@ -302,8 +314,7 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
         );
         break;
       case DayAttendanceStatus.returnOnly:
-        final defaultRet =
-            current.returnTime ??
+        final defaultRet = current.returnTime ??
             (resolvedSchedules.returnSlots.isNotEmpty
                 ? resolvedSchedules.returnSlots.first.time
                 : null);
@@ -332,8 +343,7 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
       draftOverride.value,
     );
 
-    final nextStatus =
-        current.status == DayAttendanceStatus.none ||
+    final nextStatus = current.status == DayAttendanceStatus.none ||
             current.status == DayAttendanceStatus.absent ||
             current.status == DayAttendanceStatus.returnOnly
         ? DayAttendanceStatus.both
@@ -364,20 +374,18 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
       draftOverride.value,
     );
 
-    final nextStatus =
-        current.status == DayAttendanceStatus.none ||
+    final nextStatus = current.status == DayAttendanceStatus.none ||
             current.status == DayAttendanceStatus.absent ||
             current.status == DayAttendanceStatus.outboundOnly
         ? (current.departureTime != null
-              ? DayAttendanceStatus.both
-              : DayAttendanceStatus.returnOnly)
+            ? DayAttendanceStatus.both
+            : DayAttendanceStatus.returnOnly)
         : current.status;
 
     draftOverride.value = DayAttendanceDraft(
       status: nextStatus,
-      departureTime: nextStatus == DayAttendanceStatus.both
-          ? current.departureTime
-          : null,
+      departureTime:
+          nextStatus == DayAttendanceStatus.both ? current.departureTime : null,
       returnTime: time,
     );
   }
@@ -390,15 +398,13 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
       draftOverride.value,
     );
 
-    final hadOutbound =
-        current.status == DayAttendanceStatus.both ||
+    final hadOutbound = current.status == DayAttendanceStatus.both ||
         current.status == DayAttendanceStatus.outboundOnly;
 
     draftOverride.value = hadOutbound
         ? DayAttendanceDraft(
             status: DayAttendanceStatus.outboundOnly,
-            departureTime:
-                current.departureTime ??
+            departureTime: current.departureTime ??
                 (resolvedSchedules.outboundSlots.isNotEmpty
                     ? resolvedSchedules.outboundSlots.first.time
                     : null),
@@ -438,23 +444,20 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
       return;
     }
 
-    final willGoOutbound =
-        draft.status == DayAttendanceStatus.both ||
+    final willGoOutbound = draft.status == DayAttendanceStatus.both ||
         draft.status == DayAttendanceStatus.outboundOnly;
-    final willGoReturn =
-        draft.status == DayAttendanceStatus.both ||
+    final willGoReturn = draft.status == DayAttendanceStatus.both ||
         draft.status == DayAttendanceStatus.returnOnly;
 
     final depTime = willGoOutbound
         ? (draft.departureTime ??
-              (resolvedSchedules.outboundSlots.isNotEmpty
-                  ? resolvedSchedules.outboundSlots.first.time
-                  : null))
+            (resolvedSchedules.outboundSlots.isNotEmpty
+                ? resolvedSchedules.outboundSlots.first.time
+                : null))
         : null;
 
     final retTime = willGoReturn
-        ? (draft.returnTime ??
-              resolvedSchedules.defaultReturnForOutbound(depTime))
+        ? (draft.returnTime ?? resolvedSchedules.defaultReturnForOutbound(depTime))
         : null;
 
     if (widget.isDefaultPattern) {
@@ -487,18 +490,16 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
 
         final detailParts = <String>[];
         if (willGoOutbound && depTime != null) detailParts.add('Ida $depTime');
-        if (willGoReturn && retTime != null) detailParts.add('Volta ~$retTime');
-        final suffix = detailParts.isNotEmpty
-            ? ' (${detailParts.join(' • ')})'
-            : '';
+        if (willGoReturn && retTime != null) detailParts.add('Volta $retTime');
+        final suffix =
+            detailParts.isNotEmpty ? ' (${detailParts.join(' • ')})' : '';
 
         _showSnackBar(
           'Presença de $formattedDateBr atualizada: ${draft.status.label}$suffix',
         );
         if (context.canPop()) context.pop();
       } else {
-        final err =
-            boardingViewModel.state.message.value ??
+        final err = boardingViewModel.state.message.value ??
             'Não foi possível salvar sua presença.';
         _showSnackBar(err, isError: true);
       }
@@ -575,28 +576,95 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
 
   void setStaffDirection(bool viewingReturn) {
     staffViewingReturn.value = viewingReturn;
-    staffSelectedSlotTime.value = _pickUpcomingSlotTime(
-      isReturn: viewingReturn,
-    );
+    staffSelectedSlotTime.value = _pickUpcomingSlotTime(isReturn: viewingReturn);
   }
 
   void setStaffSlotTime(String? time) {
     staffSelectedSlotTime.value = time;
   }
 
-  String _resolvePassengerName(String rawUserId) {
-    final passengers = routeViewModel.state.passengers.value;
-    final cleanTarget = _cleanDigits(rawUserId);
+  UserModel? _findLoadedUser(String rawUserId) {
+    final target = rawUserId.trim();
+    if (target.isEmpty) return null;
 
-    for (final UserModel p in passengers) {
+    final targetLower = target.toLowerCase();
+    final cleanTarget = _cleanDigits(target);
+    final looksLikeCpf = cleanTarget.length == 11;
+
+    final extraMap = extraUsersById.value;
+    if (extraMap.containsKey(target)) return extraMap[target];
+    if (looksLikeCpf && extraMap.containsKey(cleanTarget)) {
+      return extraMap[cleanTarget];
+    }
+
+    final candidates = <UserModel>[
+      ...routeViewModel.state.passengers.value,
+      ...extraMap.values,
+      if (userViewModel.state.user.value != null)
+        userViewModel.state.user.value!,
+    ];
+
+    for (final UserModel p in candidates) {
+      final pUid = p.uid.trim();
+      final pEmail = p.email.trim().toLowerCase();
       final pCleanCpf = _cleanDigits(p.cpf ?? '');
-      if (p.uid.trim() == rawUserId.trim() ||
-          (cleanTarget.isNotEmpty && pCleanCpf == cleanTarget) ||
-          p.email.trim().toLowerCase() == rawUserId.trim().toLowerCase()) {
-        return p.name;
+
+      if ((pUid.isNotEmpty && pUid == target) ||
+          (looksLikeCpf && pCleanCpf.isNotEmpty && pCleanCpf == cleanTarget) ||
+          (pEmail.isNotEmpty && pEmail == targetLower)) {
+        return p;
       }
     }
-    return 'Passageiro ($rawUserId)';
+    return null;
+  }
+
+  Future<void> _fetchMissingBoardingUsers(List<BoardingModel> boardings) async {
+    if (routeViewModel.commands.fetchRouteUsersByIdsCommand.isExecuting.value) {
+      return;
+    }
+
+    final missingIds = <String>[];
+    for (final b in boardings) {
+      final id = b.userId.trim();
+      if (id.isEmpty || _requestedUserIds.contains(id)) continue;
+      if (_findLoadedUser(id) != null) continue;
+      missingIds.add(id);
+    }
+
+    if (missingIds.isEmpty) return;
+    _requestedUserIds.addAll(missingIds);
+
+    try {
+      final fetched = await routeViewModel.commands.fetchRouteUsersByIdsCommand
+          .execute(missingIds);
+
+      if (!mounted || fetched.isEmpty) return;
+
+      final updated = Map<String, UserModel>.from(extraUsersById.value);
+      for (final user in fetched) {
+        if (user.uid.trim().isNotEmpty) {
+          updated[user.uid.trim()] = user;
+        }
+        final cleanCpf = _cleanDigits(user.cpf ?? '');
+        if (cleanCpf.length == 11) {
+          updated[cleanCpf] = user;
+        }
+        if (user.email.trim().isNotEmpty) {
+          updated[user.email.trim().toLowerCase()] = user;
+        }
+      }
+      extraUsersById.value = updated;
+    } catch (_) {
+      _requestedUserIds.removeAll(missingIds);
+    }
+  }
+
+  String _resolvePassengerName(String rawUserId) {
+    final user = _findLoadedUser(rawUserId);
+    if (user != null && user.name.trim().isNotEmpty) {
+      return user.name.trim();
+    }
+    return 'Passageiro';
   }
 
   Map<String, int> buildStaffCountsBySlot({required bool isReturn}) {
@@ -614,13 +682,12 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
     for (final b in list) {
       final chosen = isReturn
           ? (b.selectedReturnTime?.trim().isNotEmpty == true
-                ? b.selectedReturnTime!.trim()
-                : resolvedSchedules.defaultReturnForOutbound(
-                    b.selectedDepartureTime,
-                  ))
+              ? b.selectedReturnTime!.trim()
+              : resolvedSchedules
+                  .defaultReturnForOutbound(b.selectedDepartureTime))
           : (b.selectedDepartureTime?.trim().isNotEmpty == true
-                ? b.selectedDepartureTime!.trim()
-                : fallbackSlot);
+              ? b.selectedDepartureTime!.trim()
+              : fallbackSlot);
 
       if (chosen != null && counts.containsKey(chosen)) {
         counts[chosen] = counts[chosen]! + 1;
@@ -648,8 +715,8 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
       final depTime = b.selectedDepartureTime?.trim().isNotEmpty == true
           ? b.selectedDepartureTime!.trim()
           : (resolvedSchedules.outboundSlots.isNotEmpty
-                ? resolvedSchedules.outboundSlots.first.time
-                : null);
+              ? resolvedSchedules.outboundSlots.first.time
+              : null);
       final retTime = b.selectedReturnTime?.trim().isNotEmpty == true
           ? b.selectedReturnTime!.trim()
           : resolvedSchedules.defaultReturnForOutbound(depTime);
@@ -657,10 +724,17 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
       final effectiveSlot = (isReturn ? retTime : depTime) ?? fallbackSlot;
       if (filterTime != null && effectiveSlot != filterTime) continue;
 
+      final user = _findLoadedUser(b.userId);
+      final name = (user != null && user.name.trim().isNotEmpty)
+          ? user.name.trim()
+          : 'Passageiro';
+
       entries.add(
         StaffPassengerSlotEntry(
           passengerId: b.userId,
-          passengerName: _resolvePassengerName(b.userId),
+          passengerName: name,
+          photoUrl: user?.photoUrl,
+          userModel: user,
           departureTime: depTime,
           returnTime: retTime,
           willGoOutbound: b.willGoOutbound,
@@ -689,9 +763,8 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        backgroundColor: isError
-            ? const Color(0xFFDC2626)
-            : const Color(0xFF16A34A),
+        backgroundColor:
+            isError ? const Color(0xFFDC2626) : const Color(0xFF16A34A),
         behavior: SnackBarBehavior.fixed,
         duration: const Duration(seconds: 3),
       ),

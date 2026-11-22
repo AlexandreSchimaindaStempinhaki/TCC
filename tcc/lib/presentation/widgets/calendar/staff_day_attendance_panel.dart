@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:tcc/presentation/widgets/company_member_card.dart';
 
 import '../animated_three_dots.dart';
 import 'day_attendance_status.dart';
 import 'route_schedule_resolver.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/routes/indigo_routes.dart';
 
 class StaffDayAttendancePanel extends StatelessWidget {
   final String formattedDate;
@@ -60,6 +63,80 @@ class StaffDayAttendancePanel extends StatelessWidget {
           ),
         ),
       );
+
+  Widget _buildSlotChip(ScheduleSlot slot, ColorScheme cs, bool isDark) {
+    final count = staffSlotCounts[slot.time] ?? 0;
+    final isSelected = staffSelectedSlotTime == slot.time;
+
+    return Material(
+      color: isSelected
+          ? cs.primary
+          : (isDark ? const Color(0xFF232732) : const Color(0xFFF3F4F6)),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => onStaffSlotSelected(slot.time),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+          child: Center(
+            child: Text(
+              '${slot.index}ª ${staffViewingReturn ? 'volta' : 'ida'} • ${slot.time} ($count)',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: isSelected ? Colors.white : cs.onSurface,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSlotsGrid(
+    List<ScheduleSlot> slots,
+    ColorScheme cs,
+    bool isDark,
+  ) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final halfWidth = (constraints.maxWidth - 8) / 2;
+        final rows = <Widget>[];
+
+        for (int i = 0; i < slots.length; i += 2) {
+          if (rows.isNotEmpty) rows.add(const SizedBox(height: 8));
+
+          final first = slots[i];
+          final second = (i + 1 < slots.length) ? slots[i + 1] : null;
+
+          if (second != null) {
+            rows.add(
+              Row(
+                children: [
+                  Expanded(child: _buildSlotChip(first, cs, isDark)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildSlotChip(second, cs, isDark)),
+                ],
+              ),
+            );
+          } else {
+            rows.add(
+              Center(
+                child: SizedBox(
+                  width: halfWidth,
+                  child: _buildSlotChip(first, cs, isDark),
+                ),
+              ),
+            );
+          }
+        }
+
+        return Column(children: rows);
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -152,41 +229,10 @@ class StaffDayAttendancePanel extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: activeSlots.map((slot) {
-                    final count = staffSlotCounts[slot.time] ?? 0;
-                    final isSelected = staffSelectedSlotTime == slot.time;
-                    return Material(
-                      color: isSelected
-                          ? cs.primary
-                          : (isDark
-                              ? const Color(0xFF232732)
-                              : const Color(0xFFF3F4F6)),
-                      borderRadius: BorderRadius.circular(12),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap: () => onStaffSlotSelected(slot.time),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
-                          child: Text(
-                            '${slot.index}ª ${staffViewingReturn ? 'volta' : 'ida'} • ${slot.time} ($count)',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected ? Colors.white : cs.onSurface,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
+                if (activeSlots.length > 1) ...[
+                  const SizedBox(height: 12),
+                  _buildSlotsGrid(activeSlots, cs, isDark),
+                ],
               ],
             ),
           ),
@@ -194,8 +240,17 @@ class StaffDayAttendancePanel extends StatelessWidget {
           _sectionTitle('Passageiros (${staffSlotPassengers.length})', cs),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            decoration: _cardDecoration(theme),
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: theme.cardColor,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark
+                    ? cs.onSurface.withOpacity(0.26)
+                    : cs.onSurface.withOpacity(0.18),
+                width: 1.6,
+              ),
+            ),
             child: staffSlotPassengers.isEmpty
                 ? Padding(
                     padding: const EdgeInsets.symmetric(
@@ -211,86 +266,23 @@ class StaffDayAttendancePanel extends StatelessWidget {
                       ),
                     ),
                   )
-                : ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: staffSlotPassengers.length,
-                    separatorBuilder: (_, __) => Divider(
-                      height: 1,
-                      indent: 16,
-                      endIndent: 16,
-                      color: theme.dividerColor.withOpacity(0.4),
-                    ),
-                    itemBuilder: (_, index) {
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(staffSlotPassengers.length, (index) {
                       final entry = staffSlotPassengers[index];
-                      final dep = entry.departureTime?.replaceAll('~', '').trim();
-                      final ret = entry.returnTime?.replaceAll('~', '').trim();
-                      final subtitle =
-                          '${entry.willGoOutbound ? 'Ida ${dep ?? '--'}' : 'Sem ida'}  •  ${entry.willGoReturn ? 'Volta ${ret ?? '--'}' : 'Sem volta'}';
-
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.person_outline_rounded,
-                              size: 22,
-                              color: cs.onSurface,
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    entry.passengerName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 14.5,
-                                      fontWeight: FontWeight.w600,
-                                      color: cs.onSurface,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    subtitle,
-                                    style: TextStyle(
-                                      fontSize: 12.5,
-                                      color: cs.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (entry.isReady) ...[
-                              const SizedBox(width: 10),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 9,
-                                  vertical: 4.5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF16A34A),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Text(
-                                  'Pronto',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
+                      return CompanyMemberCard(
+                        name: entry.passengerName,
+                        photoUrl: entry.photoUrl ?? '',
+                        onTap: () {
+                          if (entry.userModel != null) {
+                            context.pushNamed(
+                              IndigoRouteNames.profile,
+                              extra: entry.userModel,
+                            );
+                          }
+                        },
                       );
-                    },
+                    }),
                   ),
           ),
         ],

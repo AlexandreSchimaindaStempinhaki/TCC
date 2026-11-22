@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../domain/models/user_entity.dart';
 
-enum DayAttendanceStatus {
-  none,
-  both,
-  outboundOnly,
-  returnOnly,
-  absent,
-}
+enum DayAttendanceStatus { none, both, outboundOnly, returnOnly, absent }
 
 class DayAttendanceDraft {
   final DayAttendanceStatus status;
@@ -28,8 +23,9 @@ class DayAttendanceDraft {
   }) {
     return DayAttendanceDraft(
       status: status ?? this.status,
-      departureTime:
-          clearDeparture ? null : (departureTime ?? this.departureTime),
+      departureTime: clearDeparture
+          ? null
+          : (departureTime ?? this.departureTime),
       returnTime: clearReturn ? null : (returnTime ?? this.returnTime),
     );
   }
@@ -38,6 +34,8 @@ class DayAttendanceDraft {
 class StaffPassengerSlotEntry {
   final String passengerId;
   final String passengerName;
+  final String? photoUrl;
+  final UserModel? userModel;
   final String? departureTime;
   final String? returnTime;
   final bool willGoOutbound;
@@ -47,8 +45,10 @@ class StaffPassengerSlotEntry {
   const StaffPassengerSlotEntry({
     required this.passengerId,
     required this.passengerName,
-    required this.departureTime,
-    required this.returnTime,
+    this.photoUrl,
+    this.userModel,
+    this.departureTime,
+    this.returnTime,
     required this.willGoOutbound,
     required this.willGoReturn,
     required this.isReady,
@@ -87,7 +87,10 @@ extension DayAttendanceStatusX on DayAttendanceStatus {
   }
 }
 
-BoxDecoration calendarCardDecoration(ThemeData theme, {bool highlighted = true}) {
+BoxDecoration calendarCardDecoration(
+  ThemeData theme, {
+  bool highlighted = true,
+}) {
   final colorScheme = theme.colorScheme;
   final isDark = theme.brightness == Brightness.dark;
   return BoxDecoration(
