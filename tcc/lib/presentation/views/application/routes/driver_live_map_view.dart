@@ -7,6 +7,7 @@ import 'package:tcc/presentation/widgets/animated_three_dots.dart';
 import '../../../../domain/models/company_entity.dart';
 import '../../../../domain/models/route_entity.dart';
 import '../../../../domain/models/trip_entity.dart';
+import '../../../widgets/indigo_splash_loader.dart';
 import '../../../widgets/live_map/live_map_bottom_sheet.dart';
 import '../../../widgets/live_map/live_map_floating_controls.dart';
 import '../../../widgets/live_map/live_map_marker_factory.dart';
@@ -406,16 +407,12 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            AnimatedThreeDots(color: colorScheme.onSurface),
-                            const SizedBox(height: 16),
-                            Text(
-                              statusText,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
+                            IndigoSplashLoader(
+                              isLoading: loading,
+                              duration: const Duration(milliseconds: 3500),
+                              message: statusText,
                             ),
+                            const SizedBox(height: 16),
                           ],
                         ),
                       ),

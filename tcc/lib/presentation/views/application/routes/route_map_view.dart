@@ -5,6 +5,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:tcc/presentation/widgets/animated_three_dots.dart';
+import 'package:tcc/presentation/widgets/live_map/live_map_marker_factory.dart';
 
 class RouteMapView extends StatefulWidget {
   final Map<String, dynamic> route;
@@ -110,15 +111,26 @@ class _RouteMapViewState extends State<RouteMapView> {
     _mapController!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 64));
   }
 
+  Border _overlayBorder(bool isDark) {
+    return Border.all(
+      color: isDark
+          ? Colors.white.withOpacity(0.22)
+          : Colors.black.withOpacity(0.08),
+      width: 1.2,
+    );
+  }
+
   BoxDecoration _cardDecoration(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
     return BoxDecoration(
       color: theme.cardColor,
       borderRadius: BorderRadius.circular(24),
+      border: _overlayBorder(isDark),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.06),
-          blurRadius: 14,
-          offset: const Offset(0, 4),
+          color: Colors.black.withOpacity(isDark ? 0.18 : 0.06),
+          blurRadius: 10,
+          offset: const Offset(0, 3),
         ),
       ],
     );
@@ -131,28 +143,34 @@ class _RouteMapViewState extends State<RouteMapView> {
     String? tooltip,
   }) {
     final colorScheme = theme.colorScheme;
-    return Material(
-      color: theme.cardColor,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
+    final isDark = theme.brightness == Brightness.dark;
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        child: Tooltip(
-          message: tooltip ?? '',
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
+        border: _overlayBorder(isDark),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.18 : 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Tooltip(
+            message: tooltip ?? '',
+            child: Center(
+              child: Icon(icon, color: colorScheme.onSurface, size: 20),
             ),
-            child: Icon(icon, color: colorScheme.onSurface, size: 20),
           ),
         ),
       ),
@@ -163,6 +181,7 @@ class _RouteMapViewState extends State<RouteMapView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final topSafePadding = MediaQuery.of(context).padding.top + 12;
 
     final origin =
@@ -211,6 +230,9 @@ class _RouteMapViewState extends State<RouteMapView> {
             };
 
             return GoogleMap(
+              key: ValueKey('route_map_${isDark ? 'dark' : 'light'}'),
+              mapType: MapType.normal,
+              style: isDark ? LiveMapMarkerFactory.darkMapStyle : null,
               initialCameraPosition: CameraPosition(
                 target: LatLng(
                   (_startPoint.latitude + _endPoint.latitude) / 2,

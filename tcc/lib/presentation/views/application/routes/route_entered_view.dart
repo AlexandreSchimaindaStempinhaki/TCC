@@ -8,6 +8,7 @@ import '../../../../domain/models/company_entity.dart';
 import '../../../../domain/models/route_entity.dart';
 import '../../../widgets/account_option.dart';
 import '../../../widgets/animated_three_dots.dart';
+import '../../../widgets/indigo_splash_loader.dart';
 import '../../../widgets/route_itinerary_card.dart';
 import '../../mixins/route_entered_logic.dart';
 
@@ -141,8 +142,9 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
       final activeTrips = activeTripsForRoute;
       final ownActiveTrip = myActiveTrip;
       final overflowNeedsExtra = needsExtraVehicleTrip;
-      final overflowCount =
-          overflowNeedsExtra ? unassignedStopsForClosestSchedule.length : 0;
+      final overflowCount = overflowNeedsExtra
+          ? unassignedStopsForClosestSchedule.length
+          : 0;
 
       final staff = isStaffRole;
       final hasCnh = hasValidCnh;
@@ -160,11 +162,10 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
 
       final imageUrl =
           (route.imageUrl != null && route.imageUrl!.trim().isNotEmpty)
-              ? route.imageUrl!.trim()
-              : ((company?.logoUrl != null &&
-                      company!.logoUrl!.trim().isNotEmpty)
-                  ? company.logoUrl!.trim()
-                  : '');
+          ? route.imageUrl!.trim()
+          : ((company?.logoUrl != null && company!.logoUrl!.trim().isNotEmpty)
+                ? company.logoUrl!.trim()
+                : '');
 
       final companyName = (company?.name.trim().isNotEmpty == true)
           ? company!.name.trim()
@@ -172,10 +173,11 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
 
       final originText =
           (route.originName != null && route.originName!.trim().isNotEmpty)
-              ? route.originName!
-              : 'Local de Partida';
+          ? route.originName!
+          : 'Local de Partida';
 
-      final destinationText = (route.destinationName != null &&
+      final destinationText =
+          (route.destinationName != null &&
               route.destinationName!.trim().isNotEmpty)
           ? route.destinationName!
           : 'Local de Destino';
@@ -237,8 +239,9 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black
-                                        .withOpacity(isDark ? 0.3 : 0.04),
+                                    color: Colors.black.withOpacity(
+                                      isDark ? 0.3 : 0.04,
+                                    ),
                                     blurRadius: 12,
                                     offset: const Offset(0, 4),
                                   ),
@@ -252,8 +255,8 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                       ClipRRect(
                                         borderRadius:
                                             const BorderRadius.vertical(
-                                          top: Radius.circular(18),
-                                        ),
+                                              top: Radius.circular(18),
+                                            ),
                                         child: SizedBox(
                                           height: 155,
                                           width: double.infinity,
@@ -274,9 +277,9 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                                     ImageFiltered(
                                                       imageFilter:
                                                           ImageFilter.blur(
-                                                        sigmaX: 16,
-                                                        sigmaY: 16,
-                                                      ),
+                                                            sigmaX: 16,
+                                                            sigmaY: 16,
+                                                          ),
                                                       child: _buildRawImage(
                                                         imageUrl,
                                                         colorScheme,
@@ -286,8 +289,10 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                                     Container(
                                                       color: Colors.black
                                                           .withOpacity(
-                                                        isDark ? 0.25 : 0.12,
-                                                      ),
+                                                            isDark
+                                                                ? 0.25
+                                                                : 0.12,
+                                                          ),
                                                     ),
                                                     _buildRawImage(
                                                       imageUrl,
@@ -357,7 +362,7 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                                   color: routeActive
                                                       ? const Color(0xFF16A34A)
                                                       : colorScheme
-                                                          .onSurfaceVariant,
+                                                            .onSurfaceVariant,
                                                   shape: BoxShape.circle,
                                                 ),
                                               ),
@@ -372,7 +377,7 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                                   color: routeActive
                                                       ? const Color(0xFF16A34A)
                                                       : colorScheme
-                                                          .onSurfaceVariant,
+                                                            .onSurfaceVariant,
                                                 ),
                                               ),
                                             ],
@@ -427,8 +432,9 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                               width: double.infinity,
                                               padding: const EdgeInsets.all(12),
                                               decoration: BoxDecoration(
-                                                color: Colors.amber
-                                                    .withOpacity(0.12),
+                                                color: Colors.amber.withOpacity(
+                                                  0.12,
+                                                ),
                                                 borderRadius:
                                                     BorderRadius.circular(12),
                                                 border: Border.all(
@@ -468,8 +474,9 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                                 margin: const EdgeInsets.only(
                                                   bottom: 10,
                                                 ),
-                                                padding:
-                                                    const EdgeInsets.all(12),
+                                                padding: const EdgeInsets.all(
+                                                  12,
+                                                ),
                                                 decoration: BoxDecoration(
                                                   color: Colors.amber
                                                       .withOpacity(0.14),
@@ -517,9 +524,9 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                                   onPressed: executing
                                                       ? null
                                                       : () =>
-                                                          selectVehicleAndStartTrip(
-                                                            context,
-                                                          ),
+                                                            selectVehicleAndStartTrip(
+                                                              context,
+                                                            ),
                                                   icon: const Icon(
                                                     Icons.play_arrow_rounded,
                                                     color: Colors.white,
@@ -533,17 +540,15 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                                       fontSize: 14,
                                                     ),
                                                   ),
-                                                  style:
-                                                      ElevatedButton.styleFrom(
+                                                  style: ElevatedButton.styleFrom(
                                                     backgroundColor:
                                                         colorScheme.primary,
                                                     elevation: 0,
-                                                    shape:
-                                                        RoundedRectangleBorder(
+                                                    shape: RoundedRectangleBorder(
                                                       borderRadius:
                                                           BorderRadius.circular(
-                                                        14,
-                                                      ),
+                                                            14,
+                                                          ),
                                                     ),
                                                   ),
                                                 ),
@@ -558,9 +563,9 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                                   onPressed: executing
                                                       ? null
                                                       : () =>
-                                                          selectVehicleAndStartTrip(
-                                                            context,
-                                                          ),
+                                                            selectVehicleAndStartTrip(
+                                                              context,
+                                                            ),
                                                   icon: const Icon(
                                                     Icons
                                                         .directions_bus_rounded,
@@ -575,17 +580,15 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                                       fontSize: 14,
                                                     ),
                                                   ),
-                                                  style:
-                                                      ElevatedButton.styleFrom(
+                                                  style: ElevatedButton.styleFrom(
                                                     backgroundColor:
                                                         colorScheme.primary,
                                                     elevation: 0,
-                                                    shape:
-                                                        RoundedRectangleBorder(
+                                                    shape: RoundedRectangleBorder(
                                                       borderRadius:
                                                           BorderRadius.circular(
-                                                        14,
-                                                      ),
+                                                            14,
+                                                          ),
                                                     ),
                                                   ),
                                                 ),
@@ -598,9 +601,9 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                                   onPressed: executing
                                                       ? null
                                                       : () => openLiveMap(
-                                                            context,
-                                                            isDriver: false,
-                                                          ),
+                                                          context,
+                                                          isDriver: false,
+                                                        ),
                                                   icon: Icon(
                                                     Icons.navigation_rounded,
                                                     color: colorScheme.primary,
@@ -615,19 +618,17 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                                       fontSize: 14,
                                                     ),
                                                   ),
-                                                  style:
-                                                      OutlinedButton.styleFrom(
+                                                  style: OutlinedButton.styleFrom(
                                                     side: BorderSide(
                                                       color:
                                                           colorScheme.primary,
                                                       width: 1.5,
                                                     ),
-                                                    shape:
-                                                        RoundedRectangleBorder(
+                                                    shape: RoundedRectangleBorder(
                                                       borderRadius:
                                                           BorderRadius.circular(
-                                                        14,
-                                                      ),
+                                                            14,
+                                                          ),
                                                     ),
                                                   ),
                                                 ),
@@ -642,11 +643,11 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                                   onPressed: executing
                                                       ? null
                                                       : () => openLiveMap(
-                                                            context,
-                                                            isDriver:
-                                                                ownActiveTrip !=
-                                                                    null,
-                                                          ),
+                                                          context,
+                                                          isDriver:
+                                                              ownActiveTrip !=
+                                                              null,
+                                                        ),
                                                   icon: const Icon(
                                                     Icons.navigation_rounded,
                                                     color: Colors.white,
@@ -660,17 +661,15 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                                       fontSize: 14,
                                                     ),
                                                   ),
-                                                  style:
-                                                      ElevatedButton.styleFrom(
+                                                  style: ElevatedButton.styleFrom(
                                                     backgroundColor:
                                                         const Color(0xFF16A34A),
                                                     elevation: 0,
-                                                    shape:
-                                                        RoundedRectangleBorder(
+                                                    shape: RoundedRectangleBorder(
                                                       borderRadius:
                                                           BorderRadius.circular(
-                                                        14,
-                                                      ),
+                                                            14,
+                                                          ),
                                                     ),
                                                   ),
                                                 ),
@@ -685,9 +684,9 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                                     onPressed: executing
                                                         ? null
                                                         : () =>
-                                                            _confirmStopRoute(
-                                                              context,
-                                                            ),
+                                                              _confirmStopRoute(
+                                                                context,
+                                                              ),
                                                     icon: const Icon(
                                                       Icons
                                                           .stop_circle_outlined,
@@ -704,17 +703,16 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                                         fontSize: 14,
                                                       ),
                                                     ),
-                                                    style: OutlinedButton
-                                                        .styleFrom(
+                                                    style: OutlinedButton.styleFrom(
                                                       side: const BorderSide(
                                                         color: Colors.redAccent,
                                                         width: 1.5,
                                                       ),
-                                                      shape:
-                                                          RoundedRectangleBorder(
+                                                      shape: RoundedRectangleBorder(
                                                         borderRadius:
-                                                            BorderRadius
-                                                                .circular(14),
+                                                            BorderRadius.circular(
+                                                              14,
+                                                            ),
                                                       ),
                                                     ),
                                                   ),
@@ -863,16 +861,12 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          AnimatedThreeDots(color: colorScheme.onSurface),
-                          const SizedBox(height: 16),
-                          Text(
-                            startingText,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
+                          IndigoSplashLoader(
+                            isLoading: startingRoute,
+                            duration: const Duration(milliseconds: 3200),
+                            message: startingText,
                           ),
+                          const SizedBox(height: 16),
                         ],
                       ),
                     ),

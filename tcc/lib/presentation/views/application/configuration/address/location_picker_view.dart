@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
+import 'package:tcc/presentation/widgets/live_map/live_map_marker_factory.dart';
 
 import '../../../../widgets/animated_three_dots.dart';
 
@@ -118,6 +119,13 @@ class _LocationPickerViewState extends State<LocationPickerView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final overlayBorder = Border.all(
+      color: isDark
+          ? Colors.white.withOpacity(0.22)
+          : Colors.black.withOpacity(0.08),
+      width: 1.2,
+    );
 
     final Set<Marker> markers = {
       Marker(
@@ -133,6 +141,9 @@ class _LocationPickerViewState extends State<LocationPickerView> {
       body: Stack(
         children: [
           GoogleMap(
+            key: ValueKey('location_picker_map_${isDark ? 'dark' : 'light'}'),
+            mapType: MapType.normal,
+            style: isDark ? LiveMapMarkerFactory.darkMapStyle : null,
             initialCameraPosition: CameraPosition(
               target: _targetPosition,
               zoom: 16.0,
@@ -176,14 +187,12 @@ class _LocationPickerViewState extends State<LocationPickerView> {
                 decoration: BoxDecoration(
                   color: theme.cardColor,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: theme.dividerColor),
+                  border: overlayBorder,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(
-                        theme.brightness == Brightness.dark ? 0.3 : 0.08,
-                      ),
-                      blurRadius: 16,
-                      offset: const Offset(0, 4),
+                      color: Colors.black.withOpacity(isDark ? 0.18 : 0.08),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
@@ -264,22 +273,24 @@ class _LocationPickerViewState extends State<LocationPickerView> {
             top: 50,
             left: 20,
             right: 20,
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: theme.cardColor,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(
-                        theme.brightness == Brightness.dark ? 0.3 : 0.08,
-                      ),
-                      blurRadius: 16,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(24),
+                border: overlayBorder,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.18 : 0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                surfaceTintColor: Colors.transparent,
+                borderRadius: BorderRadius.circular(24),
+                clipBehavior: Clip.antiAlias,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [

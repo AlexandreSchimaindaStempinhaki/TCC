@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tcc/presentation/widgets/live_map/live_map_marker_factory.dart';
 
 import '../../../../widgets/animated_three_dots.dart';
 
@@ -34,6 +35,13 @@ class _SingleLocationMapViewState extends State<SingleLocationMapView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final overlayBorder = Border.all(
+      color: isDark
+          ? Colors.white.withOpacity(0.22)
+          : Colors.black.withOpacity(0.08),
+      width: 1.2,
+    );
 
     final Set<Marker> markers = {
       Marker(
@@ -50,6 +58,9 @@ class _SingleLocationMapViewState extends State<SingleLocationMapView> {
         children: [
           // 1. MAPA FOCADO NO PONTO ÚNICO
           GoogleMap(
+            key: ValueKey('single_location_map_${isDark ? 'dark' : 'light'}'),
+            mapType: MapType.normal,
+            style: isDark ? LiveMapMarkerFactory.darkMapStyle : null,
             initialCameraPosition: CameraPosition(
               target: _targetPosition,
               zoom: 16.0,
@@ -79,17 +90,35 @@ class _SingleLocationMapViewState extends State<SingleLocationMapView> {
           Positioned(
             top: 50,
             left: 20,
-            child: CircleAvatar(
-              backgroundColor: theme.cardColor,
-              radius: 20,
-              child: IconButton(
-                padding: EdgeInsets.zero,
-                icon: Icon(
-                  Icons.arrow_back_rounded,
-                  color: colorScheme.onSurface,
-                  size: 20,
+            child: Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                shape: BoxShape.circle,
+                border: overlayBorder,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.18 : 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                surfaceTintColor: Colors.transparent,
+                shape: const CircleBorder(),
+                clipBehavior: Clip.antiAlias,
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  icon: Icon(
+                    Icons.arrow_back_rounded,
+                    color: colorScheme.onSurface,
+                    size: 20,
+                  ),
+                  onPressed: () => context.pop(),
                 ),
-                onPressed: () => context.pop(),
               ),
             ),
           ),
@@ -105,14 +134,12 @@ class _SingleLocationMapViewState extends State<SingleLocationMapView> {
                 decoration: BoxDecoration(
                   color: theme.cardColor,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: theme.dividerColor),
+                  border: overlayBorder,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(
-                        theme.brightness == Brightness.dark ? 0.3 : 0.08,
-                      ),
-                      blurRadius: 16,
-                      offset: const Offset(0, 4),
+                      color: Colors.black.withOpacity(isDark ? 0.18 : 0.08),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
