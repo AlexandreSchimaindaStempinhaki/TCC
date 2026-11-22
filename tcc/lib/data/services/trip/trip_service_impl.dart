@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tcc/data/services/firestore_cascade_delete_helper.dart';
+
 import '../../../domain/models/trip_entity.dart';
 import 'i_trip_service.dart';
 
@@ -7,7 +9,7 @@ class TripServiceImpl implements ITripService {
   final FirebaseFirestore _firestore;
 
   TripServiceImpl({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference get _collection => _firestore.collection('trips');
   CollectionReference get _notificationsCollection =>
@@ -253,7 +255,8 @@ class TripServiceImpl implements ITripService {
               ? _parseDateTime(map['arrivalTime'] ?? map['horarioChegada'])
               : null,
       status: _statusFromString((map['status'] ?? 'scheduled').toString()),
-      passengerCount: int.tryParse(
+      passengerCount:
+          int.tryParse(
             (map['passengerCount'] ?? map['numeroPassageiros'] ?? '0')
                 .toString(),
           ) ??
@@ -261,7 +264,8 @@ class TripServiceImpl implements ITripService {
       direction: _directionFromString(
         (map['direction'] ?? map['sentido'] ?? 'outbound').toString(),
       ),
-      tripGroupIndex: int.tryParse(
+      tripGroupIndex:
+          int.tryParse(
             (map['tripGroupIndex'] ?? map['indiceGrupo'] ?? '1').toString(),
           ) ??
           1,
@@ -285,7 +289,8 @@ class TripServiceImpl implements ITripService {
     final dLat = (lat2 - lat1) * (math.pi / 180.0);
     final dLon = (lon2 - lon1) * (math.pi / 180.0);
 
-    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+    final a =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
         math.cos(lat1 * (math.pi / 180.0)) *
             math.cos(lat2 * (math.pi / 180.0)) *
             math.sin(dLon / 2) *
@@ -425,10 +430,9 @@ class TripServiceImpl implements ITripService {
     final trimmed = routeId.trim();
     if (trimmed.isEmpty) return Stream.value(const []);
 
-    return _collection
-        .where('routeId', isEqualTo: trimmed)
-        .snapshots()
-        .map((snap) {
+    return _collection.where('routeId', isEqualTo: trimmed).snapshots().map((
+      snap,
+    ) {
       final list = snap.docs
           .map(_fromDoc)
           .whereType<TripModel>()
@@ -718,8 +722,9 @@ class TripServiceImpl implements ITripService {
       if (stop.passengerId == passengerId) {
         return stop.copyWith(
           isCompleted: isCompleted,
-          estimatedMinutesRemaining:
-              isCompleted ? 0 : stop.estimatedMinutesRemaining,
+          estimatedMinutesRemaining: isCompleted
+              ? 0
+              : stop.estimatedMinutesRemaining,
         );
       }
       return stop;
@@ -755,9 +760,8 @@ class TripServiceImpl implements ITripService {
 
   @override
   Future<void> deleteTrip(String tripId) async {
-    final trimmed = tripId.trim();
-    if (trimmed.isEmpty) return;
-    await _collection.doc(trimmed).delete();
+    final cascade = FirestoreCascadeDeleteHelper(_firestore);
+    await cascade.deleteTrip(tripId);
   }
 }
 

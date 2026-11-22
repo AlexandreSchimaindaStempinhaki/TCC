@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +12,7 @@ import '../../../domain/models/company_entity.dart';
 import '../../../domain/models/route_entity.dart';
 import '../../../domain/models/trip_entity.dart';
 import '../../../domain/models/user_entity.dart';
+import '../../../domain/models/vehicle_entity.dart';
 import '../../controllers/boarding/boarding_list_viewmodel.dart';
 import '../../controllers/boarding/boarding_viewmodel.dart';
 import '../../controllers/company/company_list_viewmodel.dart';
@@ -20,8 +20,8 @@ import '../../controllers/route/route_viewmodel.dart';
 import '../../controllers/trip/trip_list_viewmodel.dart';
 import '../../controllers/trip/trip_viewmodel.dart';
 import '../../controllers/user/user_viewmodel.dart';
-import '../application/routes/route_entered_view.dart';
 import '../../widgets/calendar/route_schedule_resolver.dart';
+import '../application/routes/route_entered_view.dart';
 
 mixin RouteEnteredMixin on State<RouteEnteredView> {
   late final RouteViewModel routeViewModel;
@@ -61,26 +61,20 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
     if (loggedUser != null && loggedUser.uid.trim().isNotEmpty) {
       return loggedUser.uid.trim();
     }
-    return FirebaseAuth.instance.currentUser?.uid ?? '';
+    return '';
   }
 
   Set<String> _allCurrentUserIdentifiers() {
     final ids = <String>{};
-    final authUser = FirebaseAuth.instance.currentUser;
     final loggedUser = userViewModel.state.user.value;
 
-    if (authUser != null) {
-      if (authUser.uid.trim().isNotEmpty) ids.add(authUser.uid.trim());
-      if (authUser.email != null && authUser.email!.trim().isNotEmpty) {
-        ids.add(authUser.email!.trim().toLowerCase());
-      }
-    }
     if (loggedUser != null) {
       if (loggedUser.uid.trim().isNotEmpty) ids.add(loggedUser.uid.trim());
       final cpf = loggedUser.cpf ?? '';
       if (cpf.trim().isNotEmpty) {
         ids.add(cpf.trim());
-        ids.add(_cleanDigits(cpf));
+        final cleaned = _cleanDigits(cpf);
+        if (cleaned.isNotEmpty) ids.add(cleaned);
       }
       if (loggedUser.email.trim().isNotEmpty) {
         ids.add(loggedUser.email.trim().toLowerCase());
@@ -96,7 +90,7 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
     final cleaned = _cleanDigits(trimmed);
     return userIds.contains(trimmed) ||
         userIds.contains(trimmed.toLowerCase()) ||
-        (cleaned.isNotEmpty && userIds.contains(cleaned));
+        (cleaned.length == 11 && userIds.contains(cleaned));
   }
 
   bool get hasValidCnh {
@@ -146,27 +140,190 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
     return !isStaffRole;
   }
 
-  TripModel? get currentActiveTrip {
-    final watched = tripViewModel.state.activeTrip.value;
-    if (watched != null &&
-        watched.routeId == routeIdStr &&
-        (watched.status == TripStatus.inProgress ||
-            watched.status == TripStatus.boarding)) {
-      return watched;
+  /// Determina automaticamente o sentido (Ida/Volta) e horário mais próximos do relógio atual.
+  ({TripDirection direction, String? slotTime, DateTime scheduledDateTime})
+  resolveClosestScheduleNow() {
+    final now = DateTime.now();
+    final nowMin = now.hour * 60 + now.minute;
+    final resolved = RouteScheduleResolver.resolve(currentRoute);
+
+    TripDirection bestDirection = TripDirection.outbound;
+    ScheduleSlot? bestSlot;
+    int bestDiff = 1 << 30;
+
+    for (final s in resolved.outboundSlots) {
+      final diff = (s.minutesFromMidnight - nowMin).abs();
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestDirection = TripDirection.outbound;
+        bestSlot = s;
+      }
     }
+
+    for (final s in resolved.returnSlots) {
+      final diff = (s.minutesFromMidnight - nowMin).abs();
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestDirection = TripDirection.returnTrip;
+        bestSlot = s;
+      }
+    }
+
+    final scheduledDateTime = bestSlot != null
+        ? DateTime(
+            now.year,
+            now.month,
+            now.day,
+            bestSlot.minutesFromMidnight ~/ 60,
+            bestSlot.minutesFromMidnight % 60,
+          )
+        : now;
+
+    return (
+      direction: bestDirection,
+      slotTime: bestSlot?.time,
+      scheduledDateTime: scheduledDateTime,
+    );
+  }
+
+  String get closestScheduleLabel {
+    final closest = resolveClosestScheduleNow();
+    final dirLabel =
+        closest.direction == TripDirection.outbound ? 'Ida' : 'Volta';
+    final cleanTime = closest.slotTime?.replaceAll('~', '').trim();
+    return cleanTime != null && cleanTime.isNotEmpty
+        ? '$dirLabel • $cleanTime'
+        : dirLabel;
+  }
+
+  /// Todas as viagens ativas (em andamento ou embarcando) nesta rota agora.
+  List<TripModel> get activeTripsForRoute {
+    final byId = <String, TripModel>{};
 
     for (final t in tripListViewModel.state.routeTrips.value) {
       if (t.routeId == routeIdStr &&
           (t.status == TripStatus.inProgress ||
               t.status == TripStatus.boarding)) {
-        return t;
+        byId[t.id] = t;
       }
+    }
+
+    final watched = tripViewModel.state.activeTrip.value;
+    if (watched != null &&
+        watched.routeId == routeIdStr &&
+        (watched.status == TripStatus.inProgress ||
+            watched.status == TripStatus.boarding)) {
+      byId[watched.id] = watched;
+    }
+
+    final list = byId.values.toList()
+      ..sort((a, b) => a.tripGroupIndex.compareTo(b.tripGroupIndex));
+    return list;
+  }
+
+  /// Viagem ativa conduzida especificamente pela conta logada.
+  TripModel? get myActiveTrip {
+    if (!isStaffRole) return null;
+    final userIds = _allCurrentUserIdentifiers();
+    for (final trip in activeTripsForRoute) {
+      if (_matchesUser(trip.driverId, userIds)) return trip;
     }
     return null;
   }
 
+  /// IDs dos veículos já ocupados por viagens ativas desta rota.
+  Set<String> get activeVehicleIds => activeTripsForRoute
+      .map((t) => t.vehicleId.trim())
+      .where((id) => id.isNotEmpty)
+      .toSet();
+
+  Set<String> _assignedPassengerKeysInActiveTrips() {
+    final assigned = <String>{};
+    for (final trip in activeTripsForRoute) {
+      for (final rawId in trip.assignedPassengerIds) {
+        final trimmed = rawId.trim();
+        if (trimmed.isNotEmpty) assigned.add(trimmed);
+        final cleaned = _cleanDigits(trimmed);
+        if (cleaned.length == 11) assigned.add(cleaned);
+      }
+      for (final stop in trip.stops) {
+        final trimmed = stop.passengerId.trim();
+        if (trimmed.isNotEmpty) assigned.add(trimmed);
+        final cleaned = _cleanDigits(trimmed);
+        if (cleaned.length == 11) assigned.add(cleaned);
+      }
+    }
+    return assigned;
+  }
+
+  bool _isPassengerAlreadyAssigned(String rawId, Set<String> assignedKeys) {
+    final trimmed = rawId.trim();
+    if (assignedKeys.contains(trimmed)) return true;
+    final cleaned = _cleanDigits(trimmed);
+    return cleaned.length == 11 && assignedKeys.contains(cleaned);
+  }
+
+  /// Passageiros confirmados no turno atual que ainda não couberam nos veículos ativos.
+  List<TripStopPoint> get unassignedStopsForClosestSchedule {
+    final closest = resolveClosestScheduleNow();
+    final allStops = _buildOptimizedStopsFromTodayBoardings(
+      startLat: currentRoute.origin.latitude,
+      startLng: currentRoute.origin.longitude,
+      directionOverride: closest.direction,
+      targetSlotTime: closest.slotTime,
+    );
+
+    final assignedKeys = _assignedPassengerKeysInActiveTrips();
+    if (assignedKeys.isEmpty) return allStops;
+
+    return allStops
+        .where((s) => !_isPassengerAlreadyAssigned(s.passengerId, assignedKeys))
+        .toList();
+  }
+
+  /// Indica se há passageiros excedendo a capacidade dos veículos atualmente em rota.
+  bool get needsExtraVehicleTrip {
+    final activeTrips = activeTripsForRoute;
+    if (activeTrips.isEmpty) return false;
+
+    final remaining = unassignedStopsForClosestSchedule.length;
+    if (remaining == 0) return false;
+
+    final totalCapacity = activeTrips.fold<int>(
+      0,
+      (sum, t) => sum + t.vehicleCapacity,
+    );
+    final totalAssigned = activeTrips.fold<int>(
+      0,
+      (sum, t) =>
+          sum + math.max(t.passengerCount, t.assignedPassengerIds.length),
+    );
+
+    return (totalAssigned + remaining) > totalCapacity ||
+        activeTrips.every((t) => t.isFull);
+  }
+
+  TripModel? get currentActiveTrip {
+    final activeTrips = activeTripsForRoute;
+    if (activeTrips.isEmpty) return null;
+
+    if (isStaffRole) {
+      return myActiveTrip ?? activeTrips.first;
+    }
+
+    final userIds = _allCurrentUserIdentifiers();
+    for (final trip in activeTrips) {
+      final assignedHere =
+          trip.assignedPassengerIds.any((id) => _matchesUser(id, userIds)) ||
+          trip.stops.any((s) => _matchesUser(s.passengerId, userIds));
+      if (assignedHere) return trip;
+    }
+
+    return activeTrips.first;
+  }
+
   bool get isRouteActiveNow =>
-      currentRoute.isTripActive || currentActiveTrip != null;
+      currentRoute.isTripActive || activeTripsForRoute.isNotEmpty;
 
   TripStopPoint? get currentUserStop {
     final trip = currentActiveTrip;
@@ -176,6 +333,44 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
       if (_matchesUser(stop.passengerId, userIds)) return stop;
     }
     return null;
+  }
+
+  /// Libera a avaliação da empresa após o passageiro concluir sua primeira viagem.
+  bool get hasCompletedFirstTrip {
+    if (isStaffRole) return false;
+
+    final current = boardingViewModel.state.currentBoarding.value;
+    if (current != null &&
+        current.present &&
+        current.attendanceStatus == BoardingAttendanceStatus.boarded) {
+      return true;
+    }
+
+    final history = boardingViewModel.state.calendarMap.value.values;
+    if (history.any(
+      (b) =>
+          b.present && b.attendanceStatus == BoardingAttendanceStatus.boarded,
+    )) {
+      return true;
+    }
+
+    final userIds = _allCurrentUserIdentifiers();
+    for (final trip in tripListViewModel.state.routeTrips.value) {
+      if (trip.routeId != routeIdStr) continue;
+      final inTrip =
+          trip.assignedPassengerIds.any((id) => _matchesUser(id, userIds)) ||
+          trip.stops.any((s) => _matchesUser(s.passengerId, userIds));
+      if (!inTrip) continue;
+
+      if (trip.status == TripStatus.completed) return true;
+      if (trip.stops.any(
+        (s) => _matchesUser(s.passengerId, userIds) && s.isCompleted,
+      )) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   List<TripStopPoint> get optimizedStopsForCurrentState {
@@ -210,9 +405,12 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
       );
     }
 
+    final closest = resolveClosestScheduleNow();
     return _buildOptimizedStopsFromTodayBoardings(
       startLat: currentRoute.origin.latitude,
       startLng: currentRoute.origin.longitude,
+      directionOverride: closest.direction,
+      targetSlotTime: closest.slotTime,
     );
   }
 
@@ -227,7 +425,8 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
     companyListViewModel = injector.get<CompanyListViewModel>();
     userViewModel = injector.get<UserViewModel>();
 
-    // Adiado para após o primeiro frame para evitar acesso ao ScaffoldMessenger no initState
+    selectedDirection.value = resolveClosestScheduleNow().direction;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _setupRealtimeNotificationsMonitor();
@@ -266,8 +465,19 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
         loadMembers: true,
       );
 
+      selectedDirection.value = resolveClosestScheduleNow().direction;
+
       final uid = currentUserId;
       if (uid.isNotEmpty) {
+        if (!isStaffRole) {
+          await boardingViewModel.commands.loadUserHistory(
+            routeId: routeIdStr,
+            userId: uid,
+            startDate: DateTime(2024, 1, 1),
+            endDate: normalizedToday,
+          );
+        }
+
         await boardingViewModel.commands.loadDailyBoarding(
           routeId: routeIdStr,
           userId: uid,
@@ -405,7 +615,7 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
     for (final p in passengers) {
       final pCleanCpf = _cleanDigits(p.cpf ?? '');
       if (p.uid.trim() == rawUserId.trim() ||
-          (cleanTarget.isNotEmpty && pCleanCpf == cleanTarget) ||
+          (cleanTarget.length == 11 && pCleanCpf == cleanTarget) ||
           p.email.trim().toLowerCase() == rawUserId.trim().toLowerCase()) {
         return p;
       }
@@ -413,30 +623,19 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
     return null;
   }
 
-  /// Determina automaticamente o horário mais próximo da viagem atual (Ida ou Volta)
-  /// e inclui somente passageiros com presença ativa para esse trecho/horário no Firestore.
   List<TripStopPoint> _buildOptimizedStopsFromTodayBoardings({
     required double startLat,
     required double startLng,
+    TripDirection? directionOverride,
     String? targetSlotTime,
   }) {
-    final isOutbound = selectedDirection.value == TripDirection.outbound;
+    final closest = resolveClosestScheduleNow();
+    final effectiveDirection = directionOverride ?? closest.direction;
+    final isOutbound = effectiveDirection == TripDirection.outbound;
     final resolved = RouteScheduleResolver.resolve(currentRoute);
     final slots = isOutbound ? resolved.outboundSlots : resolved.returnSlots;
 
-    String? effectiveSlot = targetSlotTime;
-    if (effectiveSlot == null && slots.isNotEmpty) {
-      final nowMin = DateTime.now().hour * 60 + DateTime.now().minute;
-      effectiveSlot = slots.first.time;
-      int bestDiff = 10000;
-      for (final s in slots) {
-        final diff = (s.minutesFromMidnight - nowMin).abs();
-        if (diff < bestDiff) {
-          bestDiff = diff;
-          effectiveSlot = s.time;
-        }
-      }
-    }
+    final effectiveSlot = targetSlotTime ?? closest.slotTime;
 
     final allTodayBoardings = boardingListViewModel.state.routeBoardings.value;
     final confirmedBoardings = isOutbound
@@ -447,8 +646,6 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
     final rawStops = <TripStopPoint>[];
     final addedIds = <String>{};
 
-    // IDs de passageiros que já registraram decisão explícita hoje no Firestore
-    // (impede que alguém que cancelou a volta às 13:00 volte a entrar por fallback)
     final explicitUserIds = allTodayBoardings
         .map(
           (b) => _cleanDigits(b.userId).isNotEmpty
@@ -466,7 +663,6 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
                 ? b.selectedReturnTime!.trim()
                 : resolved.defaultReturnForOutbound(b.selectedDepartureTime));
 
-      // Se o passageiro mudou a volta para outro horário (ex.: 18:30), não entra na rota das 13:15
       if (effectiveSlot != null &&
           chosenSlot != null &&
           chosenSlot != effectiveSlot) {
@@ -684,7 +880,26 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
     }
   }
 
-  Future<void> startOptimizedRouteTrip() async {
+  /// Abre a tela de veículos em modo de seleção antes de iniciar a rota ou o transporte extra.
+  Future<void> selectVehicleAndStartTrip(BuildContext context) async {
+    if (!canDriveRoute || isActionExecuting.value) return;
+
+    final selectedVehicle = await context.pushNamed<VehicleModel>(
+      IndigoRouteNames.companyVehicles,
+      extra: {
+        'company': currentCompany,
+        'companyCnpj': currentRoute.companyCnpj,
+        'canManage': false,
+        'isSelectionMode': true,
+        'unavailableVehicleIds': activeVehicleIds,
+      },
+    );
+
+    if (selectedVehicle == null || !mounted) return;
+    await startOptimizedRouteTrip(selectedVehicle);
+  }
+
+Future<void> startOptimizedRouteTrip(VehicleModel selectedVehicle) async {
     if (!canDriveRoute || isActionExecuting.value) return;
 
     isActionExecuting.value = true;
@@ -693,58 +908,72 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
       final startLat = pos?.latitude ?? currentRoute.origin.latitude;
       final startLng = pos?.longitude ?? currentRoute.origin.longitude;
 
-      final stops = _buildOptimizedStopsFromTodayBoardings(
+      final closest = resolveClosestScheduleNow();
+      selectedDirection.value = closest.direction;
+
+      final allStops = _buildOptimizedStopsFromTodayBoardings(
         startLat: startLat,
         startLng: startLng,
+        directionOverride: closest.direction,
+        targetSlotTime: closest.slotTime,
+      );
+
+      final assignedKeys = _assignedPassengerKeysInActiveTrips();
+      final remainingStops = assignedKeys.isEmpty
+          ? allStops
+          : allStops
+              .where(
+                (s) => !_isPassengerAlreadyAssigned(s.passengerId, assignedKeys),
+              )
+              .toList();
+
+      final capacity = math.max(1, selectedVehicle.capacity);
+      final stopsForThisVehicle = remainingStops.take(capacity).toList();
+      final reindexedStops = List.generate(
+        stopsForThisVehicle.length,
+        (idx) => stopsForThisVehicle[idx].copyWith(orderIndex: idx + 1),
       );
 
       final now = DateTime.now();
       final todayDate = DateTime(now.year, now.month, now.day);
       final driverId = currentUserId;
+      final nextGroupIndex = activeTripsForRoute.length + 1;
 
-      final baseTrip = TripModel(
-        id: 'trip_${currentRoute.id}_${now.millisecondsSinceEpoch}',
+      final newTrip = TripModel(
+        id: 'trip_${currentRoute.id}_${nextGroupIndex}_${now.millisecondsSinceEpoch}',
         routeId: routeIdStr,
         companyCnpj: currentRoute.companyCnpj,
-        vehicleId: 'default_vehicle',
+        vehicleId: selectedVehicle.id,
         driverId: driverId,
         date: todayDate,
-        departureTime: now,
+        departureTime: closest.scheduledDateTime,
         status: TripStatus.inProgress,
-        passengerCount: stops.length,
-        direction: selectedDirection.value,
-        tripGroupIndex: 1,
-        vehicleCapacity: 15,
-        assignedPassengerIds: stops.map((s) => s.passengerId).toList(),
+        passengerCount: reindexedStops.length,
+        direction: closest.direction,
+        tripGroupIndex: nextGroupIndex,
+        vehicleCapacity: capacity,
+        assignedPassengerIds: reindexedStops.map((s) => s.passengerId).toList(),
         driverLatitude: startLat,
         driverLongitude: startLng,
         isSharingLocation: true,
-        stops: stops,
+        stops: reindexedStops,
       );
 
-      TripModel? active;
-      final scaled = await tripViewModel.commands.generateScaledTrips(
-        baseTrip: baseTrip,
-        confirmedStops: stops,
+      final created = await tripViewModel.commands.createTrip(newTrip);
+      final active = created ?? newTrip;
+
+      await tripViewModel.commands.startTrip(
+        tripId: active.id,
+        initialLatitude: startLat,
+        initialLongitude: startLng,
       );
+      tripViewModel.commands.startWatchingTrip(active.id);
+      _startSharingDriverLocation(active.id);
 
-      if (scaled.isNotEmpty) {
-        active = scaled.first;
-      } else {
-        active = await tripViewModel.commands.createTrip(baseTrip);
+      if (!currentRoute.isTripActive) {
+        await routeViewModel.commands.startRouteTrip(currentRoute.id, driverId);
       }
 
-      if (active != null) {
-        await tripViewModel.commands.startTrip(
-          tripId: active.id,
-          initialLatitude: startLat,
-          initialLongitude: startLng,
-        );
-        tripViewModel.commands.startWatchingTrip(active.id);
-        _startSharingDriverLocation(active.id);
-      }
-
-      await routeViewModel.commands.startRouteTrip(currentRoute.id, driverId);
       await routeViewModel.commands.fetchRouteById(
         currentRoute.id,
         loadMembers: true,
@@ -754,7 +983,28 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
         date: todayDate,
       );
 
-      _showSnackBar('Rota iniciada com sucesso!');
+      final dirLabel =
+          closest.direction == TripDirection.outbound ? 'Ida' : 'Volta';
+      final cleanTime = closest.slotTime?.replaceAll('~', '').trim();
+      final scheduleText = (cleanTime != null && cleanTime.isNotEmpty)
+          ? '$dirLabel, $cleanTime'
+          : dirLabel;
+
+      final leftoverCount = remainingStops.length - reindexedStops.length;
+      if (leftoverCount > 0) {
+        _showSnackBar(
+          'Rota iniciada com o veículo:\n'
+          '${selectedVehicle.displayTitle}\n'
+          '$scheduleText\n'
+          'Restam $leftoverCount passageiro(s) aguardando veículo extra.',
+        );
+      } else {
+        _showSnackBar(
+          'Rota iniciada com o veículo:\n'
+          '${selectedVehicle.displayTitle}\n'
+          '$scheduleText',
+        );
+      }
     } catch (e) {
       _showSnackBar('Erro ao iniciar a rota: $e', isError: true);
     } finally {
@@ -794,39 +1044,31 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
       await _driverPositionSub?.cancel();
       _driverPositionSub = null;
 
-      // Encerra TODAS as viagens ativas/embarcando vinculadas a esta rota
-      final activeTripIds = <String>{};
-      final watched = tripViewModel.state.activeTrip.value;
-      if (watched != null &&
-          watched.routeId == routeIdStr &&
-          (watched.status == TripStatus.inProgress ||
-              watched.status == TripStatus.boarding)) {
-        activeTripIds.add(watched.id);
-      }
+      final ownTrip = myActiveTrip;
+      final activeTrips = activeTripsForRoute;
+      final remainingOtherTrips = ownTrip != null
+          ? activeTrips.where((t) => t.id != ownTrip.id).toList()
+          : const <TripModel>[];
 
-      for (final t in tripListViewModel.state.routeTrips.value) {
-        if (t.routeId == routeIdStr &&
-            (t.status == TripStatus.inProgress ||
-                t.status == TripStatus.boarding)) {
-          activeTripIds.add(t.id);
+      if (ownTrip != null) {
+        await tripViewModel.commands.finishTrip(ownTrip.id);
+      } else {
+        for (final t in activeTrips) {
+          await tripViewModel.commands.finishTrip(t.id);
         }
       }
 
-      for (final tripId in activeTripIds) {
-        await tripViewModel.commands.finishTrip(tripId);
+      // Só desativa isTripActive da rota se não houver outro veículo ainda em andamento
+      if (remainingOtherTrips.isEmpty) {
+        await routeViewModel.commands.finishRouteTrip(currentRoute.id);
       }
 
-      // Desativa isTripActive da rota no Firestore
-      await routeViewModel.commands.finishRouteTrip(currentRoute.id);
-
-      // Para o watcher da viagem encerrada e limpa referência ativa em memória
       tripViewModel.commands.stopWatchingTrip();
       tripViewModel.state.activeTrip.value = null;
 
       final now = DateTime.now();
       final normalizedToday = DateTime(now.year, now.month, now.day);
 
-      // Recarrega rota e lista de viagens com a data normalizada
       await routeViewModel.commands.fetchRouteById(
         currentRoute.id,
         loadMembers: true,
@@ -840,7 +1082,11 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
       _notifiedThresholdsInSession.clear();
       liveNotificationBanner.value = null;
 
-      _showSnackBar('Rota finalizada!');
+      _showSnackBar(
+        remainingOtherTrips.isEmpty
+            ? 'Rota finalizada!'
+            : 'Sua viagem foi finalizada! Outro veículo ainda segue em rota.',
+      );
     } catch (e) {
       _showSnackBar('Erro ao encerrar a rota: $e', isError: true);
     } finally {
@@ -862,6 +1108,20 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
   }
 
   Future<void> openLiveMap(BuildContext context, {bool? isDriver}) async {
+    if (!isRouteActiveNow) {
+      _showSnackBar(
+        isStaffRole
+            ? 'Nenhuma viagem está ativa nesta rota no momento. Inicie a rota antes de abrir o mapa em tempo real.'
+            : 'Esta rota ainda não foi iniciada pelo motorista.',
+        isError: true,
+      );
+      return;
+    }
+
+    final isDriverOfThisTrip =
+        (isDriver ?? canDriveRoute) &&
+        (myActiveTrip != null || activeTripsForRoute.isEmpty);
+
     await context.pushNamed(
       IndigoRouteNames.driverLiveMap,
       extra: {
@@ -869,7 +1129,7 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
         'company': currentCompany,
         'trip': currentActiveTrip,
         'stops': optimizedStopsForCurrentState,
-        'isDriver': isDriver ?? canDriveRoute,
+        'isDriver': isDriverOfThisTrip,
       },
     );
     if (mounted) {
@@ -891,6 +1151,19 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
     }
   }
 
+  Future<void> openCompanyReviews(BuildContext context) async {
+    final company = currentCompany;
+    if (company == null) return;
+
+    await context.pushNamed(
+      IndigoRouteNames.companyReviews,
+      extra: company,
+    );
+    if (mounted) {
+      await loadInitialData();
+    }
+  }
+
   void _showSnackBar(String message, {bool isError = false}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -905,6 +1178,7 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
               color: Colors.white,
               fontSize: 13.5,
               fontWeight: FontWeight.w600,
+              height: 1.4,
             ),
           ),
           backgroundColor: isError

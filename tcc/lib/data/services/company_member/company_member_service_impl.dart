@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tcc/data/services/firestore_cascade_delete_helper.dart';
+
 import '../../../domain/models/company_member_entity.dart';
 import '../../../domain/models/user_entity.dart';
 import 'i_company_member_service.dart';
@@ -7,13 +9,12 @@ class CompanyMemberServiceImpl implements ICompanyMemberService {
   final FirebaseFirestore _firestore;
 
   CompanyMemberServiceImpl({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference get _linksCollection =>
       _firestore.collection('vinculos_empresa');
 
-  CollectionReference get _usersCollection =>
-      _firestore.collection('users');
+  CollectionReference get _usersCollection => _firestore.collection('users');
 
   CollectionReference get _companiesCollection =>
       _firestore.collection('companies');
@@ -147,9 +148,7 @@ class CompanyMemberServiceImpl implements ICompanyMemberService {
       final data = _asMap(doc.data());
       if (data == null) continue;
 
-      memberships.add(
-        CompanyMemberModel.fromMap(data, documentId: doc.id),
-      );
+      memberships.add(CompanyMemberModel.fromMap(data, documentId: doc.id));
     }
 
     return memberships;
@@ -254,27 +253,10 @@ class CompanyMemberServiceImpl implements ICompanyMemberService {
     required String cnpjEmpresa,
     required String cpfPessoa,
   }) async {
-    final docId = _buildDocId(cnpjEmpresa, cpfPessoa);
-    final docRef = _linksCollection.doc(docId);
-    final doc = await docRef.get();
-
-    if (doc.exists) {
-      await docRef.delete();
-    } else {
-      final query = await _linksCollection
-          .where('cnpj_empresa', isEqualTo: cnpjEmpresa)
-          .where('cpf_pessoa', isEqualTo: cpfPessoa)
-          .get();
-
-      for (final item in query.docs) {
-        await item.reference.delete();
-      }
-    }
-
-    await _syncCompanyMemberArray(
+    final cascade = FirestoreCascadeDeleteHelper(_firestore);
+    await cascade.removeCompanyMember(
       cnpjEmpresa: cnpjEmpresa,
       cpfPessoa: cpfPessoa,
-      isAdding: false,
     );
   }
 }

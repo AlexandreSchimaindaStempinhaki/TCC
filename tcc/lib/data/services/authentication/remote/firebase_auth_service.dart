@@ -1,21 +1,22 @@
-import '../../../../core/failure/failure.dart';
-import '../../../../core/typedefs/types_defs.dart';
-
-import '../local/auth_local_session_manager.dart';
-import '../../../../domain/models/authentication/session_token.dart';
-
-import '../../../../domain/models/authentication/auth_entities.dart';
-import 'i_auth_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:signals_flutter/signals_flutter.dart';
-import 'package:firebase_auth/firebase_auth.dart' as fb;
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tcc/data/services/firestore_cascade_delete_helper.dart';
+
+import '../../../../core/failure/failure.dart';
 import '../../../../core/patterns/result.dart';
+import '../../../../core/typedefs/types_defs.dart';
+import '../../../../domain/models/authentication/auth_entities.dart';
+import '../../../../domain/models/authentication/session_token.dart';
+import '../local/auth_local_session_manager.dart';
+import 'i_auth_service.dart';
 
 class FirebaseAuthService implements IAuthService {
   final fb.FirebaseAuth _firebaseAuth;
   final FirebaseFirestore _firestore;
   final AuthLocalSessionManager _localSession;
+  late final FirestoreCascadeDeleteHelper _cascade;
 
   final Signal<AuthSession?> _currentSessionSignal = Signal<AuthSession?>(null);
 
@@ -26,6 +27,7 @@ class FirebaseAuthService implements IAuthService {
   }) : _firebaseAuth = firebaseAuth ?? fb.FirebaseAuth.instance,
        _firestore = firestore ?? FirebaseFirestore.instance,
        _localSession = localSession {
+    _cascade = FirestoreCascadeDeleteHelper(_firestore);
     _firebaseAuth.authStateChanges().listen(_onAuthStateChanged);
   }
 
@@ -35,7 +37,7 @@ class FirebaseAuthService implements IAuthService {
       return;
     }
 
-    if (_currentSessionSignal.value != null) {
+    if (_currentSessionSignal.value?.user.id == user.uid) {
       return;
     }
 
@@ -118,9 +120,7 @@ class FirebaseAuthService implements IAuthService {
           errorStr.contains('invalid-credential') ||
           errorStr.contains('invalid-email') ||
           errorStr.contains('user-mismatch')) {
-        return Error(
-          LoginFailure(),
-        ); 
+        return Error(LoginFailure());
       }
 
       return Error(DefaultFailure());
@@ -181,14 +181,10 @@ class FirebaseAuthService implements IAuthService {
       final errorStr = e.toString().toLowerCase();
 
       if (errorStr.contains('canceled')) {
-        return Error(
-          GoogleLoginCancelledFailure(),
-        );
+        return Error(GoogleLoginCancelledFailure());
       }
 
-      return Error(
-        GoogleLoginFailedFailure(),
-      ); 
+      return Error(GoogleLoginFailedFailure());
     }
   }
 
@@ -294,8 +290,13 @@ class FirebaseAuthService implements IAuthService {
   Future<Result<void, Failure>> deleteExpiredAccount() async {
     try {
       final user = _firebaseAuth.currentUser;
-      if (user != null) { 
+      if (user != null) {
+        try {
+          await _cascade.deleteUserAccount(uid: user.uid, email: user.email);
+        } catch (_) {}
         await user.delete();
+        await _localSession.clear();
+        _currentSessionSignal.value = null;
       }
       return const Success(null);
     } on fb.FirebaseAuthException catch (e) {
@@ -336,7 +337,9 @@ class FirebaseAuthService implements IAuthService {
   }
 
   @override
-  Future<Result<void, Failure>> reauthenticateWithPassword(String password) async {
+  Future<Result<void, Failure>> reauthenticateWithPassword(
+    String password,
+  ) async {
     try {
       final user = _firebaseAuth.currentUser;
       if (user == null || user.email == null) {
@@ -357,7 +360,9 @@ class FirebaseAuthService implements IAuthService {
       if (e.code == 'too-many-requests') {
         return Error(TooManyRequestsFailure());
       }
-      return Error(DefaultFailure(e.message ?? 'Não foi possível validar sua senha.'));
+      return Error(
+        DefaultFailure(e.message ?? 'Não foi possível validar sua senha.'),
+      );
     } catch (e) {
       return Error(DefaultFailure(e.toString()));
     }
@@ -376,7 +381,7 @@ class FirebaseAuthService implements IAuthService {
 
       final user = _firebaseAuth.currentUser;
       if (user == null) {
-         return Error(UserNotFoundFailure());
+        return Error(UserNotFoundFailure());
       }
 
       await user.updatePassword(newPassword);
@@ -401,13 +406,13 @@ class FirebaseAuthService implements IAuthService {
         return reauthResult;
       }
 
-      await _firestore.collection('users').doc(user.uid).delete();
-      
+      await _cascade.deleteUserAccount(uid: user.uid, email: user.email);
+
       await user.delete();
-      
+
       await _localSession.clear();
       _currentSessionSignal.value = null;
-      
+
       return const Success(null);
     } catch (e) {
       return Error(DefaultFailure(e.toString()));
@@ -421,9 +426,11 @@ class FirebaseAuthService implements IAuthService {
       return const Success(null);
     } on fb.FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
-         return Error(UserNotFoundFailure());
+        return Error(UserNotFoundFailure());
       }
-      return Error(DefaultFailure(e.message ?? 'Erro ao enviar e-mail de redefinição.'));
+      return Error(
+        DefaultFailure(e.message ?? 'Erro ao enviar e-mail de redefinição.'),
+      );
     } catch (e) {
       return Error(DefaultFailure(e.toString()));
     }

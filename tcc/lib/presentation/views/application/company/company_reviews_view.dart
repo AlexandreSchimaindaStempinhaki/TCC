@@ -256,6 +256,7 @@ class _CompanyReviewsViewState extends State<CompanyReviewsView>
     return Watch((context) {
       final isLoading =
           companyViewModel.fetchCompanyReviewsCommand.isExecuting.value;
+      final canRate = canCurrentUserRate;
       final reviews = filteredReviews;
       final company = targetCompany;
       final companyName = company?.name ?? 'Avaliações da Empresa';
@@ -294,7 +295,7 @@ class _CompanyReviewsViewState extends State<CompanyReviewsView>
           ),
           centerTitle: true,
           actions: [
-            if (canCurrentUserRate)
+            if (canRate)
               IconButton(
                 tooltip: userReview != null
                     ? 'Editar minha avaliação'
@@ -355,8 +356,7 @@ class _CompanyReviewsViewState extends State<CompanyReviewsView>
                                   color: colorScheme.onSurface,
                                 ),
                               ),
-                              if (activeFilter == null &&
-                                  canCurrentUserRate) ...[
+                              if (activeFilter == null && canRate) ...[
                                 const SizedBox(height: 6),
                                 Text(
                                   'Seja o primeiro a avaliar o serviço desta empresa.',

@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
+import 'package:tcc/data/services/firestore_cascade_delete_helper.dart';
+
 import '../../../domain/models/company_entity.dart';
 import '../../../domain/models/company_review_entity.dart';
 import 'i_company_firebase_service.dart';
@@ -276,8 +278,8 @@ final class CompanyRemoteServiceImpl implements ICompanyRemoteService {
   @override
   Future<void> deleteCompany(String cnpj) async {
     try {
-      final cleanCnpj = cnpj.replaceAll(RegExp(r'\D'), '');
-      await _companiesRef.doc(cleanCnpj).delete();
+      final cascade = FirestoreCascadeDeleteHelper(_firestore);
+      await cascade.deleteCompany(cnpj);
     } catch (e) {
       throw Exception('Erro ao excluir empresa: $e');
     }
@@ -289,8 +291,9 @@ final class CompanyRemoteServiceImpl implements ICompanyRemoteService {
     if (raw is! Map) return null;
 
     final map = Map<String, dynamic>.from(raw);
-    if (map['rating'] == null)
+    if (map['rating'] == null) {
       return null; // Ignora se foi apenas um "Agora não"
+    }
 
     final rawDate = map['updatedAt'] ?? map['createdAt'];
     final DateTime parsedDate = rawDate is Timestamp
@@ -318,7 +321,7 @@ final class CompanyRemoteServiceImpl implements ICompanyRemoteService {
     final cleanCnpj = cnpj.replaceAll(RegExp(r'\D'), '');
     if (cleanCnpj.isEmpty) return [];
 
-    final snapshot = await FirebaseFirestore.instance
+    final snapshot = await _firestore
         .collection('companies')
         .doc(cleanCnpj)
         .collection('ratings')
@@ -342,7 +345,7 @@ final class CompanyRemoteServiceImpl implements ICompanyRemoteService {
     final cleanUser = userId.trim();
     if (cleanCnpj.isEmpty || cleanUser.isEmpty) return null;
 
-    final doc = await FirebaseFirestore.instance
+    final doc = await _firestore
         .collection('companies')
         .doc(cleanCnpj)
         .collection('ratings')
@@ -361,7 +364,7 @@ final class CompanyRemoteServiceImpl implements ICompanyRemoteService {
     final cleanUser = userId.trim();
     if (cleanCnpj.isEmpty || cleanUser.isEmpty) return false;
 
-    final doc = await FirebaseFirestore.instance
+    final doc = await _firestore
         .collection('companies')
         .doc(cleanCnpj)
         .collection('ratings')
@@ -369,10 +372,9 @@ final class CompanyRemoteServiceImpl implements ICompanyRemoteService {
         .get();
 
     if (!doc.exists) return true;
-    final raw = doc.data();
-    if (raw is! Map) return true;
+    final map = doc.data();
+    if (map == null) return true;
 
-    final map = Map<String, dynamic>.from(raw!);
     final hasRated = map['rating'] != null;
     final wasDismissed = (map['promptDismissed'] as bool?) ?? false;
 
@@ -388,7 +390,7 @@ final class CompanyRemoteServiceImpl implements ICompanyRemoteService {
     final cleanUser = userId.trim();
     if (cleanCnpj.isEmpty || cleanUser.isEmpty) return;
 
-    await FirebaseFirestore.instance
+    await _firestore
         .collection('companies')
         .doc(cleanCnpj)
         .collection('ratings')
@@ -400,7 +402,7 @@ final class CompanyRemoteServiceImpl implements ICompanyRemoteService {
         }, SetOptions(merge: true));
   }
 
-  @override
+@override
   Future<CompanyModel> rateCompany({
     required String cnpj,
     required String userId,
@@ -411,27 +413,60 @@ final class CompanyRemoteServiceImpl implements ICompanyRemoteService {
   }) async {
     final cleanCnpj = cnpj.replaceAll(RegExp(r'\D'), '');
     final cleanUser = userId.trim();
+
+    if (cleanCnpj.isEmpty) {
+      throw Exception('CNPJ inválido para avaliação.');
+    }
+    if (cleanUser.isEmpty) {
+      throw Exception('Usuário inválido para avaliação.');
+    }
+
     final clampedRating = rating.clamp(1.0, 5.0);
     final trimmedDesc = description?.trim();
 
-    final firestore = FirebaseFirestore.instance;
-    final companyRef = firestore.collection('companies').doc(cleanCnpj);
+    final directRef = _companiesRef.doc(cleanCnpj);
+    final directCheck = await directRef.get();
+
+    final DocumentReference companyRef;
+    if (directCheck.exists) {
+      companyRef = directRef;
+    } else {
+      final candidates = <String>{
+        if (cnpj.trim().isNotEmpty) cnpj.trim(),
+        cleanCnpj,
+      }.toList();
+
+      final query = await _companiesRef
+          .where('cnpj', whereIn: candidates)
+          .limit(1)
+          .get();
+
+      if (query.docs.isEmpty) {
+        throw Exception('Empresa não encontrada para avaliação.');
+      }
+      companyRef = query.docs.first.reference;
+    }
+
     final userRatingRef = companyRef.collection('ratings').doc(cleanUser);
 
-    return firestore.runTransaction<CompanyModel>((transaction) async {
+    return _firestore.runTransaction<CompanyModel>((transaction) async {
       final companySnap = await transaction.get(companyRef);
-      if (!companySnap.exists || companySnap.data() is! Map) {
+      final rawCompanyData = companySnap.data();
+      if (!companySnap.exists || rawCompanyData is! Map) {
         throw Exception('Empresa não encontrada para avaliação.');
       }
 
-      final companyMap = Map<String, dynamic>.from(companySnap.data() as Map);
+      final companyMap = Map<String, dynamic>.from(rawCompanyData);
       final currentCompany = CompanyModel.fromMap(companyMap, companySnap.id);
 
       final userRatingSnap = await transaction.get(userRatingRef);
-      final existingRatingMap =
-          (userRatingSnap.exists && userRatingSnap.data() is Map)
-          ? Map<String, dynamic>.from(userRatingSnap.data() as Map)
-          : null;
+      Map<String, dynamic>? existingRatingMap;
+      if (userRatingSnap.exists) {
+        final rawExistingData = userRatingSnap.data();
+        if (rawExistingData != null) {
+          existingRatingMap = Map<String, dynamic>.from(rawExistingData);
+        }
+      }
 
       final hadPreviousRating =
           existingRatingMap != null && existingRatingMap['rating'] != null;
@@ -462,16 +497,19 @@ final class CompanyRemoteServiceImpl implements ICompanyRemoteService {
 
       newAverage = double.parse(newAverage.toStringAsFixed(2));
 
-      transaction.set(userRatingRef, {
+      final ratingData = <String, dynamic>{
         'userId': cleanUser,
-        'userName': userName.trim(),
+        'userName': userName.trim().isNotEmpty ? userName.trim() : 'Passageiro',
         'userPhotoUrl': userPhotoUrl?.trim(),
         'rating': clampedRating,
         'description': trimmedDesc,
         'descricao': trimmedDesc,
         'promptDismissed': true,
         'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+        if (!hadPreviousRating) 'createdAt': FieldValue.serverTimestamp(),
+      };
+
+      transaction.set(userRatingRef, ratingData, SetOptions(merge: true));
 
       transaction.update(companyRef, {
         'rating': newAverage,

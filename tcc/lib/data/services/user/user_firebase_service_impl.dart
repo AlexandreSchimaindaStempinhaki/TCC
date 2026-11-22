@@ -2,8 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../../domain/models/user_entity.dart';
 import 'package:http/http.dart' as http;
+import 'package:tcc/data/services/firestore_cascade_delete_helper.dart';
+
+import '../../../domain/models/user_entity.dart';
 import 'i_user_firebase_service.dart';
 
 final class UserRemoteServiceImpl implements IUserRemoteService {
@@ -52,8 +54,7 @@ final class UserRemoteServiceImpl implements IUserRemoteService {
     );
 
     final request = http.MultipartRequest('POST', uri)
-      ..fields['upload_preset'] =
-          'tcc_pics'
+      ..fields['upload_preset'] = 'tcc_pics'
       ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
 
     final response = await request.send();
@@ -77,20 +78,21 @@ final class UserRemoteServiceImpl implements IUserRemoteService {
 
   @override
   Future<void> deleteUserAccountData() async {
-    final uid = _currentUid;
-    final currentUser = FirebaseAuth.instance.currentUser;
+    final currentUser = _auth.currentUser;
 
     if (currentUser == null) {
       throw Exception('Nenhum usuário autenticado para excluir.');
     }
 
     try {
-      await _firestore.collection('users').doc(uid).delete();
+      final cascade = FirestoreCascadeDeleteHelper(_firestore);
+      await cascade.deleteUserAccount(
+        uid: currentUser.uid,
+        email: currentUser.email,
+      );
     } catch (e) {
       throw Exception('Erro ao excluir dados do banco: $e');
     }
-
-    // O BLOCO DO STORAGE FOI REMOVIDO DAQUI
 
     try {
       await currentUser.delete();

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
+import 'package:tcc/data/services/firestore_cascade_delete_helper.dart';
 
 import '../../../domain/models/company_entity.dart';
 import '../../../domain/models/route_entity.dart';
@@ -279,21 +280,8 @@ class RouteRemoteServiceImpl implements IRouteRemoteService {
 
   @override
   Future<void> deleteRoute(int routeId) async {
-    final docRef = _routesCollection.doc(routeId.toString());
-    final snapshot = await docRef.get();
-
-    if (snapshot.exists) {
-      await docRef.delete();
-      return;
-    }
-
-    final query = await _routesCollection
-        .where('id', isEqualTo: routeId)
-        .get();
-
-    for (final doc in query.docs) {
-      await doc.reference.delete();
-    }
+    final cascade = FirestoreCascadeDeleteHelper(_firestore);
+    await cascade.deleteRoute(routeId);
   }
 
   // ===========================================================================
@@ -327,12 +315,8 @@ class RouteRemoteServiceImpl implements IRouteRemoteService {
 
   @override
   Future<void> removePassengerFromRoute(int routeId, String userId) async {
-    final docRef = await _resolveRouteDocRef(routeId);
-    await docRef.update({
-      'pendingPassengerIds': FieldValue.arrayRemove([userId]),
-      'passengerIds': FieldValue.arrayRemove([userId]),
-      'confirmedPassengerIds': FieldValue.arrayRemove([userId]),
-    });
+    final cascade = FirestoreCascadeDeleteHelper(_firestore);
+    await cascade.removePassengerFromRoute(routeId: routeId, userId: userId);
   }
 
   @override

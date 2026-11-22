@@ -79,12 +79,16 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
 
   Future<void> _confirmStopRoute(BuildContext context) async {
     final colorScheme = Theme.of(context).colorScheme;
+    final hasOtherVehicles = activeTripsForRoute.length > 1 && myActiveTrip != null;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Parar rota ativa?'),
-        content: const Text(
-          'Ao encerrar a viagem, o rastreamento ao vivo será interrompido e a rota ficará inativa para os passageiros.',
+        title: Text(hasOtherVehicles ? 'Encerrar sua viagem?' : 'Parar rota ativa?'),
+        content: Text(
+          hasOtherVehicles
+              ? 'Sua viagem será finalizada, enquanto os demais veículos continuam em rota normalmente.'
+              : 'Ao encerrar a viagem, o rastreamento ao vivo será interrompido e a rota ficará inativa para os passageiros.',
         ),
         actions: [
           TextButton(
@@ -100,9 +104,9 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
               backgroundColor: Colors.redAccent,
               elevation: 0,
             ),
-            child: const Text(
-              'Parar Rota',
-              style: TextStyle(
+            child: Text(
+              hasOtherVehicles ? 'Encerrar Viagem' : 'Parar Rota',
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
@@ -129,6 +133,11 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
       final route = currentRoute;
       final company = currentCompany;
       final routeActive = isRouteActiveNow;
+      final activeTrips = activeTripsForRoute;
+      final ownActiveTrip = myActiveTrip;
+      final overflowNeedsExtra = needsExtraVehicleTrip;
+      final overflowCount =
+          overflowNeedsExtra ? unassignedStopsForClosestSchedule.length : 0;
 
       final staff = isStaffRole;
       final hasCnh = hasValidCnh;
@@ -137,6 +146,8 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
 
       // Motorista/gestor nunca confirma a própria presença como passageiro
       final isPurePassenger = isPassenger && !staff;
+      final canReviewCompany =
+          isPurePassenger && hasCompletedFirstTrip && company != null;
 
       final currentBoarding = boardingViewModel.state.currentBoarding.value;
       final isReady = currentBoarding?.isReadyForBoarding ?? false;
@@ -372,7 +383,26 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                           theme.dividerColor.withOpacity(0.5),
                                       height: 1,
                                     ),
-                                    const SizedBox(height: 14),
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.schedule_rounded,
+                                          size: 16,
+                                          color: colorScheme.onSurfaceVariant,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Turno atual: $closestScheduleLabel',
+                                          style: TextStyle(
+                                            fontSize: 12.5,
+                                            fontWeight: FontWeight.w600,
+                                            color: colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
                                     if (!hasCnh)
                                       Container(
                                         width: double.infinity,
@@ -408,47 +438,122 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                         ),
                                       )
                                     else if (canDrive) ...[
-                                      SizedBox(
-                                        width: double.infinity,
-                                        height: 48,
-                                        child: ElevatedButton.icon(
-                                          onPressed: executing
-                                              ? null
-                                              : (routeActive
-                                                  ? () => openLiveMap(
-                                                        context,
-                                                        isDriver: true,
-                                                      )
-                                                  : startOptimizedRouteTrip),
-                                          icon: Icon(
-                                            routeActive
-                                                ? Icons.navigation_rounded
-                                                : Icons.play_arrow_rounded,
-                                            color: Colors.white,
+                                      // Aviso de lotação excedida para transporte extra
+                                      if (overflowNeedsExtra) ...[
+                                        Container(
+                                          width: double.infinity,
+                                          margin: const EdgeInsets.only(
+                                            bottom: 10,
                                           ),
-                                          label: Text(
-                                            routeActive
-                                                ? 'Abrir Mapa em Tempo Real'
-                                                : 'Iniciar a Rota',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14,
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color:
+                                                Colors.amber.withOpacity(0.14),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            border: Border.all(
+                                              color: Colors.amber.shade700
+                                                  .withOpacity(0.45),
                                             ),
                                           ),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: routeActive
-                                                ? const Color(0xFF16A34A)
-                                                : colorScheme.primary,
-                                            elevation: 0,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(14),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons
+                                                    .groups_outlined,
+                                                size: 20,
+                                                color: Colors.amber.shade800,
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: Text(
+                                                  ownActiveTrip != null
+                                                      ? '$overflowCount passageiro(s) excederam a capacidade. Outro motorista/gestor com CNH pode iniciar um veículo extra.'
+                                                      : '$overflowCount passageiro(s) excederam a capacidade da van atual e aguardam um veículo extra.',
+                                                  style: TextStyle(
+                                                    fontSize: 12.5,
+                                                    fontWeight: FontWeight.w600,
+                                                    color:
+                                                        colorScheme.onSurface,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+
+                                      // Caso 1: rota inativa -> escolher veículo e iniciar
+                                      if (!routeActive)
+                                        SizedBox(
+                                          width: double.infinity,
+                                          height: 48,
+                                          child: ElevatedButton.icon(
+                                            onPressed: executing
+                                                ? null
+                                                : () =>
+                                                    selectVehicleAndStartTrip(
+                                                      context,
+                                                    ),
+                                            icon: const Icon(
+                                              Icons.play_arrow_rounded,
+                                              color: Colors.white,
+                                            ),
+                                            label: const Text(
+                                              'Iniciar a Rota',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  colorScheme.primary,
+                                              elevation: 0,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                      // Caso 2: outro motorista já está em rota e há excedente -> iniciar van extra
+                                      else if (ownActiveTrip == null &&
+                                          overflowNeedsExtra) ...[
+                                        SizedBox(
+                                          width: double.infinity,
+                                          height: 48,
+                                          child: ElevatedButton.icon(
+                                            onPressed: executing
+                                                ? null
+                                                : () =>
+                                                    selectVehicleAndStartTrip(
+                                                      context,
+                                                    ),
+                                            icon: const Icon(
+                                              Icons.directions_bus_rounded,
+                                              color: Colors.white,
+                                            ),
+                                            label: Text(
+                                              'Iniciar Transporte Extra (Van ${activeTrips.length + 1})',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  colorScheme.primary,
+                                              elevation: 0,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                      if (routeActive) ...[
                                         const SizedBox(height: 10),
                                         SizedBox(
                                           width: double.infinity,
@@ -456,23 +561,25 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                           child: OutlinedButton.icon(
                                             onPressed: executing
                                                 ? null
-                                                : () =>
-                                                    _confirmStopRoute(context),
-                                            icon: const Icon(
-                                              Icons.stop_circle_outlined,
-                                              color: Colors.redAccent,
+                                                : () => openLiveMap(
+                                                      context,
+                                                      isDriver: false,
+                                                    ),
+                                            icon: Icon(
+                                              Icons.navigation_rounded,
+                                              color: colorScheme.primary,
                                             ),
-                                            label: const Text(
-                                              'Parar Rota',
+                                            label: Text(
+                                              'Acompanhar Rota Ativa',
                                               style: TextStyle(
-                                                color: Colors.redAccent,
+                                                color: colorScheme.primary,
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 14,
                                               ),
                                             ),
                                             style: OutlinedButton.styleFrom(
-                                              side: const BorderSide(
-                                                color: Colors.redAccent,
+                                              side: BorderSide(
+                                                color: colorScheme.primary,
                                                 width: 1.5,
                                               ),
                                               shape: RoundedRectangleBorder(
@@ -482,6 +589,82 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                                             ),
                                           ),
                                         ),
+                                      ]
+                                      // Caso 3: motorista atual está dirigindo (ou rota ativa sem excedente)
+                                      else ...[
+                                        SizedBox(
+                                          width: double.infinity,
+                                          height: 48,
+                                          child: ElevatedButton.icon(
+                                            onPressed: executing
+                                                ? null
+                                                : () => openLiveMap(
+                                                      context,
+                                                      isDriver:
+                                                          ownActiveTrip != null,
+                                                    ),
+                                            icon: const Icon(
+                                              Icons.navigation_rounded,
+                                              color: Colors.white,
+                                            ),
+                                            label: const Text(
+                                              'Abrir Mapa em Tempo Real',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  const Color(0xFF16A34A),
+                                              elevation: 0,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        if (ownActiveTrip != null ||
+                                            activeTrips.isEmpty) ...[
+                                          const SizedBox(height: 10),
+                                          SizedBox(
+                                            width: double.infinity,
+                                            height: 46,
+                                            child: OutlinedButton.icon(
+                                              onPressed: executing
+                                                  ? null
+                                                  : () => _confirmStopRoute(
+                                                        context,
+                                                      ),
+                                              icon: const Icon(
+                                                Icons.stop_circle_outlined,
+                                                color: Colors.redAccent,
+                                              ),
+                                              label: Text(
+                                                activeTrips.length > 1
+                                                    ? 'Encerrar Minha Viagem'
+                                                    : 'Parar Rota',
+                                                style: const TextStyle(
+                                                  color: Colors.redAccent,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              style: OutlinedButton.styleFrom(
+                                                side: const BorderSide(
+                                                  color: Colors.redAccent,
+                                                  width: 1.5,
+                                                ),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(14),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ],
                                     ],
                                   ],
@@ -565,13 +748,13 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                               ),
                             ],
 
-                            // Acesso à tela de mapa em tempo real
+                            // Acesso à tela de mapa em tempo real (sem ">")
                             AccountOption(
                               icon: Icons.navigation_outlined,
                               title: staff
                                   ? 'Mapa da Rota em Tempo Real'
                                   : 'Acompanhar Motorista ao Vivo',
-                              trailing: const Icon(Icons.chevron_right_rounded),
+                              trailing: const SizedBox.shrink(),
                               onTap: () => openLiveMap(
                                 context,
                                 isDriver: canDrive,
@@ -579,15 +762,26 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
                             ),
                             const SizedBox(height: 8),
 
-                            // Acesso ao Calendário de Presença
+                            // Acesso ao Calendário de Presença (sem ">")
                             AccountOption(
                               icon: Icons.calendar_month_outlined,
                               title: staff
                                   ? 'Presenças Confirmadas (Calendário)'
                                   : 'Calendário de Presença',
-                              trailing: const Icon(Icons.chevron_right_rounded),
+                              trailing: const SizedBox.shrink(),
                               onTap: () => openAttendanceCalendar(context),
                             ),
+
+                            // Avaliação da empresa (liberada após concluir a 1ª viagem)
+                            if (canReviewCompany) ...[
+                              const SizedBox(height: 8),
+                              AccountOption(
+                                icon: Icons.star_outline_rounded,
+                                title: 'Avaliar Empresa',
+                                trailing: const SizedBox.shrink(),
+                                onTap: () => openCompanyReviews(context),
+                              ),
+                            ],
                             const SizedBox(height: 4),
                           ],
                         ),

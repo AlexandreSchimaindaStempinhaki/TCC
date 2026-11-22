@@ -425,11 +425,19 @@ final List<RouteBase> indigoRoutes = [
         return CompanyVehiclesView(company: extra);
       }
       if (extra is Map<String, dynamic>) {
+        final rawUnavailable = extra['unavailableVehicleIds'];
+        final unavailableIds = rawUnavailable is Iterable
+            ? rawUnavailable.map((e) => e.toString()).toSet()
+            : const <String>{};
+
         return CompanyVehiclesView(
           company: extra['company'] is CompanyModel
               ? extra['company'] as CompanyModel
               : null,
+          companyCnpj: extra['companyCnpj'] as String?,
           canManage: (extra['canManage'] as bool?) ?? false,
+          isSelectionMode: (extra['isSelectionMode'] as bool?) ?? false,
+          unavailableVehicleIds: unavailableIds,
         );
       }
       return const CompanyVehiclesView();

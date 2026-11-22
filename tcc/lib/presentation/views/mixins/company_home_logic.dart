@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -8,8 +6,11 @@ import 'package:signals_flutter/signals_flutter.dart';
 import '../../../core/di/dependency_injection.dart';
 import '../../../core/routes/indigo_routes.dart';
 import '../../../domain/models/company_entity.dart';
+import '../../../domain/models/user_entity.dart';
 import '../../controllers/company/company_list_viewmodel.dart';
 import '../../controllers/company/company_viewmodel.dart';
+import '../../controllers/company_member/company_member_viewmodel.dart';
+import '../../controllers/route/route_list_viewmodel.dart';
 import '../../controllers/user/user_viewmodel.dart';
 import '../application/company/company_home_view.dart';
 import '../application/routes/create_route_view.dart';
@@ -17,11 +18,14 @@ import '../application/routes/create_route_view.dart';
 mixin CompanyHomeMixin on State<CompanyHomeView> {
   late final CompanyViewModel companyViewModel;
   late final CompanyListViewModel companyListViewModel;
+  late final CompanyMemberViewModel companyMemberViewModel;
+  late final RouteListViewModel routeListViewModel;
   late final UserViewModel userViewModel;
 
   final Signal<bool> isInitialLoading = signal(true);
   final Signal<bool> isCompanyOwnerSignal = signal(false);
   final Signal<bool> isCompanyManagerSignal = signal(false);
+  final Signal<int> totalMembersCount = signal(0);
   final Signal<bool> _isDeletingSignal = signal(false);
 
   bool get isDeleting => _isDeletingSignal.value;
@@ -33,6 +37,8 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
     super.initState();
     companyViewModel = injector.get<CompanyViewModel>();
     companyListViewModel = injector.get<CompanyListViewModel>();
+    companyMemberViewModel = injector.get<CompanyMemberViewModel>();
+    routeListViewModel = injector.get<RouteListViewModel>();
     userViewModel = injector.get<UserViewModel>();
 
     _initializeCompanyHome();
@@ -43,6 +49,7 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
     isInitialLoading.dispose();
     isCompanyOwnerSignal.dispose();
     isCompanyManagerSignal.dispose();
+    totalMembersCount.dispose();
     _isDeletingSignal.dispose();
     super.dispose();
   }
@@ -58,83 +65,109 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
     final currentCompany =
         companyViewModel.state.selectedCompany.value ?? initial;
 
-    await _evaluateUserRoleInCompany(currentCompany);
+    await _loadCompanyRoleAndMembersCount(currentCompany);
 
     if (mounted) {
       isInitialLoading.value = false;
     }
   }
 
+  Future<void> refreshCompanyData() async {
+    final currentCompany =
+        companyViewModel.state.selectedCompany.value ?? widget.initialCompany;
+    await _loadCompanyRoleAndMembersCount(currentCompany);
+  }
+
   Set<String> _allCurrentUserIdentifiers() {
     final ids = <String>{};
-    final authUser = FirebaseAuth.instance.currentUser;
     final loggedUser = userViewModel.state.user.value;
 
-    if (authUser != null) {
-      if (authUser.uid.trim().isNotEmpty) {
-        ids.add(authUser.uid.trim());
-      }
-      final authEmail = authUser.email;
-      if (authEmail != null && authEmail.trim().isNotEmpty) {
-        ids.add(authEmail.trim());
-        ids.add(authEmail.trim().toLowerCase());
-      }
-    }
-
     if (loggedUser != null) {
+      if (loggedUser.uid.trim().isNotEmpty) {
+        ids.add(loggedUser.uid.trim());
+      }
+
       final cpf = loggedUser.cpf;
       if (cpf != null && cpf.trim().isNotEmpty) {
         ids.add(cpf.trim());
-        ids.add(cleanDigits(cpf));
+        final cleanCpf = cleanDigits(cpf);
+        if (cleanCpf.isNotEmpty) ids.add(cleanCpf);
       }
 
-      final email = loggedUser.email;
-      if (email != null && email.trim().isNotEmpty) {
-        ids.add(email.trim());
-        ids.add(email.trim().toLowerCase());
+      if (loggedUser.email.trim().isNotEmpty) {
+        ids.add(loggedUser.email.trim());
+        ids.add(loggedUser.email.trim().toLowerCase());
       }
     }
 
     return ids;
   }
 
-  bool _matchesUser(String rawTargetId, Set<String> currentUserIds) {
+  bool _matchesUser(String? rawTargetId, Set<String> currentUserIds) {
+    if (rawTargetId == null) return false;
     final trimmed = rawTargetId.trim();
     if (trimmed.isEmpty) return false;
     final cleaned = cleanDigits(trimmed);
 
     return currentUserIds.contains(trimmed) ||
         currentUserIds.contains(trimmed.toLowerCase()) ||
-        (cleaned.isNotEmpty && currentUserIds.contains(cleaned));
+        (cleaned.length == 11 && currentUserIds.contains(cleaned));
   }
 
-  bool _isOwnerRoleName(String rawRole) {
-    final role = rawRole.trim().toLowerCase();
-    return role == 'ceo' ||
-        role == 'owner' ||
-        role == 'dono' ||
-        role == 'proprietario' ||
-        role == 'proprietário';
+  bool _matchesUserModel(UserModel? user, Set<String> currentUserIds) {
+    if (user == null) return false;
+    return _matchesUser(user.uid, currentUserIds) ||
+        _matchesUser(user.cpf, currentUserIds) ||
+        _matchesUser(user.email, currentUserIds);
   }
 
-  bool _isManagerRoleName(String rawRole) {
-    final role = rawRole.trim().toLowerCase();
-    return role == 'manager' ||
-        role == 'gerente' ||
-        role == 'admin' ||
-        role == 'administrador';
-  }
-
-  Future<void> _evaluateUserRoleInCompany(CompanyModel? company) async {
+  Future<void> _loadCompanyRoleAndMembersCount(CompanyModel? company) async {
     isCompanyOwnerSignal.value = false;
     isCompanyManagerSignal.value = false;
 
-    if (company == null) return;
-
-    final userIds = _allCurrentUserIdentifiers();
-    if (userIds.isEmpty) return;
+    if (company == null) {
+      totalMembersCount.value = 0;
+      return;
+    }
 
     final rawCnpj = cleanDigits(company.cnpj);
+
+    // Garante usuário atualizado via ViewModel -> Service
+    try {
+      await userViewModel.commands.fetchUser().timeout(
+        const Duration(seconds: 6),
+      );
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    bool membersLoaded = false;
+
+    // Carrega membros detalhados e rotas da empresa em paralelo (para contar passageiros mesmo sem ser equipe)
+    await Future.wait([
+      companyMemberViewModel.commands
+          .loadCompanyMembersDetailed(company)
+          .timeout(const Duration(seconds: 6))
+          .then((_) => membersLoaded = true)
+          .catchError((_) {}),
+      if (rawCnpj.isNotEmpty)
+        routeListViewModel.commands
+            .fetchRoutesByCompany(rawCnpj)
+            .timeout(const Duration(seconds: 6))
+            .catchError((_) {}),
+    ]);
+
+    if (!mounted) return;
+
+    // 1. Recalcula total de membros (equipe + passageiros de todas as rotas, sem duplicatas)
+    totalMembersCount.value = _computeTotalMembersCount(
+      company,
+      includeDetailedMembers: membersLoaded,
+    );
+
+    // 2. Avalia cargo do usuário atual na empresa
+    final userIds = _allCurrentUserIdentifiers();
+    if (userIds.isEmpty) return;
 
     if (_matchesUser(company.ownerId, userIds)) {
       isCompanyOwnerSignal.value = true;
@@ -151,49 +184,115 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
       }
     }
 
-    if (rawCnpj.isEmpty) return;
+    if (membersLoaded) {
+      final owners = companyMemberViewModel.state.ownersList.value;
+      final managers = companyMemberViewModel.state.managersList.value;
 
-    try {
-      final companyDoc = await FirebaseFirestore.instance
-          .collection('companies')
-          .doc(rawCnpj)
-          .get();
+      if (owners.any((m) => _matchesUserModel(m.userModel, userIds))) {
+        isCompanyOwnerSignal.value = true;
+        return;
+      }
 
-      final companyData = companyDoc.data();
-      if (companyData != null) {
-        final dbOwnerId = (companyData['ownerId'] ?? '').toString();
-        if (_matchesUser(dbOwnerId, userIds)) {
-          if (mounted) isCompanyOwnerSignal.value = true;
-          return;
+      if (managers.any((m) => _matchesUserModel(m.userModel, userIds))) {
+        isCompanyManagerSignal.value = true;
+      }
+    }
+  }
+
+  int _computeTotalMembersCount(
+    CompanyModel company, {
+    required bool includeDetailedMembers,
+  }) {
+    final aliasToPerson = <String, int>{};
+    int nextPersonId = 0;
+
+    List<String> variantsForRaw(String? raw) {
+      if (raw == null) return const [];
+      final trimmed = raw.trim();
+      if (trimmed.isEmpty) return const [];
+      final lower = trimmed.toLowerCase();
+      final digits = cleanDigits(trimmed);
+      return <String>{
+        trimmed,
+        lower,
+        if (digits.length == 11) digits,
+      }.toList();
+    }
+
+    void registerPersonAliases(Iterable<String?> rawValues) {
+      final allVariants = <String>{};
+      for (final raw in rawValues) {
+        allVariants.addAll(variantsForRaw(raw));
+      }
+      if (allVariants.isEmpty) return;
+
+      final matchedIds = <int>{};
+      for (final v in allVariants) {
+        final found = aliasToPerson[v];
+        if (found != null) matchedIds.add(found);
+      }
+
+      final int personId;
+      if (matchedIds.isEmpty) {
+        personId = nextPersonId++;
+      } else {
+        personId = matchedIds.first;
+        if (matchedIds.length > 1) {
+          for (final entry in aliasToPerson.entries.toList()) {
+            if (matchedIds.contains(entry.value)) {
+              aliasToPerson[entry.key] = personId;
+            }
+          }
         }
       }
 
-      final membersSnapshot = await FirebaseFirestore.instance
-          .collection('company_members')
-          .where('companyCnpj', isEqualTo: rawCnpj)
-          .get();
+      for (final v in allVariants) {
+        aliasToPerson[v] = personId;
+      }
+    }
 
-      for (final doc in membersSnapshot.docs) {
-        final data = doc.data();
-        final memberUserId =
-            (data['userId'] ?? data['cpf'] ?? data['email'] ?? '')
-                .toString()
-                .trim();
-        final role = (data['role'] ?? data['cargo'] ?? '').toString();
+    // 1. Membros carregados pelo CompanyMemberViewModel (UID + CPF + e-mail agrupados)
+    if (includeDetailedMembers) {
+      final detailedMembers = [
+        ...companyMemberViewModel.state.ownersList.value,
+        ...companyMemberViewModel.state.managersList.value,
+        ...companyMemberViewModel.state.driversList.value,
+        ...companyMemberViewModel.state.passengersList.value,
+      ];
 
-        if (!_matchesUser(memberUserId, userIds)) continue;
-
-        if (_isOwnerRoleName(role)) {
-          if (mounted) isCompanyOwnerSignal.value = true;
-          return;
-        }
-
-        if (_isManagerRoleName(role)) {
-          if (mounted) isCompanyManagerSignal.value = true;
-          return;
+      for (final member in detailedMembers) {
+        final u = member.userModel;
+        if (u != null) {
+          registerPersonAliases([u.uid, u.cpf, u.email]);
+        } else if (member.name.trim().isNotEmpty) {
+          registerPersonAliases(['name:${member.name.trim().toLowerCase()}']);
         }
       }
-    } catch (_) {}
+    }
+
+    // 2. Dono e membros salvos no documento da empresa
+    registerPersonAliases([company.ownerId]);
+    for (final memberId in company.memberIds) {
+      registerPersonAliases([memberId]);
+    }
+
+    // 3. Motoristas e passageiros aprovados em todas as rotas da empresa
+    //    (garante a contagem de passageiros mesmo para quem não é motorista/gerente/CEO)
+    final rawCnpj = cleanDigits(company.cnpj);
+    final companyRoutes = routeListViewModel.state.companyRoutes.value.where(
+      (r) => cleanDigits(r.companyCnpj) == rawCnpj,
+    );
+
+    for (final route in companyRoutes) {
+      if (route.driverId != null && route.driverId!.trim().isNotEmpty) {
+        registerPersonAliases([route.driverId]);
+      }
+      for (final passengerId in route.passengerIds) {
+        registerPersonAliases([passengerId]);
+      }
+    }
+
+    return aliasToPerson.values.toSet().length;
   }
 
   bool isCompanyOwner(CompanyModel? company) {
@@ -294,6 +393,9 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
         builder: (_) => CreateRouteView(company: company),
       ),
     );
+    if (mounted) {
+      await refreshCompanyData();
+    }
   }
 
   Future<void> openEditCompany(CompanyModel company) async {
@@ -304,8 +406,7 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
       extra: company,
     );
     if (mounted) {
-      final updated = companyViewModel.state.selectedCompany.value ?? company;
-      await _evaluateUserRoleInCompany(updated);
+      await refreshCompanyData();
     }
   }
 
@@ -362,10 +463,7 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
       _isDeletingSignal.value = true;
       final rawCnpj = cleanDigits(company.cnpj);
 
-      await FirebaseFirestore.instance
-          .collection('companies')
-          .doc(rawCnpj)
-          .delete();
+      await companyViewModel.commands.deleteCompany(rawCnpj);
 
       if (!context.mounted) return;
       handleBack(context);

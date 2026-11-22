@@ -8,12 +8,18 @@ import '../../mixins/company_vehicles_logic.dart';
 
 class CompanyVehiclesView extends StatefulWidget {
   final CompanyModel? company;
+  final String? companyCnpj;
   final bool canManage;
+  final bool isSelectionMode;
+  final Set<String> unavailableVehicleIds;
 
   const CompanyVehiclesView({
     super.key,
     this.company,
+    this.companyCnpj,
     this.canManage = false,
+    this.isSelectionMode = false,
+    this.unavailableVehicleIds = const {},
   });
 
   @override
@@ -40,7 +46,7 @@ class _CompanyVehiclesViewState extends State<CompanyVehiclesView>
           onPressed: () => handleBack(context),
         ),
         title: Text(
-          'Veículos da Empresa',
+          widget.isSelectionMode ? 'Selecionar Veículo' : 'Veículos da Empresa',
           style: TextStyle(
             color: colorScheme.onSurface,
             fontWeight: FontWeight.bold,
@@ -49,7 +55,7 @@ class _CompanyVehiclesViewState extends State<CompanyVehiclesView>
         ),
         centerTitle: true,
         actions: [
-          if (hasManageAccess)
+          if (hasManageAccess && targetCompany != null)
             IconButton(
               tooltip: 'Cadastrar Veículo',
               icon: Icon(
@@ -64,6 +70,45 @@ class _CompanyVehiclesViewState extends State<CompanyVehiclesView>
       body: Column(
         children: [
           const SizedBox(height: 8),
+
+          if (widget.isSelectionMode)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 11,
+                ),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: colorScheme.primary.withOpacity(0.30),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.directions_bus_filled_rounded,
+                      size: 20,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Escolha o veículo que será utilizado nesta viagem para iniciar a rota.',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
           // BARRA DE PESQUISA NO PADRÃO DA HOMEVIEW
           Padding(
@@ -161,6 +206,22 @@ class _CompanyVehiclesViewState extends State<CompanyVehiclesView>
               }
 
               if (vehicles.isEmpty) {
+                final emptyTitle = query.trim().isNotEmpty
+                    ? 'Nenhum veículo encontrado para "${query.trim()}"'
+                    : (widget.isSelectionMode
+                        ? 'Nenhum veículo disponível para iniciar a rota'
+                        : 'Nenhum veículo cadastrado no momento');
+
+                final emptySubtitle = query.trim().isNotEmpty
+                    ? 'Tente pesquisar por outro modelo, marca ou placa.'
+                    : (widget.isSelectionMode
+                        ? (hasManageAccess
+                            ? 'Cadastre um veículo no ícone + acima antes de iniciar a rota.'
+                            : 'Solicite ao gerente ou proprietário da empresa o cadastro de um veículo para iniciar a rota.')
+                        : (hasManageAccess
+                            ? 'Toque no ícone + no topo para cadastrar o primeiro veículo.'
+                            : 'Os veículos utilizados pela empresa aparecerão aqui.'));
+
                 return RefreshIndicator(
                   color: colorScheme.onSurface,
                   onRefresh: refreshVehicles,
@@ -175,9 +236,7 @@ class _CompanyVehiclesViewState extends State<CompanyVehiclesView>
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        query.trim().isNotEmpty
-                            ? 'Nenhum veículo encontrado para "${query.trim()}"'
-                            : 'Nenhum veículo cadastrado no momento',
+                        emptyTitle,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 16,
@@ -187,11 +246,7 @@ class _CompanyVehiclesViewState extends State<CompanyVehiclesView>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        query.trim().isNotEmpty
-                            ? 'Tente pesquisar por outro modelo, marca ou placa.'
-                            : hasManageAccess
-                            ? 'Toque no ícone + no topo para cadastrar o primeiro veículo.'
-                            : 'Os veículos utilizados pela empresa aparecerão aqui.',
+                        emptySubtitle,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 13,
@@ -212,11 +267,50 @@ class _CompanyVehiclesViewState extends State<CompanyVehiclesView>
                   itemCount: vehicles.length,
                   itemBuilder: (context, index) {
                     final vehicle = vehicles[index];
-                    return CompanyVehicleCard(
-                      key: ValueKey('vehicle_${vehicle.id}'),
-                      vehicle: vehicle,
-                      companyLogoUrl: targetCompany?.logoUrl,
-                      onTap: () => openVehicleDetails(context, vehicle),
+                    final unavailable = widget.isSelectionMode &&
+                        isVehicleUnavailableForSelection(vehicle);
+                    final inUse =
+                        widget.isSelectionMode && isVehicleInUse(vehicle);
+
+                    return Stack(
+                      children: [
+                        Opacity(
+                          opacity: unavailable ? 0.48 : 1.0,
+                          child: CompanyVehicleCard(
+                            key: ValueKey('vehicle_${vehicle.id}'),
+                            vehicle: vehicle,
+                            companyLogoUrl: targetCompany?.logoUrl,
+                            onTap: () => handleVehicleTap(context, vehicle),
+                          ),
+                        ),
+                        if (unavailable)
+                          Positioned(
+                            top: 10,
+                            right: 12,
+                            child: IgnorePointer(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: inUse
+                                      ? const Color(0xFFF59E0B)
+                                      : const Color(0xFFDC2626),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  inUse ? 'Em uso na rota' : 'Inativo',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     );
                   },
                 ),

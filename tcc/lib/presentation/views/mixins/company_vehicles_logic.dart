@@ -20,6 +20,12 @@ mixin CompanyVehiclesMixin on State<CompanyVehiclesView> {
   CompanyModel? get targetCompany =>
       widget.company ?? companyViewModel.state.selectedCompany.value;
 
+  String get targetCompanyCnpj {
+    final fromCompany = targetCompany?.cnpj.trim() ?? '';
+    if (fromCompany.isNotEmpty) return fromCompany;
+    return (widget.companyCnpj ?? '').trim();
+  }
+
   bool get hasManageAccess {
     if (widget.canManage) return true;
     final company = targetCompany;
@@ -29,9 +35,14 @@ mixin CompanyVehiclesMixin on State<CompanyVehiclesView> {
     final uid = currentUser.uid.trim();
     final cpf = (currentUser.cpf ?? '').trim();
 
-    return company.ownerId == uid ||
-        (cpf.isNotEmpty && company.ownerId == cpf);
+    return company.ownerId == uid || (cpf.isNotEmpty && company.ownerId == cpf);
   }
+
+  bool isVehicleInUse(VehicleModel vehicle) =>
+      widget.unavailableVehicleIds.contains(vehicle.id.trim());
+
+  bool isVehicleUnavailableForSelection(VehicleModel vehicle) =>
+      isVehicleInUse(vehicle);
 
   @override
   void initState() {
@@ -54,7 +65,7 @@ mixin CompanyVehiclesMixin on State<CompanyVehiclesView> {
   }
 
   Future<void> refreshVehicles() async {
-    final cnpj = targetCompany?.cnpj ?? '';
+    final cnpj = targetCompanyCnpj;
     if (cnpj.isNotEmpty) {
       await vehicleListViewModel.commands.fetchVehiclesByCompany(cnpj);
     }
@@ -74,6 +85,44 @@ mixin CompanyVehiclesMixin on State<CompanyVehiclesView> {
     if (context.canPop()) {
       context.pop();
     }
+  }
+
+  void handleVehicleTap(BuildContext context, VehicleModel vehicle) {
+    if (!widget.isSelectionMode) {
+      openVehicleDetails(context, vehicle);
+      return;
+    }
+
+    if (isVehicleInUse(vehicle)) {
+      _showSelectionWarning(
+        context,
+        'Este veículo já está em uso em outra viagem ativa nesta rota.',
+      );
+      return;
+    }
+
+    context.pop(vehicle);
+  }
+
+  void _showSelectionWarning(BuildContext context, String message) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 13.5,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: const Color(0xFFDC2626),
+        behavior: SnackBarBehavior.fixed,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   Future<void> openCreateVehicle(BuildContext context) async {

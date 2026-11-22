@@ -98,35 +98,43 @@ class _RouteDetailsViewState extends State<RouteDetailsView>
     final colorScheme = theme.colorScheme;
 
     return Watch((context) {
+      // Garante reconstrução imediata sempre que o perfil carregado mudar
+      final _ = userViewModel.state.user.value;
+
       final reactiveRoute = findReactiveRoute();
       final id = routeId;
       final isFavorite = id != null
           ? routeListViewModel.state.isFavorite(id)
           : ((widget.route['isFavorite'] as bool?) ?? false);
 
+      final checkingPermissions = isCheckingPermissions.value;
       final userIds = allCurrentUserIdentifiers();
-      final isOwner = isCompanyOwner.value;
-      final isManager = isCompanyManager.value;
+      final isOwner = !checkingPermissions && isCompanyOwner.value;
+      final isManager = !checkingPermissions && isCompanyManager.value;
       final isDriver =
-          isCompanyDriver.value ||
-          (reactiveRoute != null &&
-              userIds.any((uid) => reactiveRoute.isUserDriver(uid)));
+          !checkingPermissions &&
+          (isCompanyDriver.value ||
+              (reactiveRoute != null &&
+                  userIds.any((uid) => reactiveRoute.isUserDriver(uid))));
       final isPassenger =
+          !checkingPermissions &&
           reactiveRoute != null &&
           userIds.any((uid) => reactiveRoute.isUserPassenger(uid));
 
       final isApproved = isOwner || isManager || isDriver || isPassenger;
       final isPending =
+          !checkingPermissions &&
           !isApproved &&
           reactiveRoute != null &&
           userIds.any((uid) => reactiveRoute.isUserPending(uid));
 
       final isExecutingAction =
+          checkingPermissions ||
           routeListViewModel.requestToJoinRouteCommand.isExecuting.value ||
           routeListViewModel.cancelJoinRequestCommand.isExecuting.value ||
           isDeletingRoute.value;
 
-      final hasManageAccess = canManageRoute.value;
+      final hasManageAccess = !checkingPermissions && canManageRoute.value;
 
       final imageUrl =
           (reactiveRoute?.imageUrl != null &&
@@ -427,7 +435,9 @@ class _RouteDetailsViewState extends State<RouteDetailsView>
                         isApproved: isApproved,
                       ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isApproved
+                  backgroundColor: isExecutingAction
+                      ? colorScheme.primary.withOpacity(0.75)
+                      : isApproved
                       ? Colors.green
                       : isPending
                       ? colorScheme.secondary

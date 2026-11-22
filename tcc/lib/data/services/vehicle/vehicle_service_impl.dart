@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tcc/data/services/firestore_cascade_delete_helper.dart';
+
 import '../../../domain/models/vehicle_entity.dart';
 import 'i_vehicle_service.dart';
 
@@ -6,7 +8,7 @@ class VehicleServiceImpl implements IVehicleService {
   final FirebaseFirestore _firestore;
 
   VehicleServiceImpl({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference get _collection => _firestore.collection('vehicles');
 
@@ -63,7 +65,8 @@ class VehicleServiceImpl implements IVehicleService {
       plate: (map['plate'] ?? map['placa'] ?? '').toString(),
       model: (map['model'] ?? map['modelo'] ?? '').toString(),
       brand: (map['brand'] ?? map['marca'] ?? '').toString(),
-      capacity: int.tryParse(
+      capacity:
+          int.tryParse(
             (map['capacity'] ?? map['capacidade'] ?? '15').toString(),
           ) ??
           15,
@@ -161,10 +164,9 @@ class VehicleServiceImpl implements IVehicleService {
       plate: _normalizePlate(vehicle.plate),
     );
 
-    await _collection.doc(docId).set(
-      _toMap(updatedVehicle),
-      SetOptions(merge: true),
-    );
+    await _collection
+        .doc(docId)
+        .set(_toMap(updatedVehicle), SetOptions(merge: true));
 
     return updatedVehicle;
   }
@@ -194,8 +196,7 @@ class VehicleServiceImpl implements IVehicleService {
 
   @override
   Future<void> deleteVehicle(String vehicleId) async {
-    final trimmedId = vehicleId.trim();
-    if (trimmedId.isEmpty) return;
-    await _collection.doc(trimmedId).delete();
+    final cascade = FirestoreCascadeDeleteHelper(_firestore);
+    await cascade.deleteVehicle(vehicleId);
   }
 }

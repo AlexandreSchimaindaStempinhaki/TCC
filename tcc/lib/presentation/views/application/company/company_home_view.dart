@@ -88,6 +88,7 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
           companyViewModel.state.selectedCompany.value ?? widget.initialCompany;
       final canManage = canManageCompanyRoutes(company);
       final isOwner = isCompanyOwner(company);
+      final membersCount = totalMembersCount.value;
 
       return AbsorbPointer(
         absorbing: isDeleting,
@@ -272,6 +273,9 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                             IndigoRouteNames.companyMembers,
                                             extra: company,
                                           );
+                                          if (mounted) {
+                                            await refreshCompanyData();
+                                          }
                                         },
                                         child: Row(
                                           mainAxisAlignment:
@@ -289,7 +293,7 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 Text(
-                                                  '${company.memberIds.length}${company.memberIds.length == 1 ? ' membro' : ' membros'}',
+                                                  '$membersCount${membersCount == 1 ? ' membro' : ' membros'}',
                                                   style: TextStyle(
                                                     fontSize: 13,
                                                     fontWeight: FontWeight.bold,
@@ -404,6 +408,9 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                   IndigoRouteNames.companyRoutes,
                                   extra: company,
                                 );
+                                if (mounted) {
+                                  await refreshCompanyData();
+                                }
                               },
                             ),
                             const SizedBox(height: 8),
@@ -435,6 +442,9 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                   IndigoRouteNames.companyMembers,
                                   extra: company,
                                 );
+                                if (mounted) {
+                                  await refreshCompanyData();
+                                }
                               },
                             ),
                             const SizedBox(height: 8),
@@ -483,6 +493,9 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                     IndigoRouteNames.companyRouteRequests,
                                     extra: company,
                                   );
+                                  if (mounted) {
+                                    await refreshCompanyData();
+                                  }
                                 },
                               ),
                               const SizedBox(height: 8),

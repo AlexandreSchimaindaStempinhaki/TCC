@@ -19,7 +19,7 @@ class EditProfileDateView extends StatefulWidget {
 class _EditProfileDateViewState extends State<EditProfileDateView> {
   late final UserViewModel _userViewModel;
   late final TextEditingController _dateController;
-  
+
   DateTime? _selectedDate;
   String? _errorMessage;
   final isLoading = signal(false);
@@ -29,7 +29,7 @@ class _EditProfileDateViewState extends State<EditProfileDateView> {
     super.initState();
     _userViewModel = injector.get<UserViewModel>();
     _selectedDate = _userViewModel.state.user.value?.birthDate;
-    
+
     _dateController = TextEditingController(
       text: _selectedDate != null ? _formatDateForTextField(_selectedDate!) : '',
     );
@@ -38,6 +38,7 @@ class _EditProfileDateViewState extends State<EditProfileDateView> {
   @override
   void dispose() {
     _dateController.dispose();
+    isLoading.dispose();
     super.dispose();
   }
 
@@ -66,6 +67,14 @@ class _EditProfileDateViewState extends State<EditProfileDateView> {
 
     try {
       final parts = text.split('/');
+      if (parts.length != 3) {
+        setState(() {
+          _selectedDate = null;
+          _errorMessage = 'Data inválida';
+        });
+        return;
+      }
+
       final day = int.parse(parts[0]);
       final month = int.parse(parts[1]);
       final year = int.parse(parts[2]);
@@ -124,7 +133,7 @@ class _EditProfileDateViewState extends State<EditProfileDateView> {
       initialDate: _selectedDate ?? DateTime(2000, 1, 1),
       firstDate: DateTime(1920),
       lastDate: DateTime.now(),
-      locale: const Locale('pt', 'BR'), 
+      locale: const Locale('pt', 'BR'),
     );
 
     if (picked != null && picked != _selectedDate) {
@@ -155,9 +164,16 @@ class _EditProfileDateViewState extends State<EditProfileDateView> {
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: Container(
-                      decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle),
+                      decoration: const BoxDecoration(
+                        color: Colors.black,
+                        shape: BoxShape.circle,
+                      ),
                       child: IconButton(
-                        icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+                        icon: const Icon(
+                          Icons.arrow_back_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                         onPressed: () => context.pop(),
                       ),
                     ),
@@ -166,19 +182,27 @@ class _EditProfileDateViewState extends State<EditProfileDateView> {
               ],
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 12.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 28.0,
+                vertical: 12.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Data de Nascimento',
-                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: colorScheme.onSurface, letterSpacing: -0.5),
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                      letterSpacing: -0.5,
+                    ),
                   ),
                   const SizedBox(height: 24),
 
                   TextField(
                     controller: _dateController,
-                    keyboardType: TextInputType.number,
+                    keyboardType: TextInputType.datetime,
                     inputFormatters: [_DateInputFormatter()],
                     onChanged: _updateDateFromText,
                     decoration: InputDecoration(
@@ -206,14 +230,19 @@ class _EditProfileDateViewState extends State<EditProfileDateView> {
                         onPressed: isLoading.value || _selectedDate == null
                             ? null
                             : () async {
-                                final currentUser = _userViewModel.state.user.value;
+                                final currentUser =
+                                    _userViewModel.state.user.value;
                                 if (currentUser == null) return;
 
                                 try {
                                   isLoading.value = true;
-                                  final updatedUser = currentUser.copyWith(birthDate: _selectedDate);
-                                  await _userViewModel.commands.saveUserData(updatedUser);
-                                  
+                                  final updatedUser = currentUser.copyWith(
+                                    birthDate: _selectedDate,
+                                  );
+                                  await _userViewModel.commands.saveUserData(
+                                    updatedUser,
+                                  );
+
                                   if (!context.mounted) return;
                                   router.pop();
                                 } finally {
@@ -222,11 +251,20 @@ class _EditProfileDateViewState extends State<EditProfileDateView> {
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: colorScheme.primary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         child: isLoading.value
                             ? AnimatedThreeDots(color: colorScheme.onSurface)
-                            : const Text('Salvar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                            : const Text(
+                                'Salvar',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
                       ),
                     ),
                   ),
@@ -242,18 +280,39 @@ class _EditProfileDateViewState extends State<EditProfileDateView> {
 
 class _DateInputFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
-    final newText = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
-    if (newText.length > 8) return oldValue;
-    
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final isDeleting = newValue.text.length < oldValue.text.length;
+    var digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+
+    // Se digitar "/" após 1 dígito de dia (ex: "5/") ou mês (ex: "11/5/"), completa com zero à esquerda
+    if (!isDeleting && newValue.text.endsWith('/')) {
+      if (digits.length == 1) {
+        digits = '0$digits';
+      } else if (digits.length == 3) {
+        digits = '${digits.substring(0, 2)}0${digits.substring(2)}';
+      }
+    }
+
+    if (digits.length > 8) {
+      digits = digits.substring(0, 8);
+    }
+
     final buffer = StringBuffer();
-    for (int i = 0; i < newText.length; i++) {
-      buffer.write(newText[i]);
-      if ((i == 1 || i == 3) && i != newText.length - 1) {
+    for (int i = 0; i < digits.length; i++) {
+      buffer.write(digits[i]);
+
+      final isEndOfDay = i == 1;
+      final isEndOfMonth = i == 3;
+      final hasMoreDigits = i < digits.length - 1;
+
+      if ((isEndOfDay || isEndOfMonth) && (hasMoreDigits || !isDeleting)) {
         buffer.write('/');
       }
     }
-    
+
     final formatted = buffer.toString();
     return TextEditingValue(
       text: formatted,
