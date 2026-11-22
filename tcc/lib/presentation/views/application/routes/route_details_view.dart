@@ -378,9 +378,6 @@ class _RouteDetailsViewState extends State<RouteDetailsView>
                             AccountOption(
                               icon: Icons.edit_rounded,
                               title: 'Editar Rota',
-                              trailing: const Icon(
-                                Icons.chevron_right_rounded,
-                              ),
                               onTap: () => openEditRoute(
                                 context,
                                 reactiveRoute,
@@ -392,10 +389,6 @@ class _RouteDetailsViewState extends State<RouteDetailsView>
                               title: 'Excluir Rota',
                               iconColor: Colors.redAccent,
                               textColor: Colors.redAccent,
-                              trailing: const Icon(
-                                Icons.chevron_right_rounded,
-                                color: Colors.redAccent,
-                              ),
                               onTap: () => confirmAndDeleteRoute(
                                 context,
                                 reactiveRoute,

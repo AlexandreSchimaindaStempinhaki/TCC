@@ -375,9 +375,6 @@ class _VehicleDetailsViewState extends State<VehicleDetailsView>
                               AccountOption(
                                 icon: Icons.edit_rounded,
                                 title: 'Editar Veículo',
-                                trailing: const Icon(
-                                  Icons.chevron_right_rounded,
-                                ),
                                 onTap: () => openEditVehicle(
                                   context,
                                   currentVehicle,
@@ -396,10 +393,7 @@ class _VehicleDetailsViewState extends State<VehicleDetailsView>
                                           color: Colors.redAccent,
                                         ),
                                       )
-                                    : const Icon(
-                                        Icons.chevron_right_rounded,
-                                        color: Colors.redAccent,
-                                      ),
+                                    : Text(''),
                                 onTap: () => confirmAndDeleteVehicle(
                                   context,
                                   currentVehicle,

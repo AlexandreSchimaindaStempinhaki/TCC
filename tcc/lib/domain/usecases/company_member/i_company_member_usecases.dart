@@ -1,7 +1,7 @@
 import '../../models/company_member_entity.dart';
 
 abstract class IFetchCompanyMembersUseCase {
-  Future<List<CompanyMemberModel>> call(String cnpjEmpresa);
+  Future<List<CompanyMemberModel>> call(String companyCnpj);
 }
 
 abstract class IFetchUserMembershipsUseCase {
@@ -9,7 +9,7 @@ abstract class IFetchUserMembershipsUseCase {
 }
 
 abstract class IGetMemberLinkUseCase {
-  Future<CompanyMemberModel?> call(String cnpjEmpresa, String cpfOrUid);
+  Future<CompanyMemberModel?> call(String companyCnpj, String cpfOrUid);
 }
 
 abstract class IAddCompanyMemberUseCase {
@@ -18,15 +18,15 @@ abstract class IAddCompanyMemberUseCase {
 
 abstract class IChangeCompanyMemberRoleUseCase {
   Future<void> call({
-    required String cnpjEmpresa,
-    required String cpfPessoa,
+    required String companyCnpj,
+    required String userCpf,
     required String newRole,
   });
 }
 
 abstract class IRemoveCompanyMemberUseCase {
   Future<void> call({
-    required String cnpjEmpresa,
-    required String cpfPessoa,
+    required String companyCnpj,
+    required String userCpf,
   });
 }

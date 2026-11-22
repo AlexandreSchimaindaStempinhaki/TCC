@@ -41,38 +41,38 @@ class CompanyMemberState {
 
   late final drivers = computed(
     () => members.value
-        .where((m) => m.cargo == CompanyRole.driver)
+        .where((m) => m.role == CompanyRole.driver)
         .toList(),
   );
 
   late final passengers = computed(
     () => members.value
-        .where((m) => m.cargo == CompanyRole.passenger)
+        .where((m) => m.role == CompanyRole.passenger)
         .toList(),
   );
 
   late final admins = computed(
     () => members.value
-        .where((m) => m.cargo == CompanyRole.admin)
+        .where((m) => m.role == CompanyRole.admin)
         .toList(),
   );
 
   late final pendingRequests = computed(
     () => members.value
-        .where((m) => m.cargo == CompanyRole.pending)
+        .where((m) => m.role == CompanyRole.pending)
         .toList(),
   );
 
   bool get isCurrentUserAdmin =>
-      currentUserLink.value?.cargo == CompanyRole.admin ||
+      currentUserLink.value?.role == CompanyRole.admin ||
       isCurrentUserOwner.value ||
       isCurrentUserManager.value;
 
   bool get isCurrentUserDriver =>
-      currentUserLink.value?.cargo == CompanyRole.driver;
+      currentUserLink.value?.role == CompanyRole.driver;
 
   bool get isCurrentUserPassenger =>
-      currentUserLink.value?.cargo == CompanyRole.passenger;
+      currentUserLink.value?.role == CompanyRole.passenger;
 
   void clearMessage() => message.value = null;
 

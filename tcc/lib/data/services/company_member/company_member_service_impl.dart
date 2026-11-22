@@ -9,7 +9,7 @@ class CompanyMemberServiceImpl implements ICompanyMemberService {
   final FirebaseFirestore _firestore;
 
   CompanyMemberServiceImpl({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference get _linksCollection =>
       _firestore.collection('vinculos_empresa');
@@ -73,21 +73,21 @@ class CompanyMemberServiceImpl implements ICompanyMemberService {
   }
 
   Future<void> _syncCompanyMemberArray({
-    required String cnpjEmpresa,
-    required String cpfPessoa,
+    required String companyCnpj,
+    required String userCpf,
     required bool isAdding,
   }) async {
-    final cleanCnpj = _cleanDigits(cnpjEmpresa);
+    final cleanCnpj = _cleanDigits(companyCnpj);
     final docRef = _companiesCollection.doc(cleanCnpj);
     final snapshot = await docRef.get();
 
     final updateData = <String, dynamic>{
       'listaIdMembros': isAdding
-          ? FieldValue.arrayUnion([cpfPessoa])
-          : FieldValue.arrayRemove([cpfPessoa]),
+          ? FieldValue.arrayUnion([userCpf])
+          : FieldValue.arrayRemove([userCpf]),
       'memberIds': isAdding
-          ? FieldValue.arrayUnion([cpfPessoa])
-          : FieldValue.arrayRemove([cpfPessoa]),
+          ? FieldValue.arrayUnion([userCpf])
+          : FieldValue.arrayRemove([userCpf]),
     };
 
     if (snapshot.exists) {
@@ -96,7 +96,7 @@ class CompanyMemberServiceImpl implements ICompanyMemberService {
     }
 
     final query = await _companiesCollection
-        .where('cnpj', isEqualTo: cnpjEmpresa)
+        .where('cnpj', isEqualTo: companyCnpj)
         .limit(1)
         .get();
     if (query.docs.isNotEmpty) {
@@ -106,22 +106,34 @@ class CompanyMemberServiceImpl implements ICompanyMemberService {
 
   @override
   Future<List<CompanyMemberModel>> fetchCompanyMembers(
-    String cnpjEmpresa,
+    String companyCnpj,
   ) async {
-    final cleanCnpj = _cleanDigits(cnpjEmpresa);
-    final snapshot = await _linksCollection
-        .where('cnpj_empresa', whereIn: [cnpjEmpresa, cleanCnpj])
-        .get();
+    final cleanCnpj = _cleanDigits(companyCnpj);
+    final targets = {companyCnpj, cleanCnpj}.where((e) => e.isNotEmpty).toList();
+    if (targets.isEmpty) return [];
+
+    final results = await Future.wait([
+      _linksCollection.where('companyCnpj', whereIn: targets).get(),
+      _linksCollection.where('cnpj_empresa', whereIn: targets).get(),
+    ]);
+
+    final docsById = <String, QueryDocumentSnapshot>{};
+    for (final snapshot in results) {
+      for (final doc in snapshot.docs) {
+        docsById[doc.id] = doc;
+      }
+    }
 
     final List<CompanyMemberModel> members = [];
 
-    for (final doc in snapshot.docs) {
+    for (final doc in docsById.values) {
       final data = _asMap(doc.data());
       if (data == null) continue;
 
-      final cpfPessoa = (data['cpf_pessoa'] as String?) ?? '';
-      final userProfile = cpfPessoa.isNotEmpty
-          ? await _fetchUserProfile(cpfPessoa)
+      final userCpf =
+          (data['userCpf'] ?? data['cpf_pessoa']) as String? ?? '';
+      final userProfile = userCpf.isNotEmpty
+          ? await _fetchUserProfile(userCpf)
           : null;
 
       members.add(
@@ -138,13 +150,21 @@ class CompanyMemberServiceImpl implements ICompanyMemberService {
 
   @override
   Future<List<CompanyMemberModel>> fetchUserMemberships(String cpfOrUid) async {
-    final snapshot = await _linksCollection
-        .where('cpf_pessoa', isEqualTo: cpfOrUid)
-        .get();
+    final results = await Future.wait([
+      _linksCollection.where('userCpf', isEqualTo: cpfOrUid).get(),
+      _linksCollection.where('cpf_pessoa', isEqualTo: cpfOrUid).get(),
+    ]);
+
+    final docsById = <String, QueryDocumentSnapshot>{};
+    for (final snapshot in results) {
+      for (final doc in snapshot.docs) {
+        docsById[doc.id] = doc;
+      }
+    }
 
     final List<CompanyMemberModel> memberships = [];
 
-    for (final doc in snapshot.docs) {
+    for (final doc in docsById.values) {
       final data = _asMap(doc.data());
       if (data == null) continue;
 
@@ -156,10 +176,10 @@ class CompanyMemberServiceImpl implements ICompanyMemberService {
 
   @override
   Future<CompanyMemberModel?> getMemberLink(
-    String cnpjEmpresa,
+    String companyCnpj,
     String cpfOrUid,
   ) async {
-    final docId = _buildDocId(cnpjEmpresa, cpfOrUid);
+    final docId = _buildDocId(companyCnpj, cpfOrUid);
     final doc = await _linksCollection.doc(docId).get();
     final directData = _asMap(doc.data());
 
@@ -172,11 +192,19 @@ class CompanyMemberServiceImpl implements ICompanyMemberService {
       );
     }
 
-    final query = await _linksCollection
-        .where('cnpj_empresa', isEqualTo: cnpjEmpresa)
-        .where('cpf_pessoa', isEqualTo: cpfOrUid)
+    var query = await _linksCollection
+        .where('companyCnpj', isEqualTo: companyCnpj)
+        .where('userCpf', isEqualTo: cpfOrUid)
         .limit(1)
         .get();
+
+    if (query.docs.isEmpty) {
+      query = await _linksCollection
+          .where('cnpj_empresa', isEqualTo: companyCnpj)
+          .where('cpf_pessoa', isEqualTo: cpfOrUid)
+          .limit(1)
+          .get();
+    }
 
     if (query.docs.isNotEmpty) {
       final found = query.docs.first;
@@ -196,44 +224,52 @@ class CompanyMemberServiceImpl implements ICompanyMemberService {
 
   @override
   Future<CompanyMemberModel> addMember(CompanyMemberModel member) async {
-    final docId = _buildDocId(member.cnpjEmpresa, member.cpfPessoa);
+    final docId = _buildDocId(member.companyCnpj, member.userCpf);
     final modelToSave = member.copyWith(id: docId);
 
     await _linksCollection.doc(docId).set(modelToSave.toMap());
 
-    if (member.cargo != CompanyRole.pending) {
+    if (member.role != CompanyRole.pending) {
       await _syncCompanyMemberArray(
-        cnpjEmpresa: member.cnpjEmpresa,
-        cpfPessoa: member.cpfPessoa,
+        companyCnpj: member.companyCnpj,
+        userCpf: member.userCpf,
         isAdding: true,
       );
     }
 
-    final userProfile = await _fetchUserProfile(member.cpfPessoa);
+    final userProfile = await _fetchUserProfile(member.userCpf);
     return modelToSave.copyWith(user: userProfile);
   }
 
   @override
   Future<void> updateMemberRole({
-    required String cnpjEmpresa,
-    required String cpfPessoa,
+    required String companyCnpj,
+    required String userCpf,
     required String newRole,
   }) async {
-    final docId = _buildDocId(cnpjEmpresa, cpfPessoa);
+    final docId = _buildDocId(companyCnpj, userCpf);
     final docRef = _linksCollection.doc(docId);
     final doc = await docRef.get();
 
     if (doc.exists) {
-      await docRef.update({'cargo': newRole});
+      await docRef.update({'role': newRole});
     } else {
-      final query = await _linksCollection
-          .where('cnpj_empresa', isEqualTo: cnpjEmpresa)
-          .where('cpf_pessoa', isEqualTo: cpfPessoa)
+      var query = await _linksCollection
+          .where('companyCnpj', isEqualTo: companyCnpj)
+          .where('userCpf', isEqualTo: userCpf)
           .limit(1)
           .get();
 
+      if (query.docs.isEmpty) {
+        query = await _linksCollection
+            .where('cnpj_empresa', isEqualTo: companyCnpj)
+            .where('cpf_pessoa', isEqualTo: userCpf)
+            .limit(1)
+            .get();
+      }
+
       if (query.docs.isNotEmpty) {
-        await query.docs.first.reference.update({'cargo': newRole});
+        await query.docs.first.reference.update({'role': newRole});
       } else {
         throw Exception('Vínculo do membro não encontrado.');
       }
@@ -241,8 +277,8 @@ class CompanyMemberServiceImpl implements ICompanyMemberService {
 
     if (newRole != CompanyRole.pending) {
       await _syncCompanyMemberArray(
-        cnpjEmpresa: cnpjEmpresa,
-        cpfPessoa: cpfPessoa,
+        companyCnpj: companyCnpj,
+        userCpf: userCpf,
         isAdding: true,
       );
     }
@@ -250,13 +286,13 @@ class CompanyMemberServiceImpl implements ICompanyMemberService {
 
   @override
   Future<void> removeMember({
-    required String cnpjEmpresa,
-    required String cpfPessoa,
+    required String companyCnpj,
+    required String userCpf,
   }) async {
     final cascade = FirestoreCascadeDeleteHelper(_firestore);
     await cascade.removeCompanyMember(
-      cnpjEmpresa: cnpjEmpresa,
-      cpfPessoa: cpfPessoa,
+      cnpjEmpresa: companyCnpj,
+      cpfPessoa: userCpf,
     );
   }
 }

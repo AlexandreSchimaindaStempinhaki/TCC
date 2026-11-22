@@ -8,10 +8,10 @@ class FetchCompanyMembersCommand {
 
   FetchCompanyMembersCommand(this._facade);
 
-  Future<List<CompanyMemberModel>> execute(String cnpjEmpresa) async {
+  Future<List<CompanyMemberModel>> execute(String companyCnpj) async {
     isExecuting.value = true;
     try {
-      return await _facade.fetchCompanyMembers(cnpjEmpresa);
+      return await _facade.fetchCompanyMembers(companyCnpj);
     } finally {
       isExecuting.value = false;
     }
@@ -41,12 +41,12 @@ class GetMemberLinkCommand {
   GetMemberLinkCommand(this._facade);
 
   Future<CompanyMemberModel?> execute(
-    String cnpjEmpresa,
+    String companyCnpj,
     String cpfOrUid,
   ) async {
     isExecuting.value = true;
     try {
-      return await _facade.getMemberLink(cnpjEmpresa, cpfOrUid);
+      return await _facade.getMemberLink(companyCnpj, cpfOrUid);
     } finally {
       isExecuting.value = false;
     }
@@ -76,15 +76,15 @@ class ChangeCompanyMemberRoleCommand {
   ChangeCompanyMemberRoleCommand(this._facade);
 
   Future<void> execute({
-    required String cnpjEmpresa,
-    required String cpfPessoa,
+    required String companyCnpj,
+    required String userCpf,
     required String newRole,
   }) async {
     isExecuting.value = true;
     try {
       await _facade.changeMemberRole(
-        cnpjEmpresa: cnpjEmpresa,
-        cpfPessoa: cpfPessoa,
+        companyCnpj: companyCnpj,
+        userCpf: userCpf,
         newRole: newRole,
       );
     } finally {
@@ -100,14 +100,14 @@ class RemoveCompanyMemberCommand {
   RemoveCompanyMemberCommand(this._facade);
 
   Future<void> execute({
-    required String cnpjEmpresa,
-    required String cpfPessoa,
+    required String companyCnpj,
+    required String userCpf,
   }) async {
     isExecuting.value = true;
     try {
       await _facade.removeMember(
-        cnpjEmpresa: cnpjEmpresa,
-        cpfPessoa: cpfPessoa,
+        companyCnpj: companyCnpj,
+        userCpf: userCpf,
       );
     } finally {
       isExecuting.value = false;

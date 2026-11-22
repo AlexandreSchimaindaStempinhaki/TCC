@@ -25,8 +25,8 @@ class CompanyMemberFacadeImpl implements ICompanyMemberFacade {
         _removeCompanyMemberUseCase = removeCompanyMemberUseCase;
 
   @override
-  Future<List<CompanyMemberModel>> fetchCompanyMembers(String cnpjEmpresa) {
-    return _fetchCompanyMembersUseCase(cnpjEmpresa);
+  Future<List<CompanyMemberModel>> fetchCompanyMembers(String companyCnpj) {
+    return _fetchCompanyMembersUseCase(companyCnpj);
   }
 
   @override
@@ -36,10 +36,10 @@ class CompanyMemberFacadeImpl implements ICompanyMemberFacade {
 
   @override
   Future<CompanyMemberModel?> getMemberLink(
-    String cnpjEmpresa,
+    String companyCnpj,
     String cpfOrUid,
   ) {
-    return _getMemberLinkUseCase(cnpjEmpresa, cpfOrUid);
+    return _getMemberLinkUseCase(companyCnpj, cpfOrUid);
   }
 
   @override
@@ -49,25 +49,25 @@ class CompanyMemberFacadeImpl implements ICompanyMemberFacade {
 
   @override
   Future<void> changeMemberRole({
-    required String cnpjEmpresa,
-    required String cpfPessoa,
+    required String companyCnpj,
+    required String userCpf,
     required String newRole,
   }) {
     return _changeCompanyMemberRoleUseCase(
-      cnpjEmpresa: cnpjEmpresa,
-      cpfPessoa: cpfPessoa,
+      companyCnpj: companyCnpj,
+      userCpf: userCpf,
       newRole: newRole,
     );
   }
 
   @override
   Future<void> removeMember({
-    required String cnpjEmpresa,
-    required String cpfPessoa,
+    required String companyCnpj,
+    required String userCpf,
   }) {
     return _removeCompanyMemberUseCase(
-      cnpjEmpresa: cnpjEmpresa,
-      cpfPessoa: cpfPessoa,
+      companyCnpj: companyCnpj,
+      userCpf: userCpf,
     );
   }
 }

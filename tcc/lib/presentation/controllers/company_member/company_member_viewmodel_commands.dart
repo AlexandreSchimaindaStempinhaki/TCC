@@ -130,11 +130,11 @@ class CompanyMemberViewModelCommands {
         .toList();
   }
 
-  Future<void> fetchCompanyMembers(String cnpjEmpresa) async {
+  Future<void> fetchCompanyMembers(String companyCnpj) async {
     _viewModel.state.clearMessage();
     try {
       final result = await _viewModel.fetchCompanyMembersCommand.execute(
-        cnpjEmpresa,
+        companyCnpj,
       );
       _viewModel.state.members.value = result;
     } catch (e) {
@@ -156,12 +156,12 @@ class CompanyMemberViewModelCommands {
   }
 
   Future<CompanyMemberModel?> loadCurrentUserRole({
-    required String cnpjEmpresa,
+    required String companyCnpj,
     required String cpfOrUid,
   }) async {
     try {
       final link = await _viewModel.getMemberLinkCommand.execute(
-        cnpjEmpresa,
+        companyCnpj,
         cpfOrUid,
       );
       _viewModel.state.currentUserLink.value = link;
@@ -173,18 +173,18 @@ class CompanyMemberViewModelCommands {
   }
 
   Future<bool> addMember({
-    required String cnpjEmpresa,
-    required String cpfPessoa,
-    String cargo = CompanyRole.passenger,
+    required String companyCnpj,
+    required String userCpf,
+    String role = CompanyRole.passenger,
   }) async {
     _viewModel.state.clearMessage();
     try {
       final newMember = CompanyMemberModel(
-        id: '${cnpjEmpresa}_$cpfPessoa',
-        cpfPessoa: cpfPessoa,
-        cnpjEmpresa: cnpjEmpresa,
-        cargo: cargo,
-        dataIngresso: DateTime.now(),
+        id: '${companyCnpj}_$userCpf',
+        userCpf: userCpf,
+        companyCnpj: companyCnpj,
+        role: role,
+        joinedAt: DateTime.now(),
       );
 
       final created = await _viewModel.addCompanyMemberCommand.execute(
@@ -192,10 +192,10 @@ class CompanyMemberViewModelCommands {
       );
 
       final currentList = _viewModel.state.members.value;
-      final exists = currentList.any((m) => m.cpfPessoa == cpfPessoa);
+      final exists = currentList.any((m) => m.userCpf == userCpf);
       if (exists) {
         _viewModel.state.members.value = currentList
-            .map((m) => m.cpfPessoa == cpfPessoa ? created : m)
+            .map((m) => m.userCpf == userCpf ? created : m)
             .toList();
       } else {
         _viewModel.state.members.value = [...currentList, created];
@@ -209,21 +209,21 @@ class CompanyMemberViewModelCommands {
   }
 
   Future<bool> changeMemberRole({
-    required String cnpjEmpresa,
-    required String cpfPessoa,
+    required String companyCnpj,
+    required String userCpf,
     required String newRole,
   }) async {
     _viewModel.state.clearMessage();
     try {
       await _viewModel.changeCompanyMemberRoleCommand.execute(
-        cnpjEmpresa: cnpjEmpresa,
-        cpfPessoa: cpfPessoa,
+        companyCnpj: companyCnpj,
+        userCpf: userCpf,
         newRole: newRole,
       );
 
       _viewModel.state.members.value = _viewModel.state.members.value.map((m) {
-        if (m.cpfPessoa == cpfPessoa) {
-          return m.copyWith(cargo: newRole);
+        if (m.userCpf == userCpf) {
+          return m.copyWith(role: newRole);
         }
         return m;
       }).toList();
@@ -236,18 +236,18 @@ class CompanyMemberViewModelCommands {
   }
 
   Future<bool> removeMember({
-    required String cnpjEmpresa,
-    required String cpfPessoa,
+    required String companyCnpj,
+    required String userCpf,
   }) async {
     _viewModel.state.clearMessage();
     try {
       await _viewModel.removeCompanyMemberCommand.execute(
-        cnpjEmpresa: cnpjEmpresa,
-        cpfPessoa: cpfPessoa,
+        companyCnpj: companyCnpj,
+        userCpf: userCpf,
       );
 
       _viewModel.state.members.value = _viewModel.state.members.value
-          .where((m) => m.cpfPessoa != cpfPessoa)
+          .where((m) => m.userCpf != userCpf)
           .toList();
 
       return true;
@@ -288,9 +288,9 @@ class CompanyMemberViewModelCommands {
 
     // 1. Membros vindos da Facade/ViewModel
     for (final member in _viewModel.state.members.value) {
-      final id = member.cpfPessoa.trim();
+      final id = member.userCpf.trim();
       if (id.isEmpty) continue;
-      final category = _classifyRole(member.cargo);
+      final category = _classifyRole(member.role);
       if (category == 'owner') {
         ownerIds.add(id);
       } else if (category == 'manager') {
@@ -313,7 +313,8 @@ class CompanyMemberViewModelCommands {
         for (final doc in snapshot.docs) {
           final data = doc.data();
           final memberId =
-              (data['userId'] ??
+              (data['userCpf'] ??
+                      data['userId'] ??
                       data['cpf'] ??
                       data['cpfPessoa'] ??
                       data['email'] ??
@@ -482,8 +483,8 @@ class CompanyMemberViewModelCommands {
     try {
       // 1. Tenta atualizar via Command/Facade oficial
       await changeMemberRole(
-        cnpjEmpresa: rawCnpj,
-        cpfPessoa: targetCpf,
+        companyCnpj: rawCnpj,
+        userCpf: targetCpf,
         newRole: mappedRole,
       );
 
@@ -496,6 +497,7 @@ class CompanyMemberViewModelCommands {
         'companyCnpj': rawCnpj,
         'cnpjEmpresa': rawCnpj,
         'userId': memberId,
+        'userCpf': targetCpf,
         'cpf': targetCpf,
         'cpfPessoa': targetCpf,
         'email': item.userModel.email,

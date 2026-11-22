@@ -1,6 +1,6 @@
 import '../../../domain/models/company_member_entity.dart';
-import 'i_company_member_repository.dart';
 import '../../services/company_member/i_company_member_service.dart';
+import 'i_company_member_repository.dart';
 
 class CompanyMemberRepositoryImpl implements ICompanyMemberRepository {
   final ICompanyMemberService _service;
@@ -8,8 +8,8 @@ class CompanyMemberRepositoryImpl implements ICompanyMemberRepository {
   CompanyMemberRepositoryImpl(this._service);
 
   @override
-  Future<List<CompanyMemberModel>> fetchCompanyMembers(String cnpjEmpresa) {
-    return _service.fetchCompanyMembers(cnpjEmpresa);
+  Future<List<CompanyMemberModel>> fetchCompanyMembers(String companyCnpj) {
+    return _service.fetchCompanyMembers(companyCnpj);
   }
 
   @override
@@ -19,10 +19,10 @@ class CompanyMemberRepositoryImpl implements ICompanyMemberRepository {
 
   @override
   Future<CompanyMemberModel?> getMemberLink(
-    String cnpjEmpresa,
+    String companyCnpj,
     String cpfOrUid,
   ) {
-    return _service.getMemberLink(cnpjEmpresa, cpfOrUid);
+    return _service.getMemberLink(companyCnpj, cpfOrUid);
   }
 
   @override
@@ -32,25 +32,25 @@ class CompanyMemberRepositoryImpl implements ICompanyMemberRepository {
 
   @override
   Future<void> updateMemberRole({
-    required String cnpjEmpresa,
-    required String cpfPessoa,
+    required String companyCnpj,
+    required String userCpf,
     required String newRole,
   }) {
     return _service.updateMemberRole(
-      cnpjEmpresa: cnpjEmpresa,
-      cpfPessoa: cpfPessoa,
+      companyCnpj: companyCnpj,
+      userCpf: userCpf,
       newRole: newRole,
     );
   }
 
   @override
   Future<void> removeMember({
-    required String cnpjEmpresa,
-    required String cpfPessoa,
+    required String companyCnpj,
+    required String userCpf,
   }) {
     return _service.removeMember(
-      cnpjEmpresa: cnpjEmpresa,
-      cpfPessoa: cpfPessoa,
+      companyCnpj: companyCnpj,
+      userCpf: userCpf,
     );
   }
 }

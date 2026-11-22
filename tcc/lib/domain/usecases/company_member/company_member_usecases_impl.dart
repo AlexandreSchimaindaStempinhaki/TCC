@@ -8,11 +8,11 @@ class FetchCompanyMembersUseCaseImpl implements IFetchCompanyMembersUseCase {
   FetchCompanyMembersUseCaseImpl(this._repository);
 
   @override
-  Future<List<CompanyMemberModel>> call(String cnpjEmpresa) {
-    if (cnpjEmpresa.trim().isEmpty) {
+  Future<List<CompanyMemberModel>> call(String companyCnpj) {
+    if (companyCnpj.trim().isEmpty) {
       throw Exception('CNPJ da empresa inválido.');
     }
-    return _repository.fetchCompanyMembers(cnpjEmpresa);
+    return _repository.fetchCompanyMembers(companyCnpj);
   }
 }
 
@@ -36,11 +36,11 @@ class GetMemberLinkUseCaseImpl implements IGetMemberLinkUseCase {
   GetMemberLinkUseCaseImpl(this._repository);
 
   @override
-  Future<CompanyMemberModel?> call(String cnpjEmpresa, String cpfOrUid) {
-    if (cnpjEmpresa.trim().isEmpty || cpfOrUid.trim().isEmpty) {
+  Future<CompanyMemberModel?> call(String companyCnpj, String cpfOrUid) {
+    if (companyCnpj.trim().isEmpty || cpfOrUid.trim().isEmpty) {
       return Future.value(null);
     }
-    return _repository.getMemberLink(cnpjEmpresa, cpfOrUid);
+    return _repository.getMemberLink(companyCnpj, cpfOrUid);
   }
 }
 
@@ -51,7 +51,7 @@ class AddCompanyMemberUseCaseImpl implements IAddCompanyMemberUseCase {
 
   @override
   Future<CompanyMemberModel> call(CompanyMemberModel member) {
-    if (member.cnpjEmpresa.trim().isEmpty || member.cpfPessoa.trim().isEmpty) {
+    if (member.companyCnpj.trim().isEmpty || member.userCpf.trim().isEmpty) {
       throw Exception('CNPJ da empresa e CPF do usuário são obrigatórios.');
     }
     return _repository.addMember(member);
@@ -66,16 +66,16 @@ class ChangeCompanyMemberRoleUseCaseImpl
 
   @override
   Future<void> call({
-    required String cnpjEmpresa,
-    required String cpfPessoa,
+    required String companyCnpj,
+    required String userCpf,
     required String newRole,
   }) {
     if (newRole.trim().isEmpty) {
       throw Exception('O novo cargo não pode ser vazio.');
     }
     return _repository.updateMemberRole(
-      cnpjEmpresa: cnpjEmpresa,
-      cpfPessoa: cpfPessoa,
+      companyCnpj: companyCnpj,
+      userCpf: userCpf,
       newRole: newRole,
     );
   }
@@ -88,12 +88,12 @@ class RemoveCompanyMemberUseCaseImpl implements IRemoveCompanyMemberUseCase {
 
   @override
   Future<void> call({
-    required String cnpjEmpresa,
-    required String cpfPessoa,
+    required String companyCnpj,
+    required String userCpf,
   }) {
     return _repository.removeMember(
-      cnpjEmpresa: cnpjEmpresa,
-      cpfPessoa: cpfPessoa,
+      companyCnpj: companyCnpj,
+      userCpf: userCpf,
     );
   }
 }
