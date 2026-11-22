@@ -9,14 +9,15 @@ import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../core/di/dependency_injection.dart';
 import '../../../core/extensions/context_extensions.dart';
-import '../../../core/routes/indigo_routes.dart';
+import '../../../core/routes/account_routes.dart';
+import '../../../core/routes/company_routes.dart';
+import '../../../core/routes/home_routes.dart';
 import '../../../domain/models/company_entity.dart';
 import '../../../domain/models/route_entity.dart';
 import '../../controllers/company/company_viewmodel.dart';
 import '../../controllers/route/route_list_viewmodel.dart';
 import '../../controllers/route/route_viewmodel.dart';
 import '../application/routes/create_route_view.dart';
-import '../application/routes/route_map_view.dart';
 
 mixin CreateRouteMixin on State<CreateRouteView> {
   late final RouteViewModel routeViewModel;
@@ -106,9 +107,6 @@ mixin CreateRouteMixin on State<CreateRouteView> {
     }
   }
 
-  // ========================================================
-  //   GEOLOCALIZAÇÃO E VISUALIZAÇÃO DE TRAJETO (ROUTE_MAP_VIEW)
-  // ========================================================
   Future<void> getCurrentLocation({required bool isOrigin}) async {
     final loadingSignal = isOrigin ? isLoadingOriginGps : isLoadingDestGps;
     if (loadingSignal.value) return;
@@ -199,7 +197,7 @@ mixin CreateRouteMixin on State<CreateRouteView> {
         : destinationPoint.value;
 
     final LatLng? pickedLocation = await context.pushNamed<LatLng>(
-      IndigoRouteNames.locationPicker,
+      AccountRouteNames.locationPicker,
       extra: initialLocation,
     );
 
@@ -239,7 +237,7 @@ mixin CreateRouteMixin on State<CreateRouteView> {
         : destinationNameController.text.trim();
 
     context.pushNamed(
-      IndigoRouteNames.singleLocationMap,
+      AccountRouteNames.singleLocationMap,
       extra: {
         'latitude': geoPoint.latitude,
         'longitude': geoPoint.longitude,
@@ -272,16 +270,9 @@ mixin CreateRouteMixin on State<CreateRouteView> {
       'companyName': targetCompany?.name ?? 'Trajeto da Rota',
     };
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => RouteMapView(route: routeData),
-      ),
-    );
+    context.pushNamed(HomeRouteNames.routeMap, extra: routeData);
   }
 
-  // ========================================================
-  //   GESTÃO DOS DIAS DA SEMANA (OPERATING DAYS)
-  // ========================================================
   void toggleOperatingDay(int weekday) {
     final current = Set<int>.from(operatingDays.value);
     if (current.contains(weekday)) {
@@ -306,9 +297,6 @@ mixin CreateRouteMixin on State<CreateRouteView> {
     errorMessage.value = null;
   }
 
-  // ========================================================
-  //   GESTÃO DE HORÁRIOS DE SAÍDA
-  // ========================================================
   void _sortAndSaveSchedules(List<DateTime> list) {
     list.sort(
       (a, b) => (a.hour * 60 + a.minute).compareTo(b.hour * 60 + b.minute),
@@ -398,9 +386,6 @@ mixin CreateRouteMixin on State<CreateRouteView> {
     return '$h:$m';
   }
 
-  // ========================================================
-  //   VALIDAÇÃO E SUBMISSÃO
-  // ========================================================
   bool validateFields() {
     final companyCnpj =
         targetCompany?.cnpj ?? widget.initialRoute?.companyCnpj ?? '';
@@ -416,7 +401,8 @@ mixin CreateRouteMixin on State<CreateRouteView> {
     }
 
     if (originPoint.value == null) {
-      errorMessage.value = 'Selecione a localização do ponto de saída no mapa ou GPS.';
+      errorMessage.value =
+          'Selecione a localização do ponto de saída no mapa ou GPS.';
       return false;
     }
 
@@ -426,7 +412,8 @@ mixin CreateRouteMixin on State<CreateRouteView> {
     }
 
     if (destinationPoint.value == null) {
-      errorMessage.value = 'Selecione a localização do destino no mapa ou GPS.';
+      errorMessage.value =
+          'Selecione a localização do destino no mapa ou GPS.';
       return false;
     }
 
@@ -450,7 +437,7 @@ mixin CreateRouteMixin on State<CreateRouteView> {
     if (context.canPop()) {
       context.pop(changed);
     } else {
-      context.goNamed(IndigoRouteNames.companyHome, extra: targetCompany);
+      context.goNamed(CompanyRouteNames.companyHome, extra: targetCompany);
     }
   }
 

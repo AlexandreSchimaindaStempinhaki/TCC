@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../domain/models/vehicle_entity.dart';
+import '../../../domain/models/vehicle_entity.dart';
 
 class CompanyVehicleCard extends StatelessWidget {
   final VehicleModel vehicle;

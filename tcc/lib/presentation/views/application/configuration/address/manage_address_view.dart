@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../../../core/di/dependency_injection.dart';
-import '../../../../../core/routes/indigo_routes.dart';
+import '../../../../../core/routes/account_routes.dart';
 import '../../../../../domain/models/address_entity.dart';
 import '../../../../controllers/user/user_viewmodel.dart';
-import '../../../../widgets/account_option.dart';
+import '../../../../widgets/account/account_option.dart';
 
 class ManageAddressView extends StatefulWidget {
   const ManageAddressView({super.key});
@@ -69,7 +68,7 @@ class _ManageAddressViewState extends State<ManageAddressView> {
       final currentUser = _userViewModel.state.user.value;
       final address = currentUser?.address;
       final isAddressMissing = address == null;
-      
+
       final isBoardingMissing = currentUser?.boardingPoint == null;
       final isDisembarkationMissing = currentUser?.disembarkationPoint == null;
 
@@ -121,7 +120,7 @@ class _ManageAddressViewState extends State<ManageAddressView> {
                       trailing: _buildMissingIndicator(isAddressMissing),
                       onTap: () {
                         context.pushNamed(
-                          IndigoRouteNames.editAddress,
+                          AccountRouteNames.editAddress,
                           extra: {
                             'initialCity': address?.city ?? '',
                             'initialNeighborhood': address?.neighborhood ?? '',
@@ -165,12 +164,12 @@ class _ManageAddressViewState extends State<ManageAddressView> {
                     AccountOption(
                       icon: Icons.pin_drop_outlined,
                       title: 'Ponto de Embarque (Ida)',
-                      trailing: isBoardingMissing 
-                          ? _buildMissingIndicator(true) 
+                      trailing: isBoardingMissing
+                          ? _buildMissingIndicator(true)
                           : const Icon(Icons.chevron_right_rounded),
                       onTap: () {
                         context.pushNamed(
-                          IndigoRouteNames.manageGeolocation,
+                          AccountRouteNames.manageGeolocation,
                           extra: {'isBoarding': true},
                         );
                       },
@@ -180,12 +179,12 @@ class _ManageAddressViewState extends State<ManageAddressView> {
                     AccountOption(
                       icon: Icons.flag_outlined,
                       title: 'Ponto de Desembarque (Volta)',
-                      trailing: isDisembarkationMissing 
-                          ? _buildMissingIndicator(true) 
+                      trailing: isDisembarkationMissing
+                          ? _buildMissingIndicator(true)
                           : const Icon(Icons.chevron_right_rounded),
                       onTap: () {
                         context.pushNamed(
-                          IndigoRouteNames.manageGeolocation,
+                          AccountRouteNames.manageGeolocation,
                           extra: {'isBoarding': false},
                         );
                       },

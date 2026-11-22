@@ -6,10 +6,10 @@ import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../../domain/models/company_entity.dart';
 import '../../../../domain/models/route_entity.dart';
-import '../../../widgets/account_option.dart';
-import '../../../widgets/animated_three_dots.dart';
-import '../../../widgets/indigo_splash_loader.dart';
-import '../../../widgets/route_itinerary_card.dart';
+import '../../../widgets/account/account_option.dart';
+import '../../../widgets/feedback/animated_three_dots.dart';
+import '../../../widgets/feedback/indigo_splash_loader.dart';
+import '../../../widgets/routes/route_itinerary_card.dart';
 import '../../mixins/route_entered_logic.dart';
 
 class RouteEnteredView extends StatefulWidget {

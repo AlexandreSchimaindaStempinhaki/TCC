@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../../domain/models/company_entity.dart';
-import '../../../widgets/animated_three_dots.dart';
-import '../../../widgets/company_member_card.dart';
+import '../../../widgets/feedback/animated_three_dots.dart';
+import '../../../widgets/company/company_member_card.dart';
 import '../../mixins/company_members_logic.dart';
 
 class CompanyMembersView extends StatefulWidget {

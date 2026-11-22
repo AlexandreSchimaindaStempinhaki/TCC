@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../widgets/help_question_option.dart';
+import '../../../widgets/account/help_question_option.dart';
 import '../../../../core/constants/app_assets.dart';
 
 class HelpFaqItem {

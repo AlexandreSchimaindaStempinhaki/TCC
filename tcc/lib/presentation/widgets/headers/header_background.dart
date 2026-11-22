@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:tcc/core/constants/app_assets.dart';
-import '../../core/extensions/context_extensions.dart';
+import '../../../core/extensions/context_extensions.dart';
 
 class HeaderBackground extends StatefulWidget {
   final double? height;

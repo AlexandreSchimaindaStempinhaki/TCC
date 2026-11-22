@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../core/di/dependency_injection.dart';
-import '../../../core/routes/indigo_routes.dart';
+import '../../../core/routes/route_operation_routes.dart';
 import '../../../domain/models/boarding_entity.dart';
 import '../../controllers/boarding/boarding_state_viewmodel.dart';
 import '../../controllers/boarding/boarding_viewmodel.dart';
@@ -185,7 +185,6 @@ mixin RouteAttendanceCalendarMixin on State<RouteAttendanceCalendarView> {
     loadMonthAttendance();
   }
 
-  /// Seleciona o dia no calendário sem redirecionar automaticamente.
   void selectDate(DateTime date) {
     final normalized = normalizeDate(date);
     if (!isOperatingDay(normalized)) return;
@@ -194,13 +193,12 @@ mixin RouteAttendanceCalendarMixin on State<RouteAttendanceCalendarView> {
     boardingViewModel.state.selectedDate.value = normalized;
   }
 
-  /// Abre a tela de programação no modo DIA ÚNICO.
   Future<void> openSelectedDaySchedule() async {
     final target = normalizeDate(selectedDate.value);
     if (!isOperatingDay(target)) return;
 
     await context.pushNamed(
-      IndigoRouteNames.routeDaySchedule,
+      RouteOperationNames.routeDaySchedule,
       extra: {
         'route': widget.route,
         'company': widget.company,
@@ -265,7 +263,7 @@ mixin RouteAttendanceCalendarMixin on State<RouteAttendanceCalendarView> {
         : '${_formatShortDayMonth(firstOp)} a ${_formatShortDayMonth(lastOp)}';
 
     await context.pushNamed(
-      IndigoRouteNames.routeDaySchedule,
+      RouteOperationNames.routeDaySchedule,
       extra: {
         'route': widget.route,
         'company': widget.company,

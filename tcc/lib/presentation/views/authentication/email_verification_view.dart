@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import '../../../core/extensions/context_extensions.dart';
-import '../../widgets/animated_three_dots.dart';
-import '../../widgets/header_background.dart';
+import '../../widgets/feedback/animated_three_dots.dart';
+import '../../widgets/headers/header_background.dart';
 import '../mixins/email_verification_logic.dart';
 
 class EmailVerificationPage extends StatefulWidget {

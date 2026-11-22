@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../domain/models/company_entity.dart';
-import '../../domain/models/route_entity.dart';
+import '../../../domain/models/company_entity.dart';
+import '../../../domain/models/route_entity.dart';
 
 class MyRouteCard extends StatelessWidget {
   final RouteModel route;

@@ -3,11 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
-import '../../../../../core/extensions/context_extensions.dart';
 import '../../../../../core/di/dependency_injection.dart';
+import '../../../../../core/extensions/context_extensions.dart';
 import '../../../../controllers/user/user_viewmodel.dart';
-import '../../../../widgets/header_background.dart';
-import '../../../../widgets/animated_three_dots.dart';
+import '../../../../widgets/feedback/animated_three_dots.dart';
+import '../../../../widgets/headers/header_background.dart';
 
 class EditProfileDateView extends StatefulWidget {
   const EditProfileDateView({super.key});
@@ -133,6 +133,7 @@ class _EditProfileDateViewState extends State<EditProfileDateView> {
       initialDate: _selectedDate ?? DateTime(2000, 1, 1),
       firstDate: DateTime(1920),
       lastDate: DateTime.now(),
+      initialEntryMode: DatePickerEntryMode.calendarOnly,
       locale: const Locale('pt', 'BR'),
     );
 

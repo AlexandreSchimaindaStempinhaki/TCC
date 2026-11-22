@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tcc/core/routes/indigo_routes.dart';
+import 'package:tcc/core/routes/home_routes.dart';
 
 import '../../../../core/constants/app_assets.dart';
 
@@ -32,7 +32,6 @@ class AboutView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-
                 Padding(
                   padding: const EdgeInsets.only(left: 6.0),
                   child: Text(
@@ -64,7 +63,13 @@ class AboutView extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
-          onPressed: () => context.pushNamed(IndigoRouteNames.account),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.goNamed(HomeRouteNames.account);
+            }
+          },
         ),
         title: Text(
           'Sobre o Aplicativo',
@@ -154,7 +159,7 @@ class AboutView extends StatelessWidget {
                   Center(
                     child: Column(
                       children: [
-                        SizedBox(height: 24),
+                        const SizedBox(height: 24),
                         Container(
                           width: 200,
                           height: 200,

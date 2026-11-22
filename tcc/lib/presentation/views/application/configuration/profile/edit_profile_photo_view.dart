@@ -7,8 +7,8 @@ import 'package:signals_flutter/signals_flutter.dart';
 import '../../../../../core/extensions/context_extensions.dart';
 import '../../../../../core/di/dependency_injection.dart';
 import '../../../../controllers/user/user_viewmodel.dart';
-import '../../../../widgets/header_background.dart';
-import '../../../../widgets/animated_three_dots.dart';
+import '../../../../widgets/headers/header_background.dart';
+import '../../../../widgets/feedback/animated_three_dots.dart';
 
 class EditProfilePhotoView extends StatefulWidget {
   const EditProfilePhotoView({super.key});

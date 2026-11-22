@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'animated_three_dots.dart';
+import '../feedback/animated_three_dots.dart';
 
 class UserRouteRequestCard extends StatelessWidget {
   final String displayName;

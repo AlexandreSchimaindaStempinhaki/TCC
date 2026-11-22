@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:tcc/core/routes/auth_routes.dart';
-import 'package:tcc/presentation/widgets/text_field.dart';
-import '../../widgets/header_background.dart';
+import 'package:tcc/presentation/widgets/inputs/text_field.dart';
+import '../../widgets/headers/header_background.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../controllers/authentication/auth_session_viewmodel.dart';
 import '../../../core/di/dependency_injection.dart';
-import '../../widgets/animated_three_dots.dart';
+import '../../widgets/feedback/animated_three_dots.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});

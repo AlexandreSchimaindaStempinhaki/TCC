@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:signals_flutter/signals_flutter.dart';
-import 'package:tcc/presentation/widgets/animated_three_dots.dart';
+import 'package:tcc/presentation/widgets/feedback/animated_three_dots.dart';
 
 import '../../../../domain/models/company_entity.dart';
 import '../../../../domain/models/route_entity.dart';
 import '../../../../domain/models/trip_entity.dart';
-import '../../../widgets/indigo_splash_loader.dart';
+import '../../../widgets/feedback/indigo_splash_loader.dart';
 import '../../../widgets/live_map/live_map_bottom_sheet.dart';
 import '../../../widgets/live_map/live_map_floating_controls.dart';
 import '../../../widgets/live_map/live_map_marker_factory.dart';

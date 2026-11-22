@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
-import '../../../widgets/animated_three_dots.dart';
-import '../../../widgets/my_route_card.dart';
-import '../../../widgets/nav_bar.dart';
+import '../../../widgets/feedback/animated_three_dots.dart';
+import '../../../widgets/routes/my_route_card.dart';
+import '../../../widgets/navigation/nav_bar.dart';
 import '../../mixins/my_routes_logic.dart';
 
 class MyRoutesView extends StatefulWidget {
@@ -129,7 +129,7 @@ class _MyRoutesViewState extends State<MyRoutesView> with MyRoutesMixin {
               Expanded(
                 child: loading
                     ? Center(
-                        child: AnimatedThreeDots(color: colorScheme.primary),
+                        child: AnimatedThreeDots(color: colorScheme.onSurface),
                       )
                     : routes.isEmpty
                         ? RefreshIndicator(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:tcc/presentation/widgets/account_option.dart';
+import 'package:tcc/presentation/widgets/account/account_option.dart';
 
-import '../animated_three_dots.dart';
+import '../feedback/animated_three_dots.dart';
 import 'day_attendance_modals.dart';
 import 'day_attendance_status.dart';
 import 'route_schedule_resolver.dart';

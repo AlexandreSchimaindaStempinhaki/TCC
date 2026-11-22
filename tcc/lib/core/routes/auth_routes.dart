@@ -1,18 +1,19 @@
 import 'package:go_router/go_router.dart';
-import '../../presentation/views/authentication/login_view.dart';
-import '../../presentation/views/authentication/welcome_view.dart';
-import '../../presentation/views/authentication/signup_view.dart';
-import '../../presentation/views/authentication/password_view.dart';
-import '../../presentation/views/authentication/signup_view_password.dart';
+
 import '../../presentation/views/authentication/email_verification_view.dart';
+import '../../presentation/views/authentication/login_view.dart';
+import '../../presentation/views/authentication/password_view.dart';
+import '../../presentation/views/authentication/signup_view.dart';
+import '../../presentation/views/authentication/signup_view_password.dart';
+import '../../presentation/views/authentication/welcome_view.dart';
 
 class AuthRouteNames {
-  static const welcome = '/welcome';
-  static const login = '/login';
-  static const signup = '/signup';
-  static const password = '/password';
-  static const signupPassword = '/signup-password';
-  static const emailVerification = '/email-verification';
+  static const welcome = 'welcome';
+  static const login = 'login';
+  static const signup = 'signup';
+  static const password = 'password';
+  static const signupPassword = 'signup_password';
+  static const emailVerification = 'email_verification';
 }
 
 class AuthPaths {
@@ -50,6 +51,12 @@ final List<RouteBase> authRoutes = [
   GoRoute(
     path: AuthPaths.signupPassword,
     name: AuthRouteNames.signupPassword,
+    redirect: (context, state) {
+      if (state.extra is! Map<String, dynamic>) {
+        return AuthPaths.signup;
+      }
+      return null;
+    },
     pageBuilder: (context, state) => NoTransitionPage(
       child: SignupPasswordPage(userData: state.extra as Map<String, dynamic>?),
     ),

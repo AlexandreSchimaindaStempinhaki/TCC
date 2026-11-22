@@ -6,7 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../core/di/dependency_injection.dart';
-import '../../../core/routes/indigo_routes.dart';
+import '../../../core/routes/company_routes.dart';
+import '../../../core/routes/home_routes.dart';
+import '../../../core/routes/route_operation_routes.dart';
 import '../../../domain/models/boarding_entity.dart';
 import '../../../domain/models/company_entity.dart';
 import '../../../domain/models/route_entity.dart';
@@ -889,7 +891,7 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
     if (!canDriveRoute || isActionExecuting.value) return;
 
     final selectedVehicle = await context.pushNamed<VehicleModel>(
-      IndigoRouteNames.companyVehicles,
+      CompanyRouteNames.companyVehicles,
       extra: {
         'company': currentCompany,
         'companyCnpj': currentRoute.companyCnpj,
@@ -1144,7 +1146,7 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
         (myActiveTrip != null || activeTripsForRoute.isEmpty);
 
     await context.pushNamed(
-      IndigoRouteNames.driverLiveMap,
+      RouteOperationNames.driverLiveMap,
       extra: {
         'route': currentRoute,
         'company': currentCompany,
@@ -1160,7 +1162,7 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
 
   Future<void> openAttendanceCalendar(BuildContext context) async {
     await context.pushNamed(
-      IndigoRouteNames.routeCalendar,
+      RouteOperationNames.routeCalendar,
       extra: {
         'route': currentRoute,
         'company': currentCompany,
@@ -1177,7 +1179,7 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
     if (company == null) return;
 
     await context.pushNamed(
-      IndigoRouteNames.companyReviews,
+      HomeRouteNames.companyReviews,
       extra: company,
     );
     if (mounted) {

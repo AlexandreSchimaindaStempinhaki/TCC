@@ -5,10 +5,10 @@ import '../../../../../core/di/dependency_injection.dart';
 import '../../../../../core/extensions/context_extensions.dart';
 import '../../../../../core/typedefs/types_defs.dart';
 import '../../../../controllers/authentication/auth_session_viewmodel.dart';
-import '../../../../widgets/animated_three_dots.dart';
-import '../../../../widgets/header_background.dart';
-import '../../../../widgets/password_checklist.dart';
-import '../../../../widgets/text_field.dart';
+import '../../../../widgets/feedback/animated_three_dots.dart';
+import '../../../../widgets/headers/header_background.dart';
+import '../../../../widgets/authentication/password_checklist.dart';
+import '../../../../widgets/inputs/text_field.dart';
 
 class ChangePasswordView extends StatefulWidget {
   final Map<String, dynamic>? extra;

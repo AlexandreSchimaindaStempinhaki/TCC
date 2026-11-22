@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../core/di/dependency_injection.dart';
-import '../../../core/routes/indigo_routes.dart';
+import '../../../core/routes/account_routes.dart';
+import '../../../core/routes/company_routes.dart';
+import '../../../core/routes/home_routes.dart';
 import '../../../domain/models/company_entity.dart';
 import '../../../domain/models/route_entity.dart';
 import '../../../domain/models/user_entity.dart';
@@ -15,7 +17,6 @@ import '../../controllers/company_member/company_member_viewmodel.dart';
 import '../../controllers/route/route_list_viewmodel.dart';
 import '../../controllers/route/route_viewmodel.dart';
 import '../../controllers/user/user_viewmodel.dart';
-import '../application/routes/create_route_view.dart';
 import '../application/routes/route_details_view.dart';
 
 mixin RouteDetailsMixin on State<RouteDetailsView> {
@@ -576,12 +577,12 @@ mixin RouteDetailsMixin on State<RouteDetailsView> {
     if (!context.mounted || action == null) return;
 
     if (action == 'profile') {
-      await context.pushNamed(IndigoRouteNames.editProfile);
+      await context.pushNamed(AccountRouteNames.editProfile);
     } else if (action == 'address') {
-      await context.pushNamed(IndigoRouteNames.manageAddress);
+      await context.pushNamed(AccountRouteNames.manageAddress);
     } else if (action == 'geolocation') {
       await context.pushNamed(
-        IndigoRouteNames.manageGeolocation,
+        AccountRouteNames.manageGeolocation,
         extra: {'isBoarding': missingBoarding},
       );
     }
@@ -615,7 +616,7 @@ mixin RouteDetailsMixin on State<RouteDetailsView> {
     companyViewModel.state.setSelectedCompany(company);
 
     if (!context.mounted) return;
-    await context.pushNamed(IndigoRouteNames.companyHome, extra: company);
+    await context.pushNamed(CompanyRouteNames.companyHome, extra: company);
 
     if (mounted) {
       await routeListViewModel.commands.fetchAllRoutes();
@@ -641,13 +642,9 @@ mixin RouteDetailsMixin on State<RouteDetailsView> {
     final company = await _resolveCompany(routeToEdit);
     if (!context.mounted) return;
 
-    final changed = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => CreateRouteView(
-          company: company ?? routeToEdit.company,
-          initialRoute: routeToEdit,
-        ),
-      ),
+    final changed = await context.pushNamed<bool>(
+      CompanyRouteNames.createRoute,
+      extra: routeToEdit.copyWith(company: company ?? routeToEdit.company),
     );
 
     if (changed == true && mounted) {
@@ -804,7 +801,7 @@ mixin RouteDetailsMixin on State<RouteDetailsView> {
     if (context.canPop()) {
       context.pop(true);
     } else {
-      context.goNamed(IndigoRouteNames.home);
+      context.goNamed(HomeRouteNames.home);
     }
   }
 

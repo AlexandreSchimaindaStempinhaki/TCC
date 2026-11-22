@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
-import '../../widgets/animated_three_dots.dart';
-import '../../widgets/header_background.dart';
+import '../../widgets/feedback/animated_three_dots.dart';
+import '../../widgets/headers/header_background.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../core/routes/auth_routes.dart';
-import '../../../core/routes/indigo_routes.dart';
-import '../../widgets/text_field.dart';
+import '../../../core/routes/home_routes.dart';
+import '../../widgets/inputs/text_field.dart';
 import '../../../core/constants/app_assets.dart';
 import '../../../core/di/dependency_injection.dart';
 import '../../../presentation/controllers/authentication/auth_session_viewmodel.dart';
@@ -209,7 +209,7 @@ class _LoginPageState extends State<LoginPage> {
                                     loginError.value =
                                         'Falha ao autenticar usuário.';
                                   } else {
-                                    router.goNamed(IndigoRouteNames.home);
+                                    router.goNamed(HomeRouteNames.home);
                                   }
                                 } catch (e) {
                                   if (!context.mounted) return;
@@ -300,7 +300,7 @@ class _LoginPageState extends State<LoginPage> {
                                     return;
                                   }
 
-                                  router.goNamed(IndigoRouteNames.home);
+                                  router.goNamed(HomeRouteNames.home);
                                 } catch (e) {
                                   if (!context.mounted) return;
                                   loginError.value =

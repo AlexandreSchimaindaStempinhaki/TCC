@@ -3,8 +3,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:signals_flutter/signals_flutter.dart';
-import 'package:tcc/presentation/widgets/account_option.dart';
-import 'package:tcc/presentation/widgets/animated_three_dots.dart';
+import 'package:tcc/presentation/widgets/account/account_option.dart';
+import 'package:tcc/presentation/widgets/feedback/animated_three_dots.dart';
 
 import '../../../../domain/models/company_entity.dart';
 import '../../../../domain/models/vehicle_entity.dart';

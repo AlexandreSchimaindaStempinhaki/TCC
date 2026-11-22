@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
-import '../../../../../core/routes/indigo_routes.dart';
+import '../../../../../core/routes/account_routes.dart';
 import '../../../../../core/utils/app_formatters.dart';
 import '../../../../../domain/models/user_entity.dart';
 import '../../../../controllers/user/user_viewmodel.dart';
-import '../../../../widgets/animated_three_dots.dart';
-import '../../../../widgets/clean_header_background.dart';
-import '../../../../widgets/profile_info_tile.dart';
+import '../../../../widgets/feedback/animated_three_dots.dart';
+import '../../../../widgets/headers/clean_header_background.dart';
+import '../../../../widgets/profile/profile_info_tile.dart';
 
 class ProfileView extends StatefulWidget {
   final UserViewModel userViewModel;
@@ -189,7 +189,7 @@ class _ProfileViewState extends State<ProfileView> {
                                 right: 4,
                                 child: GestureDetector(
                                   onTap: () => context.pushNamed(
-                                    IndigoRouteNames.editProfilePhoto,
+                                    AccountRouteNames.editProfilePhoto,
                                   ),
                                   child: Container(
                                     padding: const EdgeInsets.all(10),
@@ -224,7 +224,7 @@ class _ProfileViewState extends State<ProfileView> {
                             onTap: isOwner
                                 ? () {
                                     context.pushNamed(
-                                      IndigoRouteNames.editProfileField,
+                                      AccountRouteNames.editProfileField,
                                       extra: {
                                         'title': 'Nome',
                                         'currentValue': targetUser?.name ?? '',
@@ -309,7 +309,7 @@ class _ProfileViewState extends State<ProfileView> {
                       isRequired: true,
                       onTap: () {
                         context.pushNamed(
-                          IndigoRouteNames.editProfileField,
+                          AccountRouteNames.editProfileField,
                           extra: {
                             'title': 'Telefone',
                             'currentValue': targetUser?.phone ?? '',
@@ -335,7 +335,7 @@ class _ProfileViewState extends State<ProfileView> {
                       isRequired: true,
                       onTap: () {
                         context.pushNamed(
-                          IndigoRouteNames.editProfileField,
+                          AccountRouteNames.editProfileField,
                           extra: {
                             'title': 'CPF',
                             'currentValue': targetUser?.cpf ?? '',
@@ -360,7 +360,7 @@ class _ProfileViewState extends State<ProfileView> {
                       canEdit: isOwner,
                       isRequired: true,
                       onTap: () =>
-                          context.pushNamed(IndigoRouteNames.editProfileDate),
+                          context.pushNamed(AccountRouteNames.editProfileDate),
                     ),
                     ProfileInfoTile(
                       icon: Icons.directions_car_rounded,
@@ -370,7 +370,7 @@ class _ProfileViewState extends State<ProfileView> {
                       isRequired: false,
                       onTap: () {
                         context.pushNamed(
-                          IndigoRouteNames.editProfileField,
+                          AccountRouteNames.editProfileField,
                           extra: {
                             'title': 'CNH',
                             'currentValue': targetUser?.driverLicense ?? '',

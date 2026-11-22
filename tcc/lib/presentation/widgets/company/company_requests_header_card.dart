@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../domain/models/company_entity.dart';
+import '../../../domain/models/company_entity.dart';
 
 class CompanyRequestsHeaderCard extends StatelessWidget {
   final CompanyModel company;

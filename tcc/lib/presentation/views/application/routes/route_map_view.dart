@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:signals_flutter/signals_flutter.dart';
-import 'package:tcc/presentation/widgets/animated_three_dots.dart';
+import 'package:tcc/presentation/widgets/feedback/animated_three_dots.dart';
 import 'package:tcc/presentation/widgets/live_map/live_map_marker_factory.dart';
 
 class RouteMapView extends StatefulWidget {

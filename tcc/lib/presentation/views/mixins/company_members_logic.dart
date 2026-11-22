@@ -3,11 +3,12 @@ import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../core/di/dependency_injection.dart';
-import '../../../core/routes/indigo_routes.dart';
+import '../../../core/routes/account_routes.dart';
+import '../../../core/routes/company_routes.dart';
 import '../../../domain/models/company_entity.dart';
 import '../../controllers/company_member/company_member_state_viewmodel.dart';
 import '../../controllers/company_member/company_member_viewmodel.dart';
-import '../../widgets/account_option.dart';
+import '../../widgets/account/account_option.dart';
 import '../application/company/company_members_view.dart';
 
 export '../../controllers/company_member/company_member_state_viewmodel.dart'
@@ -71,12 +72,12 @@ mixin CompanyMembersMixin on State<CompanyMembersView> {
     if (context.canPop()) {
       context.pop();
     } else {
-      context.goNamed(IndigoRouteNames.companyHome, extra: targetCompany);
+      context.goNamed(CompanyRouteNames.companyHome, extra: targetCompany);
     }
   }
 
   void openMemberProfile(BuildContext context, CompanyMemberItem item) {
-    context.pushNamed(IndigoRouteNames.profile, extra: item.userModel);
+    context.pushNamed(AccountRouteNames.profile, extra: item.userModel);
   }
 
   Widget _buildSelectedRoleBadge(ColorScheme colorScheme) {

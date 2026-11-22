@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/di/dependency_injection.dart';
-import '../../../core/routes/indigo_routes.dart';
+import '../../../core/routes/company_routes.dart';
 import '../../../domain/models/company_entity.dart';
 import '../../../domain/models/vehicle_entity.dart';
 import '../../controllers/company/company_viewmodel.dart';
@@ -127,7 +127,7 @@ mixin CompanyVehiclesMixin on State<CompanyVehiclesView> {
 
   Future<void> openCreateVehicle(BuildContext context) async {
     final created = await context.pushNamed<bool>(
-      IndigoRouteNames.createVehicle,
+      CompanyRouteNames.createVehicle,
       extra: targetCompany,
     );
     if (created == true) {
@@ -140,7 +140,7 @@ mixin CompanyVehiclesMixin on State<CompanyVehiclesView> {
     VehicleModel vehicle,
   ) async {
     final changed = await context.pushNamed<bool>(
-      IndigoRouteNames.vehicleDetails,
+      CompanyRouteNames.vehicleDetails,
       extra: {
         'vehicle': vehicle,
         'company': targetCompany,

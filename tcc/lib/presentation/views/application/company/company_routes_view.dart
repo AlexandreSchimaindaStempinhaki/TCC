@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
-import 'package:tcc/presentation/widgets/company_route_card.dart';
+import 'package:tcc/presentation/widgets/company/company_route_card.dart';
 
 import '../../../../core/di/dependency_injection.dart';
-import '../../../../core/routes/indigo_routes.dart';
+import '../../../../core/routes/company_routes.dart';
+import '../../../../core/routes/home_routes.dart';
 import '../../../../domain/models/company_entity.dart';
 import '../../../../domain/models/route_entity.dart';
-import '../../../controllers/company/company_viewmodel.dart' show CompanyViewModel;
+import '../../../controllers/company/company_viewmodel.dart'
+    show CompanyViewModel;
 import '../../../controllers/route/route_list_viewmodel.dart';
-import '../../../widgets/animated_three_dots.dart';
+import '../../../widgets/feedback/animated_three_dots.dart';
 
 class CompanyRoutesView extends StatefulWidget {
   final CompanyModel? company;
@@ -75,7 +77,7 @@ class _CompanyRoutesViewState extends State<CompanyRoutesView> {
       context.pop();
     } else {
       context.goNamed(
-        IndigoRouteNames.companyHome,
+        CompanyRouteNames.companyHome,
         extra: _targetCompany,
       );
     }
@@ -117,13 +119,13 @@ class _CompanyRoutesViewState extends State<CompanyRoutesView> {
     final originText =
         (route.originName != null && route.originName!.trim().isNotEmpty)
         ? route.originName!
-        : 'Lat: ${route.origin.latitude.toStringAsFixed(4)}, Lng: ${route.origin.longitude.toStringAsFixed(4)}';
+        : 'Lat: ${route.origin.latitude.toStringAsFixed(4)}, Lng:${route.origin.longitude.toStringAsFixed(4)}';
 
     final destinationText =
         (route.destinationName != null &&
             route.destinationName!.trim().isNotEmpty)
         ? route.destinationName!
-        : 'Lat: ${route.destination.latitude.toStringAsFixed(4)}, Lng: ${route.destination.longitude.toStringAsFixed(4)}';
+        : 'Lat: ${route.destination.latitude.toStringAsFixed(4)}, Lng:${route.destination.longitude.toStringAsFixed(4)}';
 
     final imageUrl =
         (route.imageUrl != null && route.imageUrl!.trim().isNotEmpty)
@@ -143,7 +145,14 @@ class _CompanyRoutesViewState extends State<CompanyRoutesView> {
     final passengerCount = route.passengerIds.length;
     final vacanciesText = passengerCount == 0
         ? 'Vagas abertas'
-        : '$passengerCount ${passengerCount == 1 ? 'passageiro inscrito' : 'passageiros inscritos'}';
+        : '$passengerCount${passengerCount == 1 ? 'passageiro inscrito' : 'passageiros inscritos'}';
+
+    final ratingCount = effectiveCompany?.ratingCount ?? 0;
+    final rawRating = effectiveCompany?.rating ?? 0.0;
+    final hasRating = ratingCount > 0 && rawRating > 0;
+    final ratingDisplay = hasRating
+        ? rawRating.toStringAsFixed(1)
+        : 'Sem avaliações';
 
     return {
       'id': route.id,
@@ -160,7 +169,9 @@ class _CompanyRoutesViewState extends State<CompanyRoutesView> {
       'operatingDays': route.operatingDaysLabel,
       'shifts': shifts,
       'vacancies': vacanciesText,
-      'rating': 5.0,
+      'rating': ratingDisplay,
+      'ratingCount': ratingCount,
+      'hasRating': hasRating,
       'isFavorite': isFavorite,
       'image': imageUrl,
     };
@@ -397,7 +408,7 @@ class _CompanyRoutesViewState extends State<CompanyRoutesView> {
                         route: routeCardData,
                         onTap: () async {
                           await context.pushNamed(
-                            IndigoRouteNames.routeDetails,
+                            HomeRouteNames.routeDetails,
                             extra: routeCardData,
                           );
                           if (mounted) {

@@ -2,12 +2,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
-import 'package:tcc/presentation/widgets/animated_three_dots.dart';
-import 'package:tcc/presentation/widgets/nav_bar.dart';
-import 'package:tcc/presentation/widgets/saved_route_card.dart';
+import 'package:tcc/presentation/widgets/feedback/animated_three_dots.dart';
+import 'package:tcc/presentation/widgets/navigation/nav_bar.dart';
+import 'package:tcc/presentation/widgets/routes/saved_route_card.dart';
 
 import '../../../../core/di/dependency_injection.dart';
-import '../../../../core/routes/indigo_routes.dart';
+import '../../../../core/routes/home_routes.dart';
 import '../../../../domain/models/route_entity.dart';
 import '../../../controllers/route/route_list_viewmodel.dart';
 import '../../../controllers/user/user_viewmodel.dart';
@@ -120,6 +120,13 @@ class _SavedViewState extends State<SavedView> {
         ? 'Vagas abertas'
         : '$passengerCount ${passengerCount == 1 ? 'passageiro inscrito' : 'passageiros inscritos'}';
 
+    final ratingCount = route.company?.ratingCount ?? 0;
+    final rawRating = route.company?.rating ?? 0.0;
+    final hasRating = ratingCount > 0 && rawRating > 0;
+    final ratingDisplay = hasRating
+        ? rawRating.toStringAsFixed(1)
+        : 'Sem avaliações';
+
     return {
       'id': route.id,
       'routeModel': route,
@@ -137,7 +144,9 @@ class _SavedViewState extends State<SavedView> {
       'vacancies': vacanciesText,
       'status': statusText,
       'statusColor': statusColor,
-      'rating': 5.0,
+      'rating': ratingDisplay,
+      'ratingCount': ratingCount,
+      'hasRating': hasRating,
       'isFavorite': isFavorite,
       'image': imageUrl,
     };
@@ -194,7 +203,7 @@ class _SavedViewState extends State<SavedView> {
 
                 if (isLoading && allRoutes.isEmpty) {
                   return Center(
-                    child: AnimatedThreeDots(color: colorScheme.primary),
+                    child: AnimatedThreeDots(color: colorScheme.onSurface),
                   );
                 }
 
@@ -259,7 +268,7 @@ class _SavedViewState extends State<SavedView> {
                         route: cardData,
                         onTap: () {
                           context.pushNamed(
-                            IndigoRouteNames.routeDetails,
+                            HomeRouteNames.routeDetails,
                             extra: cardData,
                           );
                         },

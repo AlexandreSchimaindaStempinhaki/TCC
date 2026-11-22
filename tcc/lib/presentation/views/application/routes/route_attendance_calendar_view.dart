@@ -4,7 +4,7 @@ import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../../domain/models/company_entity.dart';
 import '../../../../domain/models/route_entity.dart';
-import '../../../widgets/animated_three_dots.dart';
+import '../../../widgets/feedback/animated_three_dots.dart';
 import '../../../widgets/calendar/calendar_actions_card.dart';
 import '../../../widgets/calendar/calendar_route_header_card.dart';
 import '../../../widgets/calendar/day_attendance_status.dart';

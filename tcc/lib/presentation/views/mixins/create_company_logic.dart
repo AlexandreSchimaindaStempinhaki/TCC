@@ -6,7 +6,7 @@ import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../../core/di/dependency_injection.dart';
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/routes/indigo_routes.dart';
+import '../../../../core/routes/home_routes.dart';
 import '../../../../core/utils/app_formatters.dart';
 import '../../../../domain/models/company_entity.dart';
 import '../../controllers/company/company_list_viewmodel.dart';
@@ -112,7 +112,7 @@ mixin CreateCompanyMixin on State<CreateCompanyView> {
     if (context.canPop()) {
       context.pop(true);
     } else {
-      context.goNamed(IndigoRouteNames.account);
+      context.goNamed(HomeRouteNames.account);
     }
   }
 
@@ -161,11 +161,9 @@ mixin CreateCompanyMixin on State<CreateCompanyView> {
   void _syncCompanyAcrossStates(CompanyModel finalCompany) {
     final cleanTarget = _cleanDigits(finalCompany.cnpj);
 
-    // 1. Atualiza imediatamente o estado da CompanyViewModel (CompanyHomeView)
     companyViewModel.state.setSelectedCompany(finalCompany);
     companyViewModel.state.updateCompanyInList(finalCompany);
 
-    // 2. Atualiza imediatamente as listas na CompanyListViewModel (MyCompaniesView)
     final ownedList = companyListViewModel.state.ownedCompanies.value;
     final existsInOwned = ownedList.any(
       (c) => _cleanDigits(c.cnpj) == cleanTarget,
@@ -239,7 +237,8 @@ mixin CreateCompanyMixin on State<CreateCompanyView> {
             rawCnpj,
             selectedLogoFile!,
           );
-          final logoResult = companyViewModel.updateCompanyLogoCommand.result.value;
+          final logoResult =
+              companyViewModel.updateCompanyLogoCommand.result.value;
           logoResult?.fold(
             onSuccess: (newLogoUrl) {
               targetCompany = targetCompany.copyWith(logoUrl: newLogoUrl);
@@ -249,10 +248,8 @@ mixin CreateCompanyMixin on State<CreateCompanyView> {
         } catch (_) {}
       }
 
-      // Sincroniza em memória imediatamente nas duas ViewModels!
       _syncCompanyAcrossStates(targetCompany);
 
-      // Dispara atualização em background sem travar ou sobrescrever com cache antigo
       try {
         await companyListViewModel.commands.fetchOwnedCompanies();
       } catch (_) {}

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_assets.dart';
+import '../../../core/constants/app_assets.dart';
 
 class IndigoSplashLoader extends StatefulWidget {
   final Duration duration;

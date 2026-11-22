@@ -659,14 +659,6 @@ mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
     }
   }
 
-  String _resolvePassengerName(String rawUserId) {
-    final user = _findLoadedUser(rawUserId);
-    if (user != null && user.name.trim().isNotEmpty) {
-      return user.name.trim();
-    }
-    return 'Passageiro';
-  }
-
   Map<String, int> buildStaffCountsBySlot({required bool isReturn}) {
     final slots = isReturn
         ? resolvedSchedules.returnSlots

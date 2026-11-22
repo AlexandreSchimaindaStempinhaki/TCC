@@ -1,16 +1,16 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:signals_flutter/signals_flutter.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:tcc/presentation/widgets/animated_three_dots.dart';
+import 'package:tcc/presentation/widgets/feedback/animated_three_dots.dart';
 
 import '../../../../../core/di/dependency_injection.dart';
-import '../../../../../core/routes/indigo_routes.dart';
+import '../../../../../core/routes/account_routes.dart';
 import '../../../../controllers/user/user_viewmodel.dart';
-import '../../../../widgets/account_option.dart';
-import '../../../../widgets/location_card.dart';
+import '../../../../widgets/account/account_option.dart';
+import '../../../../widgets/address/location_card.dart';
 
 class ManageGeolocationView extends StatefulWidget {
   // Flag para saber se estamos editando o Embarque (true) ou o Desembarque (false)
@@ -89,12 +89,13 @@ class _ManageGeolocationViewState extends State<ManageGeolocationView> {
       final currentUser = _userViewModel.state.user.value;
       if (currentUser != null) {
         final newGeoPoint = GeoPoint(position.latitude, position.longitude);
-        
+
         // Define qual campo será atualizado com base no parâmetro da tela
         final updatedUser = widget.isBoarding
             ? currentUser.copyWith(
                 boardingPoint: newGeoPoint,
-                disembarkationPoint: currentUser.disembarkationPoint ?? newGeoPoint,
+                disembarkationPoint:
+                    currentUser.disembarkationPoint ?? newGeoPoint,
               )
             : currentUser.copyWith(
                 disembarkationPoint: newGeoPoint,
@@ -138,16 +139,18 @@ class _ManageGeolocationViewState extends State<ManageGeolocationView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     // Títulos dinâmicos dependendo do tipo da tela
-    final screenTitle = widget.isBoarding ? 'Ponto de Embarque (Ida)' : 'Ponto de Desembarque (Volta)';
+    final screenTitle = widget.isBoarding
+        ? 'Ponto de Embarque (Ida)'
+        : 'Ponto de Desembarque (Volta)';
 
     return Watch((context) {
       final currentUser = _userViewModel.state.user.value;
-      
+
       // Lê o ponto de geolocalização correto
-      final GeoPoint? geoPoint = widget.isBoarding 
-          ? currentUser?.boardingPoint 
+      final GeoPoint? geoPoint = widget.isBoarding
+          ? currentUser?.boardingPoint
           : currentUser?.disembarkationPoint;
 
       return Scaffold(
@@ -179,7 +182,7 @@ class _ManageGeolocationViewState extends State<ManageGeolocationView> {
                 onViewOnMap: () {
                   if (geoPoint != null) {
                     context.pushNamed(
-                      IndigoRouteNames.singleLocationMap,
+                      AccountRouteNames.singleLocationMap,
                       extra: {
                         'latitude': geoPoint.latitude,
                         'longitude': geoPoint.longitude,
@@ -228,10 +231,11 @@ class _ManageGeolocationViewState extends State<ManageGeolocationView> {
                       title: 'Escolher no Mapa',
                       trailing: const Icon(Icons.chevron_right_rounded),
                       onTap: () async {
-                        final initialLocation = geoPoint ?? null;
+                        final initialLocation = geoPoint;
 
-                        final LatLng? pickedLocation = await context.pushNamed<LatLng>(
-                          IndigoRouteNames.locationPicker,
+                        final LatLng? pickedLocation =
+                            await context.pushNamed<LatLng>(
+                          AccountRouteNames.locationPicker,
                           extra: initialLocation,
                         );
 
@@ -240,16 +244,18 @@ class _ManageGeolocationViewState extends State<ManageGeolocationView> {
                             pickedLocation.latitude,
                             pickedLocation.longitude,
                           );
-                          
+
                           final updatedUser = widget.isBoarding
                               ? currentUser.copyWith(
                                   boardingPoint: newGeoPoint,
-                                  disembarkationPoint: currentUser.disembarkationPoint ?? newGeoPoint,
+                                  disembarkationPoint:
+                                      currentUser.disembarkationPoint ??
+                                          newGeoPoint,
                                 )
                               : currentUser.copyWith(
                                   disembarkationPoint: newGeoPoint,
                                 );
-                                
+
                           await _userViewModel.commands.saveUserData(
                             updatedUser,
                           );

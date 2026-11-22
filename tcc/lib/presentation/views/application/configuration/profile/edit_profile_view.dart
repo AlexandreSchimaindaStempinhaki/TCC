@@ -4,14 +4,14 @@ import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../../../core/di/dependency_injection.dart';
+import '../../../../../core/routes/account_routes.dart';
 import '../../../../../core/routes/auth_routes.dart';
-import '../../../../../core/routes/indigo_routes.dart';
 import '../../../../../core/utils/app_formatters.dart';
-import '../../../../controllers/user/user_viewmodel.dart';
-import '../../../../widgets/account_option.dart';
-import '../../../../widgets/profile_header_card.dart';
-import '../../../../widgets/animated_three_dots.dart';
 import '../../../../controllers/authentication/auth_session_viewmodel.dart';
+import '../../../../controllers/user/user_viewmodel.dart';
+import '../../../../widgets/account/account_option.dart';
+import '../../../../widgets/feedback/animated_three_dots.dart';
+import '../../../../widgets/profile/profile_header_card.dart';
 
 class EditProfileView extends StatefulWidget {
   const EditProfileView({super.key});
@@ -143,7 +143,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                         email: emailText,
                         photoUrl: photoUrl,
                         onTap: () {
-                          context.pushNamed(IndigoRouteNames.profile);
+                          context.pushNamed(AccountRouteNames.profile);
                         },
                       ),
                       const SizedBox(height: 16),
@@ -177,7 +177,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                                 currentUser?.photoUrl,
                               ),
                               onTap: () => context.pushNamed(
-                                IndigoRouteNames.editProfilePhoto,
+                                AccountRouteNames.editProfilePhoto,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -190,7 +190,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                               ),
                               onTap: () {
                                 context.pushNamed(
-                                  IndigoRouteNames.editProfileField,
+                                  AccountRouteNames.editProfileField,
                                   extra: {
                                     'title': 'Nome',
                                     'currentValue': currentUser?.name ?? '',
@@ -220,7 +220,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                               ),
                               onTap: () {
                                 context.pushNamed(
-                                  IndigoRouteNames.editProfileField,
+                                  AccountRouteNames.editProfileField,
                                   extra: {
                                     'title': 'Telefone',
                                     'currentValue': currentUser?.phone ?? '',
@@ -246,7 +246,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                               trailing: _buildMissingIndicator(currentUser?.cpf),
                               onTap: () {
                                 context.pushNamed(
-                                  IndigoRouteNames.editProfileField,
+                                  AccountRouteNames.editProfileField,
                                   extra: {
                                     'title': 'CPF',
                                     'currentValue': currentUser?.cpf ?? '',
@@ -273,7 +273,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                                 currentUser?.birthDate?.toString(),
                               ),
                               onTap: () => context.pushNamed(
-                                IndigoRouteNames.editProfileDate,
+                                AccountRouteNames.editProfileDate,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -283,7 +283,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                               title: 'CNH',
                               onTap: () {
                                 context.pushNamed(
-                                  IndigoRouteNames.editProfileField,
+                                  AccountRouteNames.editProfileField,
                                   extra: {
                                     'title': 'CNH',
                                     'currentValue':
@@ -315,7 +315,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                                 title: 'Mudar Senha',
                                 onTap: () {
                                   context.pushNamed(
-                                    IndigoRouteNames.confirmPassword,
+                                    AccountRouteNames.confirmPassword,
                                     extra: {
                                       'title': 'Alterar Senha',
                                       'subtitle':
@@ -337,7 +337,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                                           authViewModel.session.clearMessage();
                                           if (context.mounted) {
                                             context.pushNamed(
-                                              IndigoRouteNames.changePassword,
+                                              AccountRouteNames.changePassword,
                                               extra: {
                                                 'currentPassword':
                                                     currentPassword,
@@ -371,7 +371,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                               onTap: () {
                                 if (_hasPasswordProvider()) {
                                   context.pushNamed(
-                                    IndigoRouteNames.confirmPassword,
+                                    AccountRouteNames.confirmPassword,
                                     extra: {
                                       'title': 'Excluir Conta',
                                       'subtitle':

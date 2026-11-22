@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tcc/presentation/widgets/account_option.dart';
+import 'package:tcc/presentation/widgets/account/account_option.dart';
 
 import 'day_attendance_status.dart';
 

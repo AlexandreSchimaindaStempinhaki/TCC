@@ -4,9 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/dependency_injection.dart';
 import '../../../../core/routes/auth_routes.dart';
-import '../../../../core/routes/indigo_routes.dart';
+import '../../../../core/routes/home_routes.dart';
 import '../../controllers/authentication/auth_session_viewmodel.dart';
-import '../../widgets/indigo_splash_loader.dart';
+import '../../widgets/feedback/indigo_splash_loader.dart';
 
 class SplashView extends StatelessWidget {
   const SplashView({super.key});
@@ -22,9 +22,9 @@ class SplashView extends StatelessWidget {
     if (!isLoggedIn) {
       context.go(AuthPaths.welcome);
     } else if (firebaseUser != null && !firebaseUser.emailVerified) {
-      context.go('/email-verification');
+      context.go(AuthPaths.emailVerification);
     } else {
-      context.go(IndigoPaths.home);
+      context.go(HomePaths.home);
     }
   }
 

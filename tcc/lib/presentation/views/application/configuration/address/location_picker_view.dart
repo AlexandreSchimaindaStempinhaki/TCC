@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:tcc/presentation/widgets/live_map/live_map_marker_factory.dart';
 
-import '../../../../widgets/animated_three_dots.dart';
+import '../../../../widgets/feedback/animated_three_dots.dart';
 
 class LocationPickerView extends StatefulWidget {
   final GeoPoint? initialLocation;

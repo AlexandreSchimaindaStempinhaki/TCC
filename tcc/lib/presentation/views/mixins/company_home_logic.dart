@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../core/di/dependency_injection.dart';
-import '../../../core/routes/indigo_routes.dart';
+import '../../../core/routes/company_routes.dart';
+import '../../../core/routes/home_routes.dart';
 import '../../../domain/models/company_entity.dart';
 import '../../../domain/models/user_entity.dart';
 import '../../controllers/company/company_list_viewmodel.dart';
@@ -13,7 +14,6 @@ import '../../controllers/company_member/company_member_viewmodel.dart';
 import '../../controllers/route/route_list_viewmodel.dart';
 import '../../controllers/user/user_viewmodel.dart';
 import '../application/company/company_home_view.dart';
-import '../application/routes/create_route_view.dart';
 
 mixin CompanyHomeMixin on State<CompanyHomeView> {
   late final CompanyViewModel companyViewModel;
@@ -132,7 +132,6 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
 
     final rawCnpj = cleanDigits(company.cnpj);
 
-    // Garante usuário atualizado via ViewModel -> Service
     try {
       await userViewModel.commands.fetchUser().timeout(
         const Duration(seconds: 6),
@@ -143,7 +142,6 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
 
     bool membersLoaded = false;
 
-    // Carrega membros detalhados e rotas da empresa em paralelo (para contar passageiros mesmo sem ser equipe)
     await Future.wait([
       companyMemberViewModel.commands
           .loadCompanyMembersDetailed(company)
@@ -159,13 +157,11 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
 
     if (!mounted) return;
 
-    // 1. Recalcula total de membros (equipe + passageiros de todas as rotas, sem duplicatas)
     totalMembersCount.value = _computeTotalMembersCount(
       company,
       includeDetailedMembers: membersLoaded,
     );
 
-    // 2. Avalia cargo do usuário atual na empresa
     final userIds = _allCurrentUserIdentifiers();
     if (userIds.isEmpty) return;
 
@@ -251,7 +247,6 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
       }
     }
 
-    // 1. Membros carregados pelo CompanyMemberViewModel (UID + CPF + e-mail agrupados)
     if (includeDetailedMembers) {
       final detailedMembers = [
         ...companyMemberViewModel.state.ownersList.value,
@@ -270,14 +265,11 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
       }
     }
 
-    // 2. Dono e membros salvos no documento da empresa
     registerPersonAliases([company.ownerId]);
     for (final memberId in company.memberIds) {
       registerPersonAliases([memberId]);
     }
 
-    // 3. Motoristas e passageiros aprovados em todas as rotas da empresa
-    //    (garante a contagem de passageiros mesmo para quem não é motorista/gerente/CEO)
     final rawCnpj = cleanDigits(company.cnpj);
     final companyRoutes = routeListViewModel.state.companyRoutes.value.where(
       (r) => cleanDigits(r.companyCnpj) == rawCnpj,
@@ -378,7 +370,7 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
     if (context.canPop()) {
       context.pop();
     } else {
-      context.goNamed(IndigoRouteNames.myCompanies);
+      context.goNamed(HomeRouteNames.linkedCompanies);
     }
   }
 
@@ -388,10 +380,9 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
   ) async {
     if (!canManageCompanyRoutes(company)) return;
 
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => CreateRouteView(company: company),
-      ),
+    await context.pushNamed(
+      CompanyRouteNames.createRoute,
+      extra: company,
     );
     if (mounted) {
       await refreshCompanyData();
@@ -399,10 +390,10 @@ mixin CompanyHomeMixin on State<CompanyHomeView> {
   }
 
   Future<void> openEditCompany(CompanyModel company) async {
-    if (!canManageCompanyRoutes(company)) return;
+    if (!isCompanyOwner(company)) return;
 
     await context.pushNamed(
-      IndigoRouteNames.createCompany,
+      CompanyRouteNames.createCompany,
       extra: company,
     );
     if (mounted) {

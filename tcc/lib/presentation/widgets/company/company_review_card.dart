@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../domain/models/company_review_entity.dart';
+import '../../../domain/models/company_review_entity.dart';
 
 class CompanyReviewCard extends StatefulWidget {
   final CompanyReviewModel review;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/routes/indigo_routes.dart';
+
+import '../../../core/routes/home_routes.dart';
 
 class BottomNavBar extends StatefulWidget {
   final int currentIndex;
@@ -11,7 +12,8 @@ class BottomNavBar extends StatefulWidget {
   State<BottomNavBar> createState() => _BottomNavBarState();
 }
 
-class _BottomNavBarState extends State<BottomNavBar> with SingleTickerProviderStateMixin {
+class _BottomNavBarState extends State<BottomNavBar>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   bool _isNavigating = false;
@@ -48,23 +50,23 @@ class _BottomNavBarState extends State<BottomNavBar> with SingleTickerProviderSt
     });
 
     _controller.reset();
-    
+
     await _controller.forward();
 
     if (!context.mounted) return;
 
     switch (index) {
       case 0:
-        context.goNamed(IndigoRouteNames.home);
+        context.goNamed(HomeRouteNames.home);
         break;
       case 1:
-        context.goNamed(IndigoRouteNames.saved);
+        context.goNamed(HomeRouteNames.saved);
         break;
       case 2:
-        context.goNamed(IndigoRouteNames.myRoutes);
+        context.goNamed(HomeRouteNames.myRoutes);
         break;
       case 3:
-        context.goNamed(IndigoRouteNames.account);
+        context.goNamed(HomeRouteNames.account);
         break;
     }
 
@@ -123,8 +125,11 @@ class _BottomNavBarState extends State<BottomNavBar> with SingleTickerProviderSt
                     animation: _animation,
                     builder: (context, child) {
                       final double currentValue = _animation.value;
-                      
-                      final double pillLeft = (currentValue * itemWidth) + (itemWidth / 2) - (pillWidth / 2);
+
+                      final double pillLeft =
+                          (currentValue * itemWidth) +
+                          (itemWidth / 2) -
+                          (pillWidth / 2);
 
                       return Stack(
                         children: [
@@ -136,19 +141,26 @@ class _BottomNavBarState extends State<BottomNavBar> with SingleTickerProviderSt
                               width: pillWidth,
                               decoration: BoxDecoration(
                                 color: activeColor.withOpacity(
-                                  theme.brightness == Brightness.dark ? 0.25 : 0.12,
+                                  theme.brightness == Brightness.dark
+                                      ? 0.25
+                                      : 0.12,
                                 ),
                                 borderRadius: BorderRadius.circular(22),
                               ),
                             ),
                           ),
-                          
+
                           // 2. OS ÍCONES
                           Row(
                             children: List.generate(navIcons.length, (index) {
-                              final double distance = (currentValue - index).abs();
+                              final double distance =
+                                  (currentValue - index).abs();
                               final double t = (1.0 - distance.clamp(0.0, 1.0));
-                              final Color? iconColor = Color.lerp(inactiveColor, activeColor, t);
+                              final Color? iconColor = Color.lerp(
+                                inactiveColor,
+                                activeColor,
+                                t,
+                              );
 
                               return SizedBox(
                                 width: itemWidth,
@@ -162,7 +174,7 @@ class _BottomNavBarState extends State<BottomNavBar> with SingleTickerProviderSt
                                     child: Icon(
                                       navIcons[index],
                                       color: iconColor,
-                                      size: 24, // Ícone num tamanho bom e visível
+                                      size: 24,
                                     ),
                                   ),
                                 ),

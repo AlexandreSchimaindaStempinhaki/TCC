@@ -3,11 +3,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
-import 'package:tcc/presentation/widgets/animated_three_dots.dart';
-import 'package:tcc/presentation/widgets/linked_company_card.dart';
+import 'package:tcc/presentation/widgets/feedback/animated_three_dots.dart';
+import 'package:tcc/presentation/widgets/company/linked_company_card.dart';
 
 import '../../../../core/di/dependency_injection.dart';
-import '../../../../core/routes/indigo_routes.dart';
+import '../../../../core/routes/company_routes.dart';
 import '../../../../domain/models/company_entity.dart';
 import '../../../controllers/company/company_viewmodel.dart';
 import '../../../controllers/user/user_viewmodel.dart';
@@ -85,7 +85,7 @@ class _LinkedCompaniesViewState extends State<LinkedCompaniesView> {
 
     // 2. Navega para a home da empresa (passando company no extra caso a rota utilize)
     context.pushNamed(
-      IndigoRouteNames.companyHome,
+      CompanyRouteNames.companyHome,
       extra: company,
     );
   }
@@ -152,6 +152,7 @@ class _LinkedCompaniesViewState extends State<LinkedCompaniesView> {
           return matchesCurrentUser(
             value['uid'] ??
                 value['userId'] ??
+                value['userCpf'] ??
                 value['id'] ??
                 value['cpf'] ??
                 value['cpf_pessoa'] ??
@@ -198,6 +199,7 @@ class _LinkedCompaniesViewState extends State<LinkedCompaniesView> {
         String? fallbackCnpj,
       }) {
         final personField =
+            map['userCpf'] ??
             map['cpf_pessoa'] ??
             map['cpfPessoa'] ??
             map['userId'] ??
@@ -216,15 +218,15 @@ class _LinkedCompaniesViewState extends State<LinkedCompaniesView> {
             matchesCurrentUser(suffixId) ||
             matchesCurrentUser(docId)) {
           final rawCnpj =
+              map['companyCnpj'] ??
               map['cnpj_empresa'] ??
               map['cnpjEmpresa'] ??
-              map['companyCnpj'] ??
               map['cnpj'] ??
               fallbackCnpj ??
               docParts.first;
 
-          final rawCargo = (map['cargo'] ??
-                  map['role'] ??
+          final rawCargo = (map['role'] ??
+                  map['cargo'] ??
                   map['funcao'] ??
                   map['type'] ??
                   map['status'] ??

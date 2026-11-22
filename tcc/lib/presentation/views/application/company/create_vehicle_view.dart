@@ -8,9 +8,9 @@ import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/utils/app_formatters.dart';
 import '../../../../domain/models/company_entity.dart';
 import '../../../../domain/models/vehicle_entity.dart';
-import '../../../widgets/animated_three_dots.dart';
-import '../../../widgets/header_background.dart';
-import '../../../widgets/text_field.dart';
+import '../../../widgets/feedback/animated_three_dots.dart';
+import '../../../widgets/headers/header_background.dart';
+import '../../../widgets/inputs/text_field.dart';
 import '../../mixins/create_vehicle_logic.dart';
 
 class CreateVehicleView extends StatefulWidget {

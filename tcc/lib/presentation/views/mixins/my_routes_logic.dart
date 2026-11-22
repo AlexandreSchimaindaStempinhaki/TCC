@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../core/di/dependency_injection.dart';
-import '../../../core/routes/indigo_routes.dart';
+import '../../../core/routes/route_operation_routes.dart';
 import '../../../domain/models/company_entity.dart';
 import '../../../domain/models/route_entity.dart';
 import '../../controllers/company/company_list_viewmodel.dart';
@@ -322,7 +322,7 @@ mixin MyRoutesMixin on State<MyRoutesView> {
     JoinedRouteItem item,
   ) async {
     await context.pushNamed(
-      IndigoRouteNames.routeEntered,
+      RouteOperationNames.routeEntered,
       extra: {
         'route': item.route,
         'company': item.company,

@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
+import 'package:tcc/presentation/widgets/account/account_option.dart';
+import 'package:tcc/presentation/widgets/feedback/animated_three_dots.dart';
+import 'package:tcc/presentation/widgets/feedback/logout_confirmation.dart';
+import 'package:tcc/presentation/widgets/navigation/nav_bar.dart';
 
 import '../../../../core/di/dependency_injection.dart';
-import '../../../../core/theme/theme_controller.dart';
-import 'package:tcc/presentation/widgets/nav_bar.dart';
-import 'package:tcc/presentation/widgets/account_option.dart';
-import 'package:tcc/presentation/widgets/logout_confirmation.dart';
-import 'package:tcc/presentation/widgets/animated_three_dots.dart';
+import '../../../../core/routes/account_routes.dart';
 import '../../../../core/routes/auth_routes.dart';
-import '../../../../core/routes/indigo_routes.dart';
+import '../../../../core/routes/company_routes.dart';
+import '../../../../core/routes/home_routes.dart';
+import '../../../../core/theme/theme_controller.dart';
 import '../../../controllers/authentication/auth_session_viewmodel.dart';
 import '../../../controllers/company/company_list_viewmodel.dart';
 import '../../../controllers/notifications/notification_viewmodel.dart';
@@ -197,7 +199,9 @@ class _AccountViewState extends State<AccountView> {
                                     )
                                   : null,
                               onTap: () {
-                                context.pushNamed(IndigoRouteNames.editProfile);
+                                context.pushNamed(
+                                  AccountRouteNames.editProfile,
+                                );
                               },
                             );
                           }),
@@ -238,7 +242,7 @@ class _AccountViewState extends State<AccountView> {
                                   : null,
                               onTap: () {
                                 context.pushNamed(
-                                  IndigoRouteNames.manageAddress,
+                                  AccountRouteNames.manageAddress,
                                 );
                               },
                             );
@@ -322,7 +326,7 @@ class _AccountViewState extends State<AccountView> {
                             title: 'Cadastrar Empresa',
                             onTap: () async {
                               await context.pushNamed(
-                                IndigoRouteNames.createCompany,
+                                CompanyRouteNames.createCompany,
                               );
                               _companyListViewModel.commands
                                   .fetchOwnedCompanies();
@@ -337,7 +341,7 @@ class _AccountViewState extends State<AccountView> {
                             title: 'Empresas Vinculadas',
                             onTap: () {
                               context.pushNamed(
-                                IndigoRouteNames.linkedCompanies,
+                                HomeRouteNames.linkedCompanies,
                               );
                             },
                           ),
@@ -350,7 +354,7 @@ class _AccountViewState extends State<AccountView> {
                             title: 'Ajuda e Suporte',
                             onTap: () {
                               context.pushNamed(
-                                IndigoRouteNames.helpAndSupport,
+                                AccountRouteNames.helpAndSupport,
                               );
                             },
                           ),
@@ -360,7 +364,7 @@ class _AccountViewState extends State<AccountView> {
                             icon: Icons.info_outline_rounded,
                             title: 'Sobre o Aplicativo',
                             onTap: () {
-                              context.goNamed(IndigoRouteNames.about);
+                              context.pushNamed(AccountRouteNames.about);
                             },
                           ),
                           const SizedBox(height: 8),

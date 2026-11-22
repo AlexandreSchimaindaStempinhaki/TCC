@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../core/di/dependency_injection.dart';
-import '../../../core/routes/indigo_routes.dart';
+import '../../../core/routes/company_routes.dart';
 import '../../../domain/models/company_entity.dart';
 import '../../../domain/models/vehicle_entity.dart';
 import '../../controllers/company/company_viewmodel.dart';
@@ -85,7 +85,7 @@ mixin VehicleDetailsMixin on State<VehicleDetailsView> {
     final company = targetCompany;
     if (company == null) return;
     context.pushNamed(
-      IndigoRouteNames.companyHome,
+      CompanyRouteNames.companyHome,
       extra: company,
     );
   }
@@ -95,7 +95,7 @@ mixin VehicleDetailsMixin on State<VehicleDetailsView> {
     VehicleModel currentVehicle,
   ) async {
     final updated = await context.pushNamed<bool>(
-      IndigoRouteNames.createVehicle,
+      CompanyRouteNames.createVehicle,
       extra: {
         'vehicle': currentVehicle,
         'company': targetCompany,

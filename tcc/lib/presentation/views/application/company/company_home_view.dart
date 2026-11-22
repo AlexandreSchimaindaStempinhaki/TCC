@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart' show GoRouterHelper;
 import 'package:signals_flutter/signals_flutter.dart';
 
-import '../../../../core/routes/indigo_routes.dart';
+import '../../../../core/routes/company_routes.dart';
+import '../../../../core/routes/home_routes.dart';
 import '../../../../domain/models/company_entity.dart';
-import '../../../widgets/account_option.dart';
-import '../../../widgets/animated_three_dots.dart';
+import '../../../widgets/account/account_option.dart';
+import '../../../widgets/feedback/animated_three_dots.dart';
 import '../../mixins/company_home_logic.dart';
 
 class CompanyHomeView extends StatefulWidget {
@@ -270,7 +271,7 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                         borderRadius: BorderRadius.circular(12),
                                         onTap: () async {
                                           await context.pushNamed(
-                                            IndigoRouteNames.companyMembers,
+                                            CompanyRouteNames.companyMembers,
                                             extra: company,
                                           );
                                           if (mounted) {
@@ -319,7 +320,7 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                         borderRadius: BorderRadius.circular(12),
                                         onTap: () async {
                                           await context.pushNamed(
-                                            IndigoRouteNames.companyReviews,
+                                            HomeRouteNames.companyReviews,
                                             extra: company,
                                           );
                                         },
@@ -405,7 +406,7 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                               trailing: const SizedBox.shrink(),
                               onTap: () async {
                                 await context.pushNamed(
-                                  IndigoRouteNames.companyRoutes,
+                                  CompanyRouteNames.companyRoutes,
                                   extra: company,
                                 );
                                 if (mounted) {
@@ -421,7 +422,7 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                               trailing: const SizedBox.shrink(),
                               onTap: () async {
                                 await context.pushNamed(
-                                  IndigoRouteNames.companyVehicles,
+                                  CompanyRouteNames.companyVehicles,
                                   extra: {
                                     'company': company,
                                     'canManage': canManage,
@@ -439,7 +440,7 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                               trailing: const SizedBox.shrink(),
                               onTap: () async {
                                 await context.pushNamed(
-                                  IndigoRouteNames.companyMembers,
+                                  CompanyRouteNames.companyMembers,
                                   extra: company,
                                 );
                                 if (mounted) {
@@ -455,7 +456,7 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                               trailing: const SizedBox.shrink(),
                               onTap: () async {
                                 await context.pushNamed(
-                                  IndigoRouteNames.companyReviews,
+                                  HomeRouteNames.companyReviews,
                                   extra: company,
                                 );
                               },
@@ -477,7 +478,7 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                 trailing: const SizedBox.shrink(),
                                 onTap: () async {
                                   await context.pushNamed(
-                                    IndigoRouteNames.createVehicle,
+                                    CompanyRouteNames.createVehicle,
                                     extra: company,
                                   );
                                 },
@@ -490,7 +491,7 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                                 trailing: const SizedBox.shrink(),
                                 onTap: () async {
                                   await context.pushNamed(
-                                    IndigoRouteNames.companyRouteRequests,
+                                    CompanyRouteNames.companyRouteRequests,
                                     extra: company,
                                   );
                                   if (mounted) {
@@ -500,14 +501,14 @@ class _CompanyHomeViewState extends State<CompanyHomeView>
                               ),
                               const SizedBox(height: 8),
 
-                              AccountOption(
-                                icon: Icons.edit_note_rounded,
-                                title: 'Editar Dados da Empresa',
-                                onTap: () => openEditCompany(company),
-                              ),
-                              const SizedBox(height: 8),
-
                               if (isOwner) ...[
+                                AccountOption(
+                                  icon: Icons.edit_note_rounded,
+                                  title: 'Editar Dados da Empresa',
+                                  onTap: () => openEditCompany(company),
+                                ),
+                                const SizedBox(height: 8),
+
                                 AccountOption(
                                   icon: Icons.delete_outline_rounded,
                                   title: 'Excluir Empresa',

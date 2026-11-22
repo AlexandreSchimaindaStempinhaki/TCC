@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../core/di/dependency_injection.dart';
-import '../../../core/routes/indigo_routes.dart';
+import '../../../core/routes/company_routes.dart';
 import '../../../domain/models/company_entity.dart';
 import '../../../domain/models/route_entity.dart';
 import '../../controllers/company/company_viewmodel.dart';
@@ -144,7 +144,7 @@ mixin CompanyRouteRequestsMixin on State<CompanyRouteRequestsView> {
       context.pop();
     } else {
       context.goNamed(
-        IndigoRouteNames.companyHome,
+        CompanyRouteNames.companyHome,
         extra: targetCompany,
       );
     }

@@ -4,15 +4,14 @@ import 'package:signals_flutter/signals_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tcc/presentation/widgets/logout_confirmation.dart';
+import 'package:tcc/presentation/widgets/feedback/logout_confirmation.dart';
 import '../../../core/di/dependency_injection.dart';
 import '../../../core/routes/auth_routes.dart';
-import '../../../core/routes/indigo_routes.dart';
+import '../../../core/routes/home_routes.dart';
 import '../../../core/typedefs/types_defs.dart';
 import '../../controllers/authentication/auth_session_viewmodel.dart';
-import '../authentication/email_verification_view.dart'; // <-- Adicione este import para reconhecer a classe
+import '../authentication/email_verification_view.dart';
 
-// Restringe diretamente ao State da EmailVerificationPage
 mixin EmailVerificationLogic on State<EmailVerificationPage> {
   late final AuthViewModel authController;
 
@@ -53,7 +52,6 @@ mixin EmailVerificationLogic on State<EmailVerificationPage> {
   }
 
   void _loadUserEmail() {
-    // Como agora o mixin sabe que está em EmailVerificationPage, podemos usar widget.userData diretamente!
     String? email = FirebaseAuth.instance.currentUser?.email;
     if ((email == null || email.isEmpty) && widget.userData != null) {
       email = widget.userData?['email'];
@@ -102,7 +100,7 @@ mixin EmailVerificationLogic on State<EmailVerificationPage> {
 
       if (mounted) {
         context.goNamed(
-          AuthPaths.login,
+          AuthRouteNames.login,
           extra:
               'Sua conta foi excluída porque se passaram 30 minutos. Por favor, refaça o cadastro.',
         );
@@ -181,7 +179,7 @@ mixin EmailVerificationLogic on State<EmailVerificationPage> {
       result.fold(
         onSuccess: (isVerified) {
           if (isVerified) {
-            context.goNamed(IndigoRouteNames.home);
+            context.goNamed(HomeRouteNames.home);
           } else {
             verificationError.value =
                 'O seu e-mail ainda não foi verificado. Abra a caixa de entrada ou spam e clique no link.';
@@ -257,7 +255,7 @@ mixin EmailVerificationLogic on State<EmailVerificationPage> {
     authController.session.clearMessage();
     await authController.commands.signOut();
     if (mounted) {
-      context.goNamed(AuthPaths.login);
+      context.goNamed(AuthRouteNames.login);
     }
   }
 
@@ -287,7 +285,7 @@ mixin EmailVerificationLogic on State<EmailVerificationPage> {
 
             if (mounted) {
               context.goNamed(
-                AuthPaths.login,
+                AuthRouteNames.login,
                 extra: 'Cadastro cancelado com sucesso.',
               );
             }

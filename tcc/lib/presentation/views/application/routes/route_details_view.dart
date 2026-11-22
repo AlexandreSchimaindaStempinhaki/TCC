@@ -2,11 +2,11 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
-import 'package:tcc/presentation/widgets/account_option.dart';
-import 'package:tcc/presentation/widgets/animated_three_dots.dart';
-import 'package:tcc/presentation/widgets/route_itinerary_card.dart';
+import 'package:tcc/presentation/widgets/account/account_option.dart';
+import 'package:tcc/presentation/widgets/feedback/animated_three_dots.dart';
+import 'package:tcc/presentation/widgets/routes/route_itinerary_card.dart';
 
-import '../../../../core/routes/indigo_routes.dart';
+import '../../../../core/routes/home_routes.dart';
 import '../../mixins/route_details_logic.dart';
 
 class RouteDetailsView extends StatefulWidget {
@@ -338,7 +338,7 @@ class _RouteDetailsViewState extends State<RouteDetailsView>
                                 mapPayload['destination'] = destinationText;
                               }
                               context.pushNamed(
-                                IndigoRouteNames.routeMap,
+                                HomeRouteNames.routeMap,
                                 extra: mapPayload,
                               );
                             },

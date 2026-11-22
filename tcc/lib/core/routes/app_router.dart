@@ -1,13 +1,17 @@
-import 'package:flutter/foundation.dart';
-import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
-import '../../presentation/views/authentication/splash_view.dart';
-import 'auth_routes.dart';
-import 'indigo_routes.dart';
-import '../di/dependency_injection.dart';
 import '../../presentation/controllers/authentication/auth_session_viewmodel.dart';
+import '../../presentation/views/application/home/home_view.dart';
+import '../../presentation/views/authentication/splash_view.dart';
+import '../di/dependency_injection.dart';
+import 'account_routes.dart';
+import 'auth_routes.dart';
+import 'company_routes.dart';
+import 'home_routes.dart';
+import 'route_operation_routes.dart';
 
 class RouterNotifier extends ChangeNotifier {
   late final VoidCallback _disposer;
@@ -43,20 +47,19 @@ class AppRouter {
       }
 
       final authController = injector.get<AuthViewModel>();
-
       final firebaseUser = FirebaseAuth.instance.currentUser;
       final isLoggedIn =
           authController.session.session.value != null || firebaseUser != null;
 
       final isPureAuthRoute =
-          state.matchedLocation.startsWith('/welcome') ||
-          state.matchedLocation.startsWith('/login') ||
-          state.matchedLocation.startsWith('/signup') ||
-          state.matchedLocation.startsWith('/password') ||
-          state.matchedLocation.startsWith('/signup-password');
+          state.matchedLocation.startsWith(AuthPaths.welcome) ||
+          state.matchedLocation.startsWith(AuthPaths.login) ||
+          state.matchedLocation.startsWith(AuthPaths.signup) ||
+          state.matchedLocation.startsWith(AuthPaths.password) ||
+          state.matchedLocation.startsWith(AuthPaths.signupPassword);
 
       final isVerificationRoute = state.matchedLocation.startsWith(
-        '/email-verification',
+        AuthPaths.emailVerification,
       );
 
       if (!isLoggedIn && !isPureAuthRoute && !isVerificationRoute) {
@@ -65,7 +68,7 @@ class AppRouter {
 
       if (isLoggedIn && firebaseUser != null && !firebaseUser.emailVerified) {
         if (!isVerificationRoute) {
-          return '/email-verification';
+          return AuthPaths.emailVerification;
         }
         return null;
       }
@@ -74,11 +77,12 @@ class AppRouter {
           firebaseUser != null &&
           firebaseUser.emailVerified &&
           (isPureAuthRoute || isVerificationRoute)) {
-        return IndigoPaths.home;
+        return HomePaths.home;
       }
 
       return null;
     },
+    errorBuilder: (context, state) => const HomeView(),
     routes: <RouteBase>[
       GoRoute(
         path: splashPath,
@@ -86,7 +90,10 @@ class AppRouter {
         builder: (context, state) => const SplashView(),
       ),
       ...authRoutes,
-      ...indigoRoutes,
+      ...homeRoutes,
+      ...accountRoutes,
+      ...companyRoutes,
+      ...routeOperationRoutes,
     ],
   );
 }

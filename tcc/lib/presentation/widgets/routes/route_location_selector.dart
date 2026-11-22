@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-import 'account_option.dart';
-import 'animated_three_dots.dart';
-import 'location_card.dart';
+import '../account/account_option.dart';
+import '../feedback/animated_three_dots.dart';
+import '../address/location_card.dart';
 
 class RouteLocationSelector extends StatelessWidget {
   final String label;

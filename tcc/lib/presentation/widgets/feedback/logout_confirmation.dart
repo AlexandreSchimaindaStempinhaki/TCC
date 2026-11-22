@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/animated_three_dots.dart';
+import 'animated_three_dots.dart';
 
 class LogoutConfirmation extends StatefulWidget {
   final String title;

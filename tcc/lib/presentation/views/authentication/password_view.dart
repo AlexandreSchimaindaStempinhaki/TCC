@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tcc/core/extensions/context_extensions.dart';
-import 'package:tcc/presentation/widgets/animated_three_dots.dart';
-import '../../widgets/header_background.dart';
-import '../../widgets/text_field.dart';
+import 'package:tcc/presentation/widgets/feedback/animated_three_dots.dart';
+import '../../widgets/headers/header_background.dart';
+import '../../widgets/inputs/text_field.dart';
 import '../../../core/routes/auth_routes.dart';
 import '../../../core/di/dependency_injection.dart';
 import '../../../presentation/controllers/authentication/auth_session_viewmodel.dart';

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:tcc/presentation/widgets/company_member_card.dart';
+import 'package:go_router/go_router.dart';
+import 'package:tcc/presentation/widgets/company/company_member_card.dart';
 
-import '../animated_three_dots.dart';
+import '../../../core/routes/account_routes.dart';
+import '../feedback/animated_three_dots.dart';
 import 'day_attendance_status.dart';
 import 'route_schedule_resolver.dart';
-import 'package:go_router/go_router.dart';
-import '../../../core/routes/indigo_routes.dart';
 
 class StaffDayAttendancePanel extends StatelessWidget {
   final String formattedDate;
@@ -276,7 +276,7 @@ class StaffDayAttendancePanel extends StatelessWidget {
                         onTap: () {
                           if (entry.userModel != null) {
                             context.pushNamed(
-                              IndigoRouteNames.profile,
+                              AccountRouteNames.profile,
                               extra: entry.userModel,
                             );
                           }
