@@ -21,6 +21,19 @@ class LiveMapMarkerFactory {
 
   static const String lightMapStyle = '''
 [
+  {"elementType":"geometry","stylers":[{"color":"#e8edf3"}]},
+  {"elementType":"labels.text.fill","stylers":[{"color":"#334155"}]},
+  {"elementType":"labels.text.stroke","stylers":[{"color":"#ffffff"}]},
+  {"featureType":"landscape.man_made","elementType":"geometry.fill","stylers":[{"color":"#dfe6ee"}]},
+  {"featureType":"landscape.man_made","elementType":"geometry.stroke","stylers":[{"color":"#cbd5e1"}]},
+  {"featureType":"road","elementType":"geometry.fill","stylers":[{"color":"#ffffff"}]},
+  {"featureType":"road","elementType":"geometry.stroke","stylers":[{"color":"#cbd5e1"}]},
+  {"featureType":"road.arterial","elementType":"geometry.fill","stylers":[{"color":"#ffffff"}]},
+  {"featureType":"road.arterial","elementType":"geometry.stroke","stylers":[{"color":"#94a3b8"}]},
+  {"featureType":"road.highway","elementType":"geometry.fill","stylers":[{"color":"#fde68a"}]},
+  {"featureType":"road.highway","elementType":"geometry.stroke","stylers":[{"color":"#d97706"}]},
+  {"featureType":"water","elementType":"geometry","stylers":[{"color":"#93c5fd"}]},
+  {"featureType":"poi.park","elementType":"geometry","stylers":[{"color":"#bbf7d0"}]},
   {"featureType":"poi","elementType":"labels","stylers":[{"visibility":"off"}]},
   {"featureType":"transit","elementType":"labels.icon","stylers":[{"visibility":"off"}]}
 ]

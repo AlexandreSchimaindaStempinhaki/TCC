@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../../core/di/dependency_injection.dart';
 import '../../../domain/models/trip_entity.dart';
@@ -18,6 +19,13 @@ mixin DriverLiveMapMixin on State<DriverLiveMapView> {
 
   late final TripViewModel tripViewModel;
   GoogleMapController? mapController;
+
+  final isInitialLoading = signal<bool>(true);
+  final initialLoadingMessage = signal<String>('Preparando navegação...');
+
+  bool _hasInitialLocation = false;
+  bool _hasInitialRoute = false;
+  Timer? _initialLoadingTimeout;
 
   StreamSubscription<Position>? _gpsSubscription;
   DateTime? _lastFirebaseLocationPush;
@@ -74,6 +82,12 @@ mixin DriverLiveMapMixin on State<DriverLiveMapView> {
     tripViewModel = injector.get<TripViewModel>();
     _routingService.loadApiKey();
 
+    _hasInitialLocation = !widget.isDriver;
+    initialLoadingMessage.value = widget.isDriver
+        ? 'Obtendo sua localização...'
+        : 'Carregando trajeto em tempo real...';
+    _startInitialLoadingGuard();
+
     if (widget.trip != null && widget.trip!.id.trim().isNotEmpty) {
       tripViewModel.commands.startWatchingTrip(widget.trip!.id);
     }
@@ -85,12 +99,41 @@ mixin DriverLiveMapMixin on State<DriverLiveMapView> {
 
   @override
   void dispose() {
+    _initialLoadingTimeout?.cancel();
+    isInitialLoading.dispose();
+    initialLoadingMessage.dispose();
     _gpsSubscription?.cancel();
     if (widget.trip != null && widget.trip!.id.trim().isNotEmpty) {
       tripViewModel.commands.stopWatchingTrip();
     }
     mapController?.dispose();
     super.dispose();
+  }
+
+  void _startInitialLoadingGuard() {
+    _initialLoadingTimeout?.cancel();
+    _initialLoadingTimeout = Timer(const Duration(seconds: 7), () {
+      if (mounted && isInitialLoading.value) {
+        isInitialLoading.value = false;
+      }
+    });
+  }
+
+  void _markInitialLocationReady() {
+    if (_hasInitialLocation) return;
+    _hasInitialLocation = true;
+    if (isInitialLoading.value) {
+      initialLoadingMessage.value = 'Calculando melhor rota...';
+    }
+    _tryFinishInitialLoading();
+  }
+
+  void _tryFinishInitialLoading() {
+    if (!mounted || !isInitialLoading.value) return;
+    if (_hasInitialLocation && _hasInitialRoute) {
+      _initialLoadingTimeout?.cancel();
+      isInitialLoading.value = false;
+    }
   }
 
   String get destinationLabel =>
@@ -100,7 +143,10 @@ mixin DriverLiveMapMixin on State<DriverLiveMapView> {
 
   Future<void> _startDriverGpsTracking() async {
     try {
-      if (!await Geolocator.isLocationServiceEnabled()) return;
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        _markInitialLocationReady();
+        return;
+      }
 
       var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -108,10 +154,12 @@ mixin DriverLiveMapMixin on State<DriverLiveMapView> {
       }
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
+        _markInitialLocationReady();
         return;
       }
 
       _handleDriverGpsUpdate(await Geolocator.getCurrentPosition());
+      _markInitialLocationReady();
 
       _gpsSubscription?.cancel();
       _gpsSubscription = Geolocator.getPositionStream(
@@ -122,6 +170,7 @@ mixin DriverLiveMapMixin on State<DriverLiveMapView> {
       ).listen(_handleDriverGpsUpdate);
     } catch (e) {
       debugPrint('Erro ao iniciar rastreamento GPS do motorista: $e');
+      _markInitialLocationReady();
     }
   }
 
@@ -286,7 +335,15 @@ mixin DriverLiveMapMixin on State<DriverLiveMapView> {
         now.difference(_lastRouteFetchTime!).inSeconds >=
             (_navSteps.isNotEmpty ? 30 : 10);
 
-    if (!force && !stopsChanged && !(movedFarEnough && cooldownPassed)) return;
+    if (!force && !stopsChanged && !(movedFarEnough && cooldownPassed)) {
+      if (_hasInitialLocation &&
+          !_hasInitialRoute &&
+          _lastRouteFetchTime != null) {
+        _hasInitialRoute = true;
+        _tryFinishInitialLoading();
+      }
+      return;
+    }
 
     _isFetchingRoute = true;
     _lastRoutedOrigin = driverPos;
@@ -334,6 +391,10 @@ mixin DriverLiveMapMixin on State<DriverLiveMapView> {
       debugPrint('Erro ao calcular rota: $e');
     } finally {
       _isFetchingRoute = false;
+      if (_hasInitialLocation && !_hasInitialRoute) {
+        _hasInitialRoute = true;
+        _tryFinishInitialLoading();
+      }
     }
   }
 

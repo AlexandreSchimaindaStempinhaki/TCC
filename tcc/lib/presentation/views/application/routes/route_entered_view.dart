@@ -79,12 +79,15 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
 
   Future<void> _confirmStopRoute(BuildContext context) async {
     final colorScheme = Theme.of(context).colorScheme;
-    final hasOtherVehicles = activeTripsForRoute.length > 1 && myActiveTrip != null;
+    final hasOtherVehicles =
+        activeTripsForRoute.length > 1 && myActiveTrip != null;
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(hasOtherVehicles ? 'Encerrar sua viagem?' : 'Parar rota ativa?'),
+        title: Text(
+          hasOtherVehicles ? 'Encerrar sua viagem?' : 'Parar rota ativa?',
+        ),
         content: Text(
           hasOtherVehicles
               ? 'Sua viagem será finalizada, enquanto os demais veículos continuam em rota normalmente.'
@@ -130,6 +133,8 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
     return Watch((context) {
       final loading = isLoading.value;
       final executing = isActionExecuting.value;
+      final startingRoute = isStartingRoute.value;
+      final startingText = startingRouteMessage.value;
       final route = currentRoute;
       final company = currentCompany;
       final routeActive = isRouteActiveNow;
@@ -178,618 +183,705 @@ class _RouteEnteredViewState extends State<RouteEnteredView>
       final operatingDaysText = route.operatingDaysLabel;
       final currentShifts = _resolveShifts(route);
 
-      return Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: AppBar(
-          backgroundColor: theme.scaffoldBackgroundColor,
-          elevation: 0,
-          centerTitle: true,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: colorScheme.onSurface,
-            ),
-            onPressed: () {
-              if (context.canPop()) context.pop();
-            },
-          ),
-          title: Text(
-            'Painel da Rota',
-            style: TextStyle(
-              color: colorScheme.onSurface,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
-        ),
-        body: loading
-            ? Center(
-                child: AnimatedThreeDots(color: colorScheme.onSurface),
-              )
-            : RefreshIndicator(
-                color: colorScheme.onSurface,
-                onRefresh: loadInitialData,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // ================= CARD DA ROTA =================
-                      Container(
-                        decoration: BoxDecoration(
-                          color: theme.cardColor,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: isDark
-                                ? colorScheme.onSurface.withOpacity(0.24)
-                                : colorScheme.onSurface.withOpacity(0.16),
-                            width: 1.8,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black
-                                  .withOpacity(isDark ? 0.3 : 0.04),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
+      return PopScope(
+        canPop: !startingRoute,
+        child: Stack(
+          children: [
+            Scaffold(
+              backgroundColor: theme.scaffoldBackgroundColor,
+              appBar: AppBar(
+                backgroundColor: theme.scaffoldBackgroundColor,
+                elevation: 0,
+                centerTitle: true,
+                leading: IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_rounded,
+                    color: colorScheme.onSurface,
+                  ),
+                  onPressed: () {
+                    if (context.canPop()) context.pop();
+                  },
+                ),
+                title: Text(
+                  'Painel da Rota',
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+              body: loading
+                  ? Center(
+                      child: AnimatedThreeDots(color: colorScheme.onSurface),
+                    )
+                  : RefreshIndicator(
+                      color: colorScheme.onSurface,
+                      onRefresh: loadInitialData,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Stack(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(18),
-                                  ),
-                                  child: SizedBox(
-                                    height: 155,
-                                    width: double.infinity,
-                                    child: imageUrl.isEmpty
-                                        ? Container(
-                                            color: colorScheme.primary
-                                                .withOpacity(0.08),
-                                            alignment: Alignment.center,
-                                            child: Icon(
-                                              Icons.route_rounded,
-                                              size: 48,
-                                              color: colorScheme.primary,
-                                            ),
-                                          )
-                                        : Stack(
-                                            fit: StackFit.expand,
-                                            children: [
-                                              ImageFiltered(
-                                                imageFilter: ImageFilter.blur(
-                                                  sigmaX: 16,
-                                                  sigmaY: 16,
-                                                ),
-                                                child: _buildRawImage(
-                                                  imageUrl,
-                                                  colorScheme,
-                                                  fit: BoxFit.cover,
-                                                ),
-                                              ),
-                                              Container(
-                                                color: Colors.black.withOpacity(
-                                                  isDark ? 0.25 : 0.12,
-                                                ),
-                                              ),
-                                              _buildRawImage(
-                                                imageUrl,
-                                                colorScheme,
-                                                fit: BoxFit.contain,
-                                              ),
-                                            ],
-                                          ),
-                                  ),
+                            // ================= CARD DA ROTA =================
+                            Container(
+                              decoration: BoxDecoration(
+                                color: theme.cardColor,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: isDark
+                                      ? colorScheme.onSurface.withOpacity(0.24)
+                                      : colorScheme.onSurface.withOpacity(0.16),
+                                  width: 1.8,
                                 ),
-                                if (widget.roleBadge != null)
-                                  Positioned(
-                                    top: 12,
-                                    right: 12,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: colorScheme.primary,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Text(
-                                        widget.roleBadge!,
-                                        style: const TextStyle(
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black
+                                        .withOpacity(isDark ? 0.3 : 0.04),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
                                   ),
-                              ],
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(16.0),
+                                ],
+                              ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    companyName,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: colorScheme.onSurface,
-                                    ),
-                                  ),
-
-                                  // ================= 1. STATUS PARA PASSAGEIRO =================
-                                  if (isPurePassenger) ...[
-                                    const SizedBox(height: 14),
-                                    Divider(
-                                      color:
-                                          theme.dividerColor.withOpacity(0.5),
-                                      height: 1,
-                                    ),
-                                    const SizedBox(height: 14),
-                                    Row(
-                                      children: [
-                                        Container(
-                                          width: 10,
-                                          height: 10,
-                                          decoration: BoxDecoration(
-                                            color: routeActive
-                                                ? const Color(0xFF16A34A)
-                                                : colorScheme.onSurfaceVariant,
-                                            shape: BoxShape.circle,
-                                          ),
+                                  Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius:
+                                            const BorderRadius.vertical(
+                                          top: Radius.circular(18),
                                         ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          routeActive
-                                              ? 'Rota ativa no momento'
-                                              : 'A rota ainda não foi iniciada',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                            color: routeActive
-                                                ? const Color(0xFF16A34A)
-                                                : colorScheme.onSurfaceVariant,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    if (routeActive &&
-                                        myStop?.estimatedMinutesRemaining !=
-                                            null) ...[
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        'Chegada estimada no seu ponto: ~${myStop!.estimatedMinutesRemaining} min (Parada #${myStop.orderIndex})',
-                                        style: TextStyle(
-                                          fontSize: 12.5,
-                                          color: colorScheme.onSurfaceVariant,
+                                        child: SizedBox(
+                                          height: 155,
+                                          width: double.infinity,
+                                          child: imageUrl.isEmpty
+                                              ? Container(
+                                                  color: colorScheme.primary
+                                                      .withOpacity(0.08),
+                                                  alignment: Alignment.center,
+                                                  child: Icon(
+                                                    Icons.route_rounded,
+                                                    size: 48,
+                                                    color: colorScheme.primary,
+                                                  ),
+                                                )
+                                              : Stack(
+                                                  fit: StackFit.expand,
+                                                  children: [
+                                                    ImageFiltered(
+                                                      imageFilter:
+                                                          ImageFilter.blur(
+                                                        sigmaX: 16,
+                                                        sigmaY: 16,
+                                                      ),
+                                                      child: _buildRawImage(
+                                                        imageUrl,
+                                                        colorScheme,
+                                                        fit: BoxFit.cover,
+                                                      ),
+                                                    ),
+                                                    Container(
+                                                      color: Colors.black
+                                                          .withOpacity(
+                                                        isDark ? 0.25 : 0.12,
+                                                      ),
+                                                    ),
+                                                    _buildRawImage(
+                                                      imageUrl,
+                                                      colorScheme,
+                                                      fit: BoxFit.contain,
+                                                    ),
+                                                  ],
+                                                ),
                                         ),
                                       ),
-                                    ],
-                                  ],
-
-                                  // ================= 2. PAINEL DO MOTORISTA / GESTOR =================
-                                  if (staff) ...[
-                                    const SizedBox(height: 14),
-                                    Divider(
-                                      color:
-                                          theme.dividerColor.withOpacity(0.5),
-                                      height: 1,
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          Icons.schedule_rounded,
-                                          size: 16,
-                                          color: colorScheme.onSurfaceVariant,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          'Turno atual: $closestScheduleLabel',
-                                          style: TextStyle(
-                                            fontSize: 12.5,
-                                            fontWeight: FontWeight.w600,
-                                            color: colorScheme.onSurfaceVariant,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    if (!hasCnh)
-                                      Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: Colors.amber.withOpacity(0.12),
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: Colors.amber.shade700
-                                                .withOpacity(0.4),
-                                          ),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.badge_outlined,
-                                              size: 20,
-                                              color: Colors.amber.shade800,
+                                      if (widget.roleBadge != null)
+                                        Positioned(
+                                          top: 12,
+                                          right: 12,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 6,
                                             ),
-                                            const SizedBox(width: 10),
-                                            Expanded(
-                                              child: Text(
-                                                'Cadastre sua CNH no seu perfil para poder iniciar esta rota.',
-                                                style: TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: colorScheme.onSurface,
+                                            decoration: BoxDecoration(
+                                              color: colorScheme.primary,
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child: Text(
+                                              widget.roleBadge!,
+                                              style: const TextStyle(
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          companyName,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: colorScheme.onSurface,
+                                          ),
+                                        ),
+
+                                        // ================= 1. STATUS PARA PASSAGEIRO =================
+                                        if (isPurePassenger) ...[
+                                          const SizedBox(height: 14),
+                                          Divider(
+                                            color: theme.dividerColor
+                                                .withOpacity(0.5),
+                                            height: 1,
+                                          ),
+                                          const SizedBox(height: 14),
+                                          Row(
+                                            children: [
+                                              Container(
+                                                width: 10,
+                                                height: 10,
+                                                decoration: BoxDecoration(
+                                                  color: routeActive
+                                                      ? const Color(0xFF16A34A)
+                                                      : colorScheme
+                                                          .onSurfaceVariant,
+                                                  shape: BoxShape.circle,
                                                 ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                      )
-                                    else if (canDrive) ...[
-                                      // Aviso de lotação excedida para transporte extra
-                                      if (overflowNeedsExtra) ...[
-                                        Container(
-                                          width: double.infinity,
-                                          margin: const EdgeInsets.only(
-                                            bottom: 10,
-                                          ),
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: BoxDecoration(
-                                            color:
-                                                Colors.amber.withOpacity(0.14),
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            border: Border.all(
-                                              color: Colors.amber.shade700
-                                                  .withOpacity(0.45),
-                                            ),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                Icons
-                                                    .groups_outlined,
-                                                size: 20,
-                                                color: Colors.amber.shade800,
-                                              ),
-                                              const SizedBox(width: 10),
-                                              Expanded(
-                                                child: Text(
-                                                  ownActiveTrip != null
-                                                      ? '$overflowCount passageiro(s) excederam a capacidade. Outro motorista/gestor com CNH pode iniciar um veículo extra.'
-                                                      : '$overflowCount passageiro(s) excederam a capacidade da van atual e aguardam um veículo extra.',
-                                                  style: TextStyle(
-                                                    fontSize: 12.5,
-                                                    fontWeight: FontWeight.w600,
-                                                    color:
-                                                        colorScheme.onSurface,
-                                                  ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                routeActive
+                                                    ? 'Rota ativa no momento'
+                                                    : 'A rota ainda não foi iniciada',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: routeActive
+                                                      ? const Color(0xFF16A34A)
+                                                      : colorScheme
+                                                          .onSurfaceVariant,
                                                 ),
                                               ),
                                             ],
                                           ),
-                                        ),
-                                      ],
+                                          if (routeActive &&
+                                              myStop?.estimatedMinutesRemaining !=
+                                                  null) ...[
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              'Chegada estimada no seu ponto: ~${myStop!.estimatedMinutesRemaining} min (Parada #${myStop.orderIndex})',
+                                              style: TextStyle(
+                                                fontSize: 12.5,
+                                                color: colorScheme
+                                                    .onSurfaceVariant,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
 
-                                      // Caso 1: rota inativa -> escolher veículo e iniciar
-                                      if (!routeActive)
-                                        SizedBox(
-                                          width: double.infinity,
-                                          height: 48,
-                                          child: ElevatedButton.icon(
-                                            onPressed: executing
-                                                ? null
-                                                : () =>
-                                                    selectVehicleAndStartTrip(
-                                                      context,
-                                                    ),
-                                            icon: const Icon(
-                                              Icons.play_arrow_rounded,
-                                              color: Colors.white,
-                                            ),
-                                            label: const Text(
-                                              'Iniciar a Rota',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor:
-                                                  colorScheme.primary,
-                                              elevation: 0,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(14),
-                                              ),
-                                            ),
+                                        // ================= 2. PAINEL DO MOTORISTA / GESTOR =================
+                                        if (staff) ...[
+                                          const SizedBox(height: 14),
+                                          Divider(
+                                            color: theme.dividerColor
+                                                .withOpacity(0.5),
+                                            height: 1,
                                           ),
-                                        )
-                                      // Caso 2: outro motorista já está em rota e há excedente -> iniciar van extra
-                                      else if (ownActiveTrip == null &&
-                                          overflowNeedsExtra) ...[
-                                        SizedBox(
-                                          width: double.infinity,
-                                          height: 48,
-                                          child: ElevatedButton.icon(
-                                            onPressed: executing
-                                                ? null
-                                                : () =>
-                                                    selectVehicleAndStartTrip(
-                                                      context,
-                                                    ),
-                                            icon: const Icon(
-                                              Icons.directions_bus_rounded,
-                                              color: Colors.white,
-                                            ),
-                                            label: Text(
-                                              'Iniciar Transporte Extra (Van ${activeTrips.length + 1})',
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14,
+                                          const SizedBox(height: 12),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.schedule_rounded,
+                                                size: 16,
+                                                color: colorScheme
+                                                    .onSurfaceVariant,
                                               ),
-                                            ),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor:
-                                                  colorScheme.primary,
-                                              elevation: 0,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(14),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                'Turno atual: $closestScheduleLabel',
+                                                style: TextStyle(
+                                                  fontSize: 12.5,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: colorScheme
+                                                      .onSurfaceVariant,
+                                                ),
                                               ),
-                                            ),
+                                            ],
                                           ),
-                                        ),
-                                        const SizedBox(height: 10),
-                                        SizedBox(
-                                          width: double.infinity,
-                                          height: 46,
-                                          child: OutlinedButton.icon(
-                                            onPressed: executing
-                                                ? null
-                                                : () => openLiveMap(
-                                                      context,
-                                                      isDriver: false,
-                                                    ),
-                                            icon: Icon(
-                                              Icons.navigation_rounded,
-                                              color: colorScheme.primary,
-                                            ),
-                                            label: Text(
-                                              'Acompanhar Rota Ativa',
-                                              style: TextStyle(
-                                                color: colorScheme.primary,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                            style: OutlinedButton.styleFrom(
-                                              side: BorderSide(
-                                                color: colorScheme.primary,
-                                                width: 1.5,
-                                              ),
-                                              shape: RoundedRectangleBorder(
+                                          const SizedBox(height: 12),
+                                          if (!hasCnh)
+                                            Container(
+                                              width: double.infinity,
+                                              padding: const EdgeInsets.all(12),
+                                              decoration: BoxDecoration(
+                                                color: Colors.amber
+                                                    .withOpacity(0.12),
                                                 borderRadius:
-                                                    BorderRadius.circular(14),
+                                                    BorderRadius.circular(12),
+                                                border: Border.all(
+                                                  color: Colors.amber.shade700
+                                                      .withOpacity(0.4),
+                                                ),
                                               ),
-                                            ),
-                                          ),
-                                        ),
-                                      ]
-                                      // Caso 3: motorista atual está dirigindo (ou rota ativa sem excedente)
-                                      else ...[
-                                        SizedBox(
-                                          width: double.infinity,
-                                          height: 48,
-                                          child: ElevatedButton.icon(
-                                            onPressed: executing
-                                                ? null
-                                                : () => openLiveMap(
-                                                      context,
-                                                      isDriver:
-                                                          ownActiveTrip != null,
-                                                    ),
-                                            icon: const Icon(
-                                              Icons.navigation_rounded,
-                                              color: Colors.white,
-                                            ),
-                                            label: const Text(
-                                              'Abrir Mapa em Tempo Real',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor:
-                                                  const Color(0xFF16A34A),
-                                              elevation: 0,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(14),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        if (ownActiveTrip != null ||
-                                            activeTrips.isEmpty) ...[
-                                          const SizedBox(height: 10),
-                                          SizedBox(
-                                            width: double.infinity,
-                                            height: 46,
-                                            child: OutlinedButton.icon(
-                                              onPressed: executing
-                                                  ? null
-                                                  : () => _confirmStopRoute(
-                                                        context,
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.badge_outlined,
+                                                    size: 20,
+                                                    color:
+                                                        Colors.amber.shade800,
+                                                  ),
+                                                  const SizedBox(width: 10),
+                                                  Expanded(
+                                                    child: Text(
+                                                      'Cadastre sua CNH no seu perfil para poder iniciar esta rota.',
+                                                      style: TextStyle(
+                                                        fontSize: 13,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: colorScheme
+                                                            .onSurface,
                                                       ),
-                                              icon: const Icon(
-                                                Icons.stop_circle_outlined,
-                                                color: Colors.redAccent,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                              label: Text(
-                                                activeTrips.length > 1
-                                                    ? 'Encerrar Minha Viagem'
-                                                    : 'Parar Rota',
-                                                style: const TextStyle(
-                                                  color: Colors.redAccent,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 14,
+                                            )
+                                          else if (canDrive) ...[
+                                            // Aviso de lotação excedida para transporte extra
+                                            if (overflowNeedsExtra) ...[
+                                              Container(
+                                                width: double.infinity,
+                                                margin: const EdgeInsets.only(
+                                                  bottom: 10,
                                                 ),
-                                              ),
-                                              style: OutlinedButton.styleFrom(
-                                                side: const BorderSide(
-                                                  color: Colors.redAccent,
-                                                  width: 1.5,
-                                                ),
-                                                shape: RoundedRectangleBorder(
+                                                padding:
+                                                    const EdgeInsets.all(12),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.amber
+                                                      .withOpacity(0.14),
                                                   borderRadius:
-                                                      BorderRadius.circular(14),
+                                                      BorderRadius.circular(12),
+                                                  border: Border.all(
+                                                    color: Colors.amber.shade700
+                                                        .withOpacity(0.45),
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.groups_outlined,
+                                                      size: 20,
+                                                      color:
+                                                          Colors.amber.shade800,
+                                                    ),
+                                                    const SizedBox(width: 10),
+                                                    Expanded(
+                                                      child: Text(
+                                                        ownActiveTrip != null
+                                                            ? '$overflowCount passageiro(s) excederam a capacidade. Outro motorista/gestor com CNH pode iniciar um veículo extra.'
+                                                            : '$overflowCount passageiro(s) excederam a capacidade da van atual e aguardam um veículo extra.',
+                                                        style: TextStyle(
+                                                          fontSize: 12.5,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: colorScheme
+                                                              .onSurface,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
-                                            ),
-                                          ),
+                                            ],
+
+                                            // Caso 1: rota inativa -> escolher veículo e iniciar
+                                            if (!routeActive)
+                                              SizedBox(
+                                                width: double.infinity,
+                                                height: 48,
+                                                child: ElevatedButton.icon(
+                                                  onPressed: executing
+                                                      ? null
+                                                      : () =>
+                                                          selectVehicleAndStartTrip(
+                                                            context,
+                                                          ),
+                                                  icon: const Icon(
+                                                    Icons.play_arrow_rounded,
+                                                    color: Colors.white,
+                                                  ),
+                                                  label: const Text(
+                                                    'Iniciar a Rota',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        colorScheme.primary,
+                                                    elevation: 0,
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                        14,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                            // Caso 2: outro motorista já está em rota e há excedente -> iniciar van extra
+                                            else if (ownActiveTrip == null &&
+                                                overflowNeedsExtra) ...[
+                                              SizedBox(
+                                                width: double.infinity,
+                                                height: 48,
+                                                child: ElevatedButton.icon(
+                                                  onPressed: executing
+                                                      ? null
+                                                      : () =>
+                                                          selectVehicleAndStartTrip(
+                                                            context,
+                                                          ),
+                                                  icon: const Icon(
+                                                    Icons
+                                                        .directions_bus_rounded,
+                                                    color: Colors.white,
+                                                  ),
+                                                  label: Text(
+                                                    'Iniciar Transporte Extra (Van ${activeTrips.length + 1})',
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        colorScheme.primary,
+                                                    elevation: 0,
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                        14,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              SizedBox(
+                                                width: double.infinity,
+                                                height: 46,
+                                                child: OutlinedButton.icon(
+                                                  onPressed: executing
+                                                      ? null
+                                                      : () => openLiveMap(
+                                                            context,
+                                                            isDriver: false,
+                                                          ),
+                                                  icon: Icon(
+                                                    Icons.navigation_rounded,
+                                                    color: colorScheme.primary,
+                                                  ),
+                                                  label: Text(
+                                                    'Acompanhar Rota Ativa',
+                                                    style: TextStyle(
+                                                      color:
+                                                          colorScheme.primary,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                  style:
+                                                      OutlinedButton.styleFrom(
+                                                    side: BorderSide(
+                                                      color:
+                                                          colorScheme.primary,
+                                                      width: 1.5,
+                                                    ),
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                        14,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ]
+                                            // Caso 3: motorista atual está dirigindo (ou rota ativa sem excedente)
+                                            else ...[
+                                              SizedBox(
+                                                width: double.infinity,
+                                                height: 48,
+                                                child: ElevatedButton.icon(
+                                                  onPressed: executing
+                                                      ? null
+                                                      : () => openLiveMap(
+                                                            context,
+                                                            isDriver:
+                                                                ownActiveTrip !=
+                                                                    null,
+                                                          ),
+                                                  icon: const Icon(
+                                                    Icons.navigation_rounded,
+                                                    color: Colors.white,
+                                                  ),
+                                                  label: const Text(
+                                                    'Abrir Mapa em Tempo Real',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        const Color(0xFF16A34A),
+                                                    elevation: 0,
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                        14,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              if (ownActiveTrip != null ||
+                                                  activeTrips.isEmpty) ...[
+                                                const SizedBox(height: 10),
+                                                SizedBox(
+                                                  width: double.infinity,
+                                                  height: 46,
+                                                  child: OutlinedButton.icon(
+                                                    onPressed: executing
+                                                        ? null
+                                                        : () =>
+                                                            _confirmStopRoute(
+                                                              context,
+                                                            ),
+                                                    icon: const Icon(
+                                                      Icons
+                                                          .stop_circle_outlined,
+                                                      color: Colors.redAccent,
+                                                    ),
+                                                    label: Text(
+                                                      activeTrips.length > 1
+                                                          ? 'Encerrar Minha Viagem'
+                                                          : 'Parar Rota',
+                                                      style: const TextStyle(
+                                                        color: Colors.redAccent,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                    style: OutlinedButton
+                                                        .styleFrom(
+                                                      side: const BorderSide(
+                                                        color: Colors.redAccent,
+                                                        width: 1.5,
+                                                      ),
+                                                      shape:
+                                                          RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(14),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ],
                                         ],
                                       ],
-                                    ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // ================= CARD DE ITINERÁRIO =================
+                            RouteItineraryCard(
+                              origin: originText,
+                              destination: destinationText,
+                              operatingDays: operatingDaysText,
+                              shifts: currentShifts,
+                            ),
+                            const SizedBox(height: 16),
+
+                            // ================= 3. AÇÕES INFERIORES =================
+                            Container(
+                              clipBehavior: Clip.antiAlias,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              decoration: BoxDecoration(
+                                color: theme.cardColor,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.04),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  // Apenas passageiro (nunca motorista/equipe) confirma presença no ponto
+                                  if (isPurePassenger && routeActive) ...[
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        16,
+                                        8,
+                                        16,
+                                        8,
+                                      ),
+                                      child: SizedBox(
+                                        width: double.infinity,
+                                        height: 48,
+                                        child: ElevatedButton.icon(
+                                          onPressed: executing
+                                              ? null
+                                              : togglePassengerReady,
+                                          icon: Icon(
+                                            isReady
+                                                ? Icons.check_circle_rounded
+                                                : Icons.hail_rounded,
+                                            color: Colors.white,
+                                          ),
+                                          label: Text(
+                                            isReady
+                                                ? 'Estou Pronto (Confirmado)'
+                                                : 'Confirmar que estou no ponto',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13.5,
+                                            ),
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: isReady
+                                                ? const Color(0xFF16A34A)
+                                                : colorScheme.primary,
+                                            elevation: 0,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ],
+
+                                  // Acesso à tela de mapa em tempo real (sem ">")
+                                  AccountOption(
+                                    icon: Icons.navigation_outlined,
+                                    title: staff
+                                        ? 'Mapa da Rota em Tempo Real'
+                                        : 'Acompanhar Motorista ao Vivo',
+                                    trailing: const SizedBox.shrink(),
+                                    onTap: () => openLiveMap(
+                                      context,
+                                      isDriver: canDrive,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+
+                                  // Acesso ao Calendário de Presença (sem ">")
+                                  AccountOption(
+                                    icon: Icons.calendar_month_outlined,
+                                    title: staff
+                                        ? 'Presenças Confirmadas (Calendário)'
+                                        : 'Calendário de Presença',
+                                    trailing: const SizedBox.shrink(),
+                                    onTap: () =>
+                                        openAttendanceCalendar(context),
+                                  ),
+
+                                  // Avaliação da empresa (liberada após concluir a 1ª viagem)
+                                  if (canReviewCompany) ...[
+                                    const SizedBox(height: 8),
+                                    AccountOption(
+                                      icon: Icons.star_outline_rounded,
+                                      title: 'Avaliar Empresa',
+                                      trailing: const SizedBox.shrink(),
+                                      onTap: () => openCompanyReviews(context),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 4),
                                 ],
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 16),
+                    ),
+            ),
 
-                      // ================= CARD DE ITINERÁRIO =================
-                      RouteItineraryCard(
-                        origin: originText,
-                        destination: destinationText,
-                        operatingDays: operatingDaysText,
-                        shifts: currentShifts,
+            // ================= SPLASH DE INICIALIZAÇÃO DA ROTA =================
+            IgnorePointer(
+              ignoring: !startingRoute,
+              child: AnimatedOpacity(
+                opacity: startingRoute ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeOut,
+                child: Material(
+                  color: theme.scaffoldBackgroundColor,
+                  child: SafeArea(
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AnimatedThreeDots(color: colorScheme.onSurface),
+                          const SizedBox(height: 16),
+                          Text(
+                            startingText,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-
-                      // ================= 3. AÇÕES INFERIORES =================
-                      Container(
-                        clipBehavior: Clip.antiAlias,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        decoration: BoxDecoration(
-                          color: theme.cardColor,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            // Apenas passageiro (nunca motorista/equipe) confirma presença no ponto
-                            if (isPurePassenger && routeActive) ...[
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                  16,
-                                  8,
-                                  16,
-                                  8,
-                                ),
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  height: 48,
-                                  child: ElevatedButton.icon(
-                                    onPressed: executing
-                                        ? null
-                                        : togglePassengerReady,
-                                    icon: Icon(
-                                      isReady
-                                          ? Icons.check_circle_rounded
-                                          : Icons.hail_rounded,
-                                      color: Colors.white,
-                                    ),
-                                    label: Text(
-                                      isReady
-                                          ? 'Estou Pronto (Confirmado)'
-                                          : 'Confirmar que estou no ponto',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13.5,
-                                      ),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: isReady
-                                          ? const Color(0xFF16A34A)
-                                          : colorScheme.primary,
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-
-                            // Acesso à tela de mapa em tempo real (sem ">")
-                            AccountOption(
-                              icon: Icons.navigation_outlined,
-                              title: staff
-                                  ? 'Mapa da Rota em Tempo Real'
-                                  : 'Acompanhar Motorista ao Vivo',
-                              trailing: const SizedBox.shrink(),
-                              onTap: () => openLiveMap(
-                                context,
-                                isDriver: canDrive,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-
-                            // Acesso ao Calendário de Presença (sem ">")
-                            AccountOption(
-                              icon: Icons.calendar_month_outlined,
-                              title: staff
-                                  ? 'Presenças Confirmadas (Calendário)'
-                                  : 'Calendário de Presença',
-                              trailing: const SizedBox.shrink(),
-                              onTap: () => openAttendanceCalendar(context),
-                            ),
-
-                            // Avaliação da empresa (liberada após concluir a 1ª viagem)
-                            if (canReviewCompany) ...[
-                              const SizedBox(height: 8),
-                              AccountOption(
-                                icon: Icons.star_outline_rounded,
-                                title: 'Avaliar Empresa',
-                                trailing: const SizedBox.shrink(),
-                                onTap: () => openCompanyReviews(context),
-                              ),
-                            ],
-                            const SizedBox(height: 4),
-                          ],
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
+            ),
+          ],
+        ),
       );
     });
   }

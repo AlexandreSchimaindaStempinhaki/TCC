@@ -34,6 +34,8 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
 
   final isLoading = signal<bool>(true);
   final isActionExecuting = signal<bool>(false);
+  final isStartingRoute = signal<bool>(false);
+  final startingRouteMessage = signal<String>('Iniciando rota...');
   final selectedDirection = signal<TripDirection>(TripDirection.outbound);
   final liveNotificationBanner = signal<String?>(null);
 
@@ -444,6 +446,8 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
     tripViewModel.commands.stopWatchingTrip();
     isLoading.dispose();
     isActionExecuting.dispose();
+    isStartingRoute.dispose();
+    startingRouteMessage.dispose();
     selectedDirection.dispose();
     liveNotificationBanner.dispose();
     super.dispose();
@@ -899,14 +903,21 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
     await startOptimizedRouteTrip(selectedVehicle);
   }
 
-Future<void> startOptimizedRouteTrip(VehicleModel selectedVehicle) async {
+  Future<void> startOptimizedRouteTrip(VehicleModel selectedVehicle) async {
     if (!canDriveRoute || isActionExecuting.value) return;
 
     isActionExecuting.value = true;
+    startingRouteMessage.value = 'Obtendo sua localização...';
+    isStartingRoute.value = true;
+
     try {
       final pos = await _tryGetCurrentPosition();
       final startLat = pos?.latitude ?? currentRoute.origin.latitude;
       final startLng = pos?.longitude ?? currentRoute.origin.longitude;
+
+      if (mounted) {
+        startingRouteMessage.value = 'Organizando paradas e passageiros...';
+      }
 
       final closest = resolveClosestScheduleNow();
       selectedDirection.value = closest.direction;
@@ -959,6 +970,11 @@ Future<void> startOptimizedRouteTrip(VehicleModel selectedVehicle) async {
         stops: reindexedStops,
       );
 
+      if (mounted) {
+        startingRouteMessage.value =
+            'Iniciando viagem e notificando passageiros...';
+      }
+
       final created = await tripViewModel.commands.createTrip(newTrip);
       final active = created ?? newTrip;
 
@@ -972,6 +988,10 @@ Future<void> startOptimizedRouteTrip(VehicleModel selectedVehicle) async {
 
       if (!currentRoute.isTripActive) {
         await routeViewModel.commands.startRouteTrip(currentRoute.id, driverId);
+      }
+
+      if (mounted) {
+        startingRouteMessage.value = 'Sincronizando painel da rota...';
       }
 
       await routeViewModel.commands.fetchRouteById(
@@ -1009,6 +1029,7 @@ Future<void> startOptimizedRouteTrip(VehicleModel selectedVehicle) async {
       _showSnackBar('Erro ao iniciar a rota: $e', isError: true);
     } finally {
       if (mounted) {
+        isStartingRoute.value = false;
         isActionExecuting.value = false;
       }
     }

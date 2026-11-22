@@ -77,13 +77,10 @@ class DriverMapFloatingControls extends StatelessWidget {
                 height: 60,
                 decoration: BoxDecoration(
                   color: followDriver
-                      ? LiveMapMarkerFactory.waitingAmber
-                      : LiveMapMarkerFactory.appBlue,
+                      ? LiveMapMarkerFactory.appBlue
+                      : LiveMapMarkerFactory.appBlueDark,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isDark ? Colors.white : Colors.white,
-                    width: 3.5,
-                  ),
+                  border: Border.all(color: Colors.white, width: 3.5),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(isDark ? 0.3 : 0.18),

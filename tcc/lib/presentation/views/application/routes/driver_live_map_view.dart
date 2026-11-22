@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:signals_flutter/signals_flutter.dart';
+import 'package:tcc/presentation/widgets/animated_three_dots.dart';
 
 import '../../../../domain/models/company_entity.dart';
 import '../../../../domain/models/route_entity.dart';
@@ -53,13 +54,14 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
             position: LatLng(s.latitude, s.longitude),
             anchor: const Offset(0.5, 1.0),
             zIndexInt: s.passengerId == selectedPassengerId ? 9 : 5,
-            icon: driverStopCardsCache[key] ??
+            icon:
+                driverStopCardsCache[key] ??
                 BitmapDescriptor.defaultMarkerWithHue(
                   s.isCompleted
                       ? BitmapDescriptor.hueAzure
                       : (s.isPassengerReady
-                          ? BitmapDescriptor.hueGreen
-                          : BitmapDescriptor.hueOrange),
+                            ? BitmapDescriptor.hueGreen
+                            : BitmapDescriptor.hueOrange),
                 ),
             onTap: () {
               focusOnStop(s);
@@ -71,21 +73,22 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
         final anonymousTitle = s.isCompleted
             ? 'Embarque concluído'
             : (s.isPassengerReady
-                ? 'Passageiro pronto'
-                : 'Passageiro aguardando');
+                  ? 'Passageiro pronto'
+                  : 'Passageiro aguardando');
 
         return Marker(
           markerId: MarkerId('anon_stop_${s.orderIndex}'),
           position: LatLng(s.latitude, s.longitude),
           anchor: const Offset(0.5, 0.5),
           zIndexInt: 3,
-          icon: anonymousIconForStop(s) ??
+          icon:
+              anonymousIconForStop(s) ??
               BitmapDescriptor.defaultMarkerWithHue(
                 s.isCompleted
                     ? BitmapDescriptor.hueAzure
                     : (s.isPassengerReady
-                        ? BitmapDescriptor.hueGreen
-                        : BitmapDescriptor.hueOrange),
+                          ? BitmapDescriptor.hueGreen
+                          : BitmapDescriptor.hueOrange),
               ),
           infoWindow: InfoWindow(title: anonymousTitle),
         );
@@ -94,7 +97,8 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
         markerId: const MarkerId('destination'),
         position: destLatLng,
         zIndexInt: 4,
-        icon: destIcon ??
+        icon:
+            destIcon ??
             BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
         infoWindow: InfoWindow(title: destinationLabel),
       ),
@@ -107,13 +111,13 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
         zIndexInt: 10,
         icon: isDriver
             ? (driverArrowIcon ??
-                BitmapDescriptor.defaultMarkerWithHue(
-                  BitmapDescriptor.hueAzure,
-                ))
+                  BitmapDescriptor.defaultMarkerWithHue(
+                    BitmapDescriptor.hueAzure,
+                  ))
             : (busVehicleIcon ??
-                BitmapDescriptor.defaultMarkerWithHue(
-                  BitmapDescriptor.hueGreen,
-                )),
+                  BitmapDescriptor.defaultMarkerWithHue(
+                    BitmapDescriptor.hueGreen,
+                  )),
         infoWindow: isDriver
             ? InfoWindow.noText
             : const InfoWindow(title: 'Motorista em deslocamento'),
@@ -147,6 +151,7 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final isDriver = widget.isDriver;
 
@@ -165,9 +170,10 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
       );
 
       final firebaseDriverLatLng =
-          (liveTrip?.driverLatitude != null && liveTrip?.driverLongitude != null)
-              ? LatLng(liveTrip!.driverLatitude!, liveTrip.driverLongitude!)
-              : null;
+          (liveTrip?.driverLatitude != null &&
+              liveTrip?.driverLongitude != null)
+          ? LatLng(liveTrip!.driverLatitude!, liveTrip.driverLongitude!)
+          : null;
 
       final driverLatLng = isDriver
           ? (liveGpsDriverPosition ?? firebaseDriverLatLng ?? originLatLng)
@@ -195,17 +201,21 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
       final activePolyline = roadPolylinePoints.length >= 2
           ? roadPolylinePoints
           : fallbackPoints;
-      final lookAheadPoint =
-          activePolyline.length >= 2 ? activePolyline[1] : nextTargetLatLng;
+      final lookAheadPoint = activePolyline.length >= 2
+          ? activePolyline[1]
+          : nextTargetLatLng;
 
-      final bannerDistanceMeters = nextManeuverDistanceMeters ??
+      final bannerDistanceMeters =
+          nextManeuverDistanceMeters ??
           LiveMapNavigationEngine.distanceMeters(
             driverLatLng,
             nextTargetLatLng,
           );
-      final totalRemainingMeters = roadTotalDistanceMeters ??
+      final totalRemainingMeters =
+          roadTotalDistanceMeters ??
           LiveMapNavigationEngine.polylineLengthMeters(fallbackPoints);
-      final estimatedMinutes = roadTotalDurationMinutes ??
+      final estimatedMinutes =
+          roadTotalDurationMinutes ??
           nextStop?.estimatedMinutesRemaining ??
           ((totalRemainingMeters / 1000) / 38 * 60).ceil().clamp(1, 999);
 
@@ -213,12 +223,14 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
           ? widget.company!.name.trim()
           : 'Transporte';
 
-      final nextBannerTitle = nextRoadName ??
+      final nextBannerTitle =
+          nextRoadName ??
           (nextStop != null
               ? '${LiveMapMarkerFactory.firstName(nextStop.passengerName)} (Parada #${nextStop.orderIndex})'
               : destinationLabel);
 
-      final bottomPillLabel = currentRoadName ??
+      final bottomPillLabel =
+          currentRoadName ??
           (nextStop != null
               ? 'Próxima parada: ${LiveMapMarkerFactory.firstName(nextStop.passengerName)}'
               : destinationLabel);
@@ -241,15 +253,15 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
         body: Stack(
           children: [
             GoogleMap(
+              key: ValueKey('live_map_${isDark ? 'dark' : 'light'}'),
+              mapType: MapType.normal,
               initialCameraPosition: CameraPosition(
                 target: driverLatLng,
                 zoom: isDriver ? 16.2 : 14.8,
                 tilt: isDriver ? 60.0 : 0.0,
                 bearing: initialBearing,
               ),
-              style: isDark
-                  ? LiveMapMarkerFactory.darkMapStyle
-                  : LiveMapMarkerFactory.lightMapStyle,
+              style: isDark ? LiveMapMarkerFactory.darkMapStyle : null,
               buildingsEnabled: isDriver,
               tiltGesturesEnabled: isDriver,
               rotateGesturesEnabled: isDriver,
@@ -294,8 +306,9 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
                 right: 0,
                 child: DriverNavigationBanner(
                   maneuverIcon: nextManeuverIcon,
-                  distanceLabel:
-                      LiveMapNavigationEngine.formatDistance(bannerDistanceMeters),
+                  distanceLabel: LiveMapNavigationEngine.formatDistance(
+                    bannerDistanceMeters,
+                  ),
                   nextBannerTitle: nextBannerTitle,
                   thenBannerTitle: thenRoadName,
                   thenManeuverIcon: thenManeuverIcon,
@@ -354,11 +367,13 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
               child: LiveMapBottomSheet(
                 isDriver: isDriver,
                 isExpanded: isStopsExpanded,
-                arrivalClock:
-                    LiveMapNavigationEngine.formatArrivalClock(estimatedMinutes),
+                arrivalClock: LiveMapNavigationEngine.formatArrivalClock(
+                  estimatedMinutes,
+                ),
                 estimatedMinutes: estimatedMinutes,
-                remainingDistanceLabel:
-                    LiveMapNavigationEngine.formatDistance(totalRemainingMeters),
+                remainingDistanceLabel: LiveMapNavigationEngine.formatDistance(
+                  totalRemainingMeters,
+                ),
                 stops: stops,
                 selectedPassengerId: selectedPassengerId,
                 resolvedAddresses: resolvedAddressByPassengerId,
@@ -372,6 +387,43 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
                     : null,
               ),
             ),
+            Watch((context) {
+              final loading = isInitialLoading.value;
+              final statusText = initialLoadingMessage.value;
+
+              return IgnorePointer(
+                ignoring: !loading,
+                child: AnimatedOpacity(
+                  opacity: loading ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 350),
+                  curve: Curves.easeOut,
+                  child: Container(
+                    width: double.infinity,
+                    height: double.infinity,
+                    color: theme.scaffoldBackgroundColor,
+                    child: SafeArea(
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AnimatedThreeDots(color: colorScheme.onSurface),
+                            const SizedBox(height: 16),
+                            Text(
+                              statusText,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
           ],
         ),
       );
