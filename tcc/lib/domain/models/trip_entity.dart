@@ -15,6 +15,7 @@ class TripStopPoint {
   final String passengerId;
   final String passengerName;
   final String? passengerPhotoUrl;
+  final String? passengerAddress;
   final double latitude;
   final double longitude;
   final int orderIndex;
@@ -27,6 +28,7 @@ class TripStopPoint {
     required this.passengerId,
     required this.passengerName,
     this.passengerPhotoUrl,
+    this.passengerAddress,
     required this.latitude,
     required this.longitude,
     required this.orderIndex,
@@ -40,6 +42,7 @@ class TripStopPoint {
     String? passengerId,
     String? passengerName,
     String? passengerPhotoUrl,
+    String? passengerAddress,
     double? latitude,
     double? longitude,
     int? orderIndex,
@@ -52,6 +55,7 @@ class TripStopPoint {
       passengerId: passengerId ?? this.passengerId,
       passengerName: passengerName ?? this.passengerName,
       passengerPhotoUrl: passengerPhotoUrl ?? this.passengerPhotoUrl,
+      passengerAddress: passengerAddress ?? this.passengerAddress,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       orderIndex: orderIndex ?? this.orderIndex,

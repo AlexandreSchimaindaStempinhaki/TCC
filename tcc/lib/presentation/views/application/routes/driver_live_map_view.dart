@@ -9,6 +9,7 @@ import '../../../../domain/models/trip_entity.dart';
 import '../../../widgets/live_map/live_map_bottom_sheet.dart';
 import '../../../widgets/live_map/live_map_floating_controls.dart';
 import '../../../widgets/live_map/live_map_marker_factory.dart';
+import '../../../widgets/live_map/live_map_navigation_engine.dart';
 import '../../../widgets/live_map/live_map_top_bar.dart';
 import '../../mixins/driver_live_map_logic.dart';
 
@@ -34,51 +35,153 @@ class DriverLiveMapView extends StatefulWidget {
 
 class _DriverLiveMapViewState extends State<DriverLiveMapView>
     with DriverLiveMapMixin {
+  Set<Marker> _buildMarkers({
+    required BuildContext context,
+    required List<TripStopPoint> stops,
+    required LatLng driverLatLng,
+    required LatLng destLatLng,
+    required bool isDark,
+  }) {
+    final isDriver = widget.isDriver;
+
+    return {
+      ...stops.map((s) {
+        if (isDriver) {
+          final key = stopCardCacheKey(s, isDark);
+          return Marker(
+            markerId: MarkerId('stop_${s.passengerId}_${s.orderIndex}'),
+            position: LatLng(s.latitude, s.longitude),
+            anchor: const Offset(0.5, 1.0),
+            zIndexInt: s.passengerId == selectedPassengerId ? 9 : 5,
+            icon: driverStopCardsCache[key] ??
+                BitmapDescriptor.defaultMarkerWithHue(
+                  s.isCompleted
+                      ? BitmapDescriptor.hueAzure
+                      : (s.isPassengerReady
+                          ? BitmapDescriptor.hueGreen
+                          : BitmapDescriptor.hueOrange),
+                ),
+            onTap: () {
+              focusOnStop(s);
+              showPassengerAddressModal(context, s);
+            },
+          );
+        }
+
+        final anonymousTitle = s.isCompleted
+            ? 'Embarque concluído'
+            : (s.isPassengerReady
+                ? 'Passageiro pronto'
+                : 'Passageiro aguardando');
+
+        return Marker(
+          markerId: MarkerId('anon_stop_${s.orderIndex}'),
+          position: LatLng(s.latitude, s.longitude),
+          anchor: const Offset(0.5, 0.5),
+          zIndexInt: 3,
+          icon: anonymousIconForStop(s) ??
+              BitmapDescriptor.defaultMarkerWithHue(
+                s.isCompleted
+                    ? BitmapDescriptor.hueAzure
+                    : (s.isPassengerReady
+                        ? BitmapDescriptor.hueGreen
+                        : BitmapDescriptor.hueOrange),
+              ),
+          infoWindow: InfoWindow(title: anonymousTitle),
+        );
+      }),
+      Marker(
+        markerId: const MarkerId('destination'),
+        position: destLatLng,
+        zIndexInt: 4,
+        icon: destIcon ??
+            BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+        infoWindow: InfoWindow(title: destinationLabel),
+      ),
+      Marker(
+        markerId: const MarkerId('driver'),
+        position: driverLatLng,
+        rotation: isDriver ? currentBearing : 0.0,
+        flat: isDriver,
+        anchor: const Offset(0.5, 0.5),
+        zIndexInt: 10,
+        icon: isDriver
+            ? (driverArrowIcon ??
+                BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueAzure,
+                ))
+            : (busVehicleIcon ??
+                BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueGreen,
+                )),
+        infoWindow: isDriver
+            ? InfoWindow.noText
+            : const InfoWindow(title: 'Motorista em deslocamento'),
+      ),
+    };
+  }
+
+  Set<Polyline> _buildPolylines(List<LatLng> points, bool isDriver) {
+    return {
+      Polyline(
+        polylineId: const PolylineId('route_outline'),
+        points: points,
+        width: isDriver ? 12 : 9,
+        color: LiveMapMarkerFactory.appBlueDark,
+        startCap: Cap.roundCap,
+        endCap: Cap.roundCap,
+        jointType: JointType.round,
+      ),
+      Polyline(
+        polylineId: const PolylineId('route_core'),
+        points: points,
+        width: isDriver ? 7 : 5,
+        color: LiveMapMarkerFactory.appBlue,
+        startCap: Cap.roundCap,
+        endCap: Cap.roundCap,
+        jointType: JointType.round,
+      ),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isDriver = widget.isDriver;
 
+    ensureBaseIconsForTheme(isDark);
+
     return Watch((context) {
-      final liveTrip = DriverLiveMapMixin.useMockDemoData
-          ? null
-          : (tripViewModel.state.activeTrip.value ?? widget.trip);
+      final liveTrip = tripViewModel.state.activeTrip.value ?? widget.trip;
 
-      final (demoOrigin, demoDest) = resolveDemoAnchors();
+      final originLatLng = LatLng(
+        widget.route.origin.latitude,
+        widget.route.origin.longitude,
+      );
+      final destLatLng = LatLng(
+        widget.route.destination.latitude,
+        widget.route.destination.longitude,
+      );
 
-      final originLatLng = DriverLiveMapMixin.useMockDemoData
-          ? demoOrigin
-          : LatLng(widget.route.origin.latitude, widget.route.origin.longitude);
-
-      final destLatLng = DriverLiveMapMixin.useMockDemoData
-          ? demoDest
-          : LatLng(
-              widget.route.destination.latitude,
-              widget.route.destination.longitude,
-            );
-
-      final driverLatLng = DriverLiveMapMixin.useMockDemoData
-          ? (mockDriverPosition ?? originLatLng)
-          : ((liveTrip?.driverLatitude != null &&
-                  liveTrip?.driverLongitude != null)
+      final firebaseDriverLatLng =
+          (liveTrip?.driverLatitude != null && liveTrip?.driverLongitude != null)
               ? LatLng(liveTrip!.driverLatitude!, liveTrip.driverLongitude!)
-              : originLatLng);
+              : null;
 
-      final stops = DriverLiveMapMixin.useMockDemoData
-          ? mockStops
-          : optimizeStopsOrder(
-              (liveTrip != null && liveTrip.stops.isNotEmpty)
-                  ? liveTrip.stops
-                  : widget.stops,
-              driverLatLng,
-            );
+      final driverLatLng = isDriver
+          ? (liveGpsDriverPosition ?? firebaseDriverLatLng ?? originLatLng)
+          : (firebaseDriverLatLng ?? originLatLng);
 
-      if (isDriver) ensureDriverStopCards(stops);
+      final rawStops = (liveTrip != null && liveTrip.stops.isNotEmpty)
+          ? liveTrip.stops
+          : widget.stops;
+      final stops = resolveOrderedStops(rawStops, driverLatLng);
+
+      if (isDriver) ensureDriverStopCards(stops, isDark: isDark);
 
       final pendingStops = stops.where((s) => !s.isCompleted).toList()
         ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-
       final nextStop = pendingStops.isNotEmpty ? pendingStops.first : null;
       final nextTargetLatLng = nextStop != null
           ? LatLng(nextStop.latitude, nextStop.longitude)
@@ -89,156 +192,65 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
         ...pendingStops.map((s) => LatLng(s.latitude, s.longitude)),
         destLatLng,
       ];
-
       final activePolyline = roadPolylinePoints.length >= 2
           ? roadPolylinePoints
           : fallbackPoints;
-
       final lookAheadPoint =
           activePolyline.length >= 2 ? activePolyline[1] : nextTargetLatLng;
 
       final bannerDistanceMeters = nextManeuverDistanceMeters ??
-          distanceMeters(driverLatLng, nextTargetLatLng);
-
-      double fallbackTotalMeters = 0;
-      for (int i = 0; i < fallbackPoints.length - 1; i++) {
-        fallbackTotalMeters +=
-            distanceMeters(fallbackPoints[i], fallbackPoints[i + 1]);
-      }
-
-      final totalRemainingMeters =
-          roadTotalDistanceMeters ?? fallbackTotalMeters;
-
+          LiveMapNavigationEngine.distanceMeters(
+            driverLatLng,
+            nextTargetLatLng,
+          );
+      final totalRemainingMeters = roadTotalDistanceMeters ??
+          LiveMapNavigationEngine.polylineLengthMeters(fallbackPoints);
       final estimatedMinutes = roadTotalDurationMinutes ??
           nextStop?.estimatedMinutesRemaining ??
           ((totalRemainingMeters / 1000) / 38 * 60).ceil().clamp(1, 999);
 
-      final destLabel = (widget.route.destinationName?.trim().isNotEmpty == true)
-          ? widget.route.destinationName!.trim()
-          : 'Campus Central • Destino';
-
       final companyName = (widget.company?.name.trim().isNotEmpty == true)
           ? widget.company!.name.trim()
-          : 'Transportes Costa';
+          : 'Transporte';
 
-      final nextBannerTitle = nextRoadName != null
-          ? '» $nextRoadName'
-          : (nextStop != null
-              ? '» ${LiveMapMarkerFactory.firstName(nextStop.passengerName)} (Parada #${nextStop.orderIndex})'
-              : '» $destLabel');
+      final nextBannerTitle = nextRoadName ??
+          (nextStop != null
+              ? '${LiveMapMarkerFactory.firstName(nextStop.passengerName)} (Parada #${nextStop.orderIndex})'
+              : destinationLabel);
 
       final bottomPillLabel = currentRoadName ??
           (nextStop != null
               ? 'Próxima parada: ${LiveMapMarkerFactory.firstName(nextStop.passengerName)}'
-              : destLabel);
+              : destinationLabel);
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         syncDriverMotion(driverLatLng, lookAheadPoint);
-        if (!DriverLiveMapMixin.useMockDemoData || mockRoadStopsReady) {
-          maybeFetchRoadRoute(driverLatLng, pendingStops, destLatLng);
-        }
+        maybeFetchRoadRoute(driverLatLng, pendingStops, destLatLng);
       });
 
-      final markers = <Marker>{
-        ...stops.map((s) {
-          if (isDriver) {
-            final key = stopCardCacheKey(s);
-            return Marker(
-              markerId: MarkerId('stop_${s.passengerId}_${s.orderIndex}'),
-              position: LatLng(s.latitude, s.longitude),
-              anchor: const Offset(0.5, 1.0),
-              zIndexInt: s.passengerId == selectedPassengerId ? 9 : 5,
-              icon: driverStopCardsCache[key] ??
-                  BitmapDescriptor.defaultMarkerWithHue(
-                    s.isCompleted
-                        ? BitmapDescriptor.hueAzure
-                        : (s.isPassengerReady
-                            ? BitmapDescriptor.hueGreen
-                            : BitmapDescriptor.hueOrange),
-                  ),
-              onTap: () => focusOnStop(s),
-            );
-          }
-
-          return Marker(
-            markerId: MarkerId('anon_stop_${s.orderIndex}'),
-            position: LatLng(s.latitude, s.longitude),
-            anchor: const Offset(0.5, 0.5),
-            zIndexInt: 3,
-            consumeTapEvents: true,
-            icon: anonymousStopIcon ??
-                BitmapDescriptor.defaultMarkerWithHue(
-                  BitmapDescriptor.hueAzure,
-                ),
-          );
-        }),
-        Marker(
-          markerId: const MarkerId('destination'),
-          position: destLatLng,
-          zIndexInt: 4,
-          icon: destIcon ??
-              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-          infoWindow: InfoWindow(title: destLabel),
-        ),
-        Marker(
-          markerId: const MarkerId('driver'),
-          position: driverLatLng,
-          rotation: isDriver ? currentBearing : 0.0,
-          flat: isDriver,
-          anchor: const Offset(0.5, 0.5),
-          zIndexInt: 10,
-          icon: isDriver
-              ? (driverArrowIcon ??
-                  BitmapDescriptor.defaultMarkerWithHue(
-                    BitmapDescriptor.hueAzure,
-                  ))
-              : (busVehicleIcon ??
-                  BitmapDescriptor.defaultMarkerWithHue(
-                    BitmapDescriptor.hueGreen,
-                  )),
-          infoWindow: isDriver
-              ? InfoWindow.noText
-              : const InfoWindow(title: 'Motorista em deslocamento'),
-        ),
-      };
-
-      final polylines = <Polyline>{
-        Polyline(
-          polylineId: const PolylineId('route_outline'),
-          points: activePolyline,
-          width: isDriver ? 12 : 9,
-          color: LiveMapMarkerFactory.appBlueDark,
-          startCap: Cap.roundCap,
-          endCap: Cap.roundCap,
-          jointType: JointType.round,
-        ),
-        Polyline(
-          polylineId: const PolylineId('route_core'),
-          points: activePolyline,
-          width: isDriver ? 7 : 5,
-          color: LiveMapMarkerFactory.appBlue,
-          startCap: Cap.roundCap,
-          endCap: Cap.roundCap,
-          jointType: JointType.round,
-        ),
-      };
+      final initialBearing = isDriver
+          ? LiveMapNavigationEngine.calculateBearing(
+              driverLatLng,
+              lookAheadPoint,
+            )
+          : 0.0;
 
       return Scaffold(
-        backgroundColor: isDriver ? Colors.black : theme.scaffoldBackgroundColor,
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: Stack(
           children: [
             GoogleMap(
               initialCameraPosition: CameraPosition(
                 target: driverLatLng,
-                zoom: isDriver ? 15.8 : 14.8,
-                tilt: isDriver ? 60.0 : 25.0,
-                bearing: isDriver
-                    ? calculateBearing(driverLatLng, lookAheadPoint)
-                    : 0.0,
+                zoom: isDriver ? 16.2 : 14.8,
+                tilt: isDriver ? 60.0 : 0.0,
+                bearing: initialBearing,
               ),
-              style: isDark ? LiveMapMarkerFactory.darkMapStyle : null,
-              buildingsEnabled: true,
+              style: isDark
+                  ? LiveMapMarkerFactory.darkMapStyle
+                  : LiveMapMarkerFactory.lightMapStyle,
+              buildingsEnabled: isDriver,
               tiltGesturesEnabled: isDriver,
               rotateGesturesEnabled: isDriver,
               compassEnabled: false,
@@ -247,11 +259,17 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
               myLocationButtonEnabled: false,
               mapToolbarEnabled: false,
               padding: EdgeInsets.only(
-                top: MediaQuery.of(context).padding.top + (isDriver ? 138 : 82),
-                bottom: (isDriver && isStopsExpanded) ? 310 : 124,
+                top: MediaQuery.of(context).padding.top + (isDriver ? 168 : 82),
+                bottom: (isDriver && isStopsExpanded) ? 330 : 134,
               ),
-              markers: markers,
-              polylines: polylines,
+              markers: _buildMarkers(
+                context: context,
+                stops: stops,
+                driverLatLng: driverLatLng,
+                destLatLng: destLatLng,
+                isDark: isDark,
+              ),
+              polylines: _buildPolylines(activePolyline, isDriver),
               onTap: (_) {
                 if (selectedPassengerId != null) {
                   setState(() => selectedPassengerId = null);
@@ -262,10 +280,7 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
                 Future.delayed(const Duration(milliseconds: 350), () {
                   if (!mounted) return;
                   if (isDriver) {
-                    animateCameraToDriver(
-                      driverLatLng,
-                      calculateBearing(driverLatLng, lookAheadPoint),
-                    );
+                    animateCameraToDriver(driverLatLng, initialBearing);
                   } else if (activePolyline.length >= 2) {
                     fitOverviewBounds(activePolyline);
                   }
@@ -279,8 +294,11 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
                 right: 0,
                 child: DriverNavigationBanner(
                   maneuverIcon: nextManeuverIcon,
-                  distanceLabel: formatDistance(bannerDistanceMeters),
+                  distanceLabel:
+                      LiveMapNavigationEngine.formatDistance(bannerDistanceMeters),
                   nextBannerTitle: nextBannerTitle,
+                  thenBannerTitle: thenRoadName,
+                  thenManeuverIcon: thenManeuverIcon,
                   onBack: () {
                     if (context.canPop()) context.pop();
                   },
@@ -293,7 +311,7 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
                 right: 16,
                 child: PassengerTrackingHeader(
                   companyName: companyName,
-                  destinationLabel: destLabel,
+                  destinationLabel: destinationLabel,
                   onBack: () {
                     if (context.canPop()) context.pop();
                   },
@@ -303,7 +321,7 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
               Positioned(
                 left: 16,
                 right: 16,
-                bottom: isStopsExpanded ? 298 : 114,
+                bottom: isStopsExpanded ? 320 : 114,
                 child: DriverMapFloatingControls(
                   speedKmh: currentSpeedKmh.round(),
                   followDriver: followDriver,
@@ -313,17 +331,14 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
                       followDriver = true;
                       selectedPassengerId = null;
                     });
-                    animateCameraToDriver(
-                      driverLatLng,
-                      calculateBearing(driverLatLng, lookAheadPoint),
-                    );
+                    animateCameraToDriver(driverLatLng, initialBearing);
                   },
                 ),
               )
             else
               Positioned(
                 right: 16,
-                bottom: 118,
+                bottom: 132,
                 child: PassengerRecenterButton(
                   followDriver: followDriver,
                   onPressed: () {
@@ -339,16 +354,22 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
               child: LiveMapBottomSheet(
                 isDriver: isDriver,
                 isExpanded: isStopsExpanded,
-                arrivalClock: formatArrivalClock(estimatedMinutes),
+                arrivalClock:
+                    LiveMapNavigationEngine.formatArrivalClock(estimatedMinutes),
                 estimatedMinutes: estimatedMinutes,
-                remainingDistanceLabel: formatDistance(totalRemainingMeters),
+                remainingDistanceLabel:
+                    LiveMapNavigationEngine.formatDistance(totalRemainingMeters),
                 stops: stops,
                 selectedPassengerId: selectedPassengerId,
+                resolvedAddresses: resolvedAddressByPassengerId,
                 onOverview: () => fitOverviewBounds(activePolyline),
                 onToggleExpand: () {
                   setState(() => isStopsExpanded = !isStopsExpanded);
                 },
                 onTapStop: focusOnStop,
+                onOpenStopAddress: isDriver
+                    ? (stop) => showPassengerAddressModal(context, stop)
+                    : null,
               ),
             ),
           ],

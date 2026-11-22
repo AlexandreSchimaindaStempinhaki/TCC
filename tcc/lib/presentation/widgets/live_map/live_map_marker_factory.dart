@@ -15,6 +15,16 @@ class LiveMapMarkerFactory {
 
   static const Color appBlue = Color(0xFF3B82F6);
   static const Color appBlueDark = Color(0xFF1E3A8A);
+  static const Color readyGreen = Color(0xFF16A34A);
+  static const Color waitingAmber = Color(0xFFF59E0B);
+  static const Color completedSlate = Color(0xFF64748B);
+
+  static const String lightMapStyle = '''
+[
+  {"featureType":"poi","elementType":"labels","stylers":[{"visibility":"off"}]},
+  {"featureType":"transit","elementType":"labels.icon","stylers":[{"visibility":"off"}]}
+]
+''';
 
   static const String darkMapStyle = '''
 [
@@ -29,6 +39,16 @@ class LiveMapMarkerFactory {
   {"featureType":"poi","elementType":"labels","stylers":[{"visibility":"off"}]}
 ]
 ''';
+
+  static Color statusColorForStop(TripStopPoint stop) {
+    if (stop.isCompleted) return completedSlate;
+    return stop.isPassengerReady ? readyGreen : waitingAmber;
+  }
+
+  static String statusLabelForStop(TripStopPoint stop) {
+    if (stop.isCompleted) return 'Embarcado';
+    return stop.isPassengerReady ? 'Pronto' : 'Aguardando';
+  }
 
   static String initialsFromName(String name) {
     final parts =
@@ -77,8 +97,9 @@ class LiveMapMarkerFactory {
   }
 
   static Future<BitmapDescriptor> createPassengerMapCardIcon(
-    TripStopPoint stop,
-  ) async {
+    TripStopPoint stop, {
+    required bool isDark,
+  }) async {
     const double width = 316;
     const double height = 122;
     const double cardHeight = 92;
@@ -87,15 +108,15 @@ class LiveMapMarkerFactory {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
 
-    final accentColor = stop.isCompleted
-        ? const Color(0xFF64748B)
-        : (stop.isPassengerReady
-            ? const Color(0xFF16A34A)
-            : const Color(0xFFF59E0B));
+    final accentColor = statusColorForStop(stop);
+    final statusWord = statusLabelForStop(stop);
 
-    final statusWord = stop.isCompleted
-        ? 'Embarcado'
-        : (stop.isPassengerReady ? 'Pronto' : 'Aguardando');
+    final cardBgColor =
+        isDark ? const Color(0xFF111827) : const Color(0xFFFFFFFF);
+    final titleColor =
+        isDark ? Colors.white : const Color(0xFF0F172A);
+    final etaColor =
+        isDark ? const Color(0xFFE2E8F0) : const Color(0xFF475569);
 
     final cardRect = RRect.fromRectAndRadius(
       const Rect.fromLTWH(8, 6, width - 16, cardHeight),
@@ -104,11 +125,11 @@ class LiveMapMarkerFactory {
 
     canvas.drawShadow(
       Path()..addRRect(cardRect),
-      Colors.black.withOpacity(0.55),
+      Colors.black.withOpacity(isDark ? 0.55 : 0.25),
       9,
       true,
     );
-    canvas.drawRRect(cardRect, Paint()..color = const Color(0xFF111827));
+    canvas.drawRRect(cardRect, Paint()..color = cardBgColor);
     canvas.drawRRect(
       cardRect,
       Paint()
@@ -178,7 +199,7 @@ class LiveMapMarkerFactory {
     }
 
     const badgeCenter = Offset(77, 75);
-    canvas.drawCircle(badgeCenter, 13.5, Paint()..color = const Color(0xFF111827));
+    canvas.drawCircle(badgeCenter, 13.5, Paint()..color = cardBgColor);
     canvas.drawCircle(badgeCenter, 11, Paint()..color = accentColor);
     final orderPainter = TextPainter(
       text: TextSpan(
@@ -202,8 +223,8 @@ class LiveMapMarkerFactory {
     final namePainter = TextPainter(
       text: TextSpan(
         text: firstName(stop.passengerName),
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: titleColor,
           fontSize: 22,
           fontWeight: FontWeight.w800,
         ),
@@ -255,8 +276,8 @@ class LiveMapMarkerFactory {
         final etaPainter = TextPainter(
           text: TextSpan(
             text: '${stop.estimatedMinutesRemaining} min',
-            style: const TextStyle(
-              color: Color(0xFFE2E8F0),
+            style: TextStyle(
+              color: etaColor,
               fontSize: 15,
               fontWeight: FontWeight.w700,
             ),
@@ -284,15 +305,55 @@ class LiveMapMarkerFactory {
     );
   }
 
-  static Future<BitmapDescriptor> createAnonymousStopIcon() async {
-    const double size = 64;
+  /// Marcador anônimo para a visão 2D do passageiro: indica apenas se há alguém
+  /// pronto (verde), aguardando (âmbar) ou já embarcado (cinza), sem expor dados pessoais.
+  static Future<BitmapDescriptor> createAnonymousStopIcon({
+    required bool isReady,
+    required bool isCompleted,
+    required bool isDark,
+  }) async {
+    const double size = 84;
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
     const center = Offset(size / 2, size / 2);
 
-    canvas.drawCircle(center, 22, Paint()..color = Colors.white);
-    canvas.drawCircle(center, 16, Paint()..color = appBlue);
-    canvas.drawCircle(center, 6, Paint()..color = Colors.white);
+    final color = isCompleted
+        ? completedSlate
+        : (isReady ? readyGreen : waitingAmber);
+
+    final ringColor = isDark ? const Color(0xFF111827) : Colors.white;
+
+    // Halo suave de status
+    canvas.drawCircle(center, 38, Paint()..color = color.withOpacity(0.22));
+    // Borda externa contrastante com o tema
+    canvas.drawCircle(center, 27, Paint()..color = ringColor);
+    // Núcleo com a cor do status
+    canvas.drawCircle(center, 21, Paint()..color = color);
+
+    final iconData = isCompleted
+        ? Icons.check_rounded
+        : (isReady ? Icons.person_rounded : Icons.schedule_rounded);
+
+    final iconPainter = TextPainter(
+      text: TextSpan(
+        text: String.fromCharCode(iconData.codePoint),
+        style: TextStyle(
+          fontSize: 24,
+          fontFamily: iconData.fontFamily,
+          package: iconData.fontPackage,
+          color: Colors.white,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    iconPainter.paint(
+      canvas,
+      Offset(
+        center.dx - iconPainter.width / 2,
+        center.dy - iconPainter.height / 2,
+      ),
+    );
 
     final image = await recorder.endRecording().toImage(
           size.toInt(),
@@ -301,8 +362,8 @@ class LiveMapMarkerFactory {
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
     return BitmapDescriptor.bytes(
       bytes!.buffer.asUint8List(),
-      width: 24,
-      height: 24,
+      width: 30,
+      height: 30,
     );
   }
 
@@ -358,10 +419,10 @@ class LiveMapMarkerFactory {
     canvas.drawCircle(
       center,
       58,
-      Paint()..color = const Color(0xFF16A34A).withOpacity(0.20),
+      Paint()..color = readyGreen.withOpacity(0.20),
     );
     canvas.drawCircle(center, 44, Paint()..color = Colors.white);
-    canvas.drawCircle(center, 37, Paint()..color = const Color(0xFF16A34A));
+    canvas.drawCircle(center, 37, Paint()..color = readyGreen);
 
     final iconPainter = TextPainter(
       text: TextSpan(

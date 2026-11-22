@@ -18,6 +18,13 @@ class DriverMapFloatingControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final speedBg = isDark ? const Color(0xFF1F2937) : Colors.white;
+    final speedBorder = isDark ? Colors.white : const Color(0xFFE2E8F0);
+    final speedText = isDark ? Colors.white : const Color(0xFF0F172A);
+    final speedSubText = isDark ? Colors.white70 : const Color(0xFF64748B);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -29,12 +36,12 @@ class DriverMapFloatingControls extends StatelessWidget {
               width: 66,
               height: 66,
               decoration: BoxDecoration(
-                color: const Color(0xFF1F2937),
+                color: speedBg,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 3),
+                border: Border.all(color: speedBorder, width: 3),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.35),
+                    color: Colors.black.withOpacity(isDark ? 0.35 : 0.16),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -45,17 +52,17 @@ class DriverMapFloatingControls extends StatelessWidget {
                 children: [
                   Text(
                     '$speedKmh',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: speedText,
                       fontSize: 21,
                       fontWeight: FontWeight.w800,
                       height: 1.0,
                     ),
                   ),
-                  const Text(
+                  Text(
                     'km/h',
                     style: TextStyle(
-                      color: Colors.white70,
+                      color: speedSubText,
                       fontSize: 10.5,
                       fontWeight: FontWeight.w600,
                     ),
@@ -70,13 +77,16 @@ class DriverMapFloatingControls extends StatelessWidget {
                 height: 60,
                 decoration: BoxDecoration(
                   color: followDriver
-                      ? const Color(0xFFF59E0B)
+                      ? LiveMapMarkerFactory.waitingAmber
                       : LiveMapMarkerFactory.appBlue,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 3.5),
+                  border: Border.all(
+                    color: isDark ? Colors.white : Colors.white,
+                    width: 3.5,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
+                      color: Colors.black.withOpacity(isDark ? 0.3 : 0.18),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -99,7 +109,7 @@ class DriverMapFloatingControls extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.28),
+                color: Colors.black.withOpacity(isDark ? 0.28 : 0.16),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
@@ -142,7 +152,7 @@ class PassengerRecenterButton extends StatelessWidget {
       child: Icon(
         Icons.directions_bus_rounded,
         color: followDriver
-            ? const Color(0xFF16A34A)
+            ? LiveMapMarkerFactory.readyGreen
             : LiveMapMarkerFactory.appBlue,
       ),
     );
