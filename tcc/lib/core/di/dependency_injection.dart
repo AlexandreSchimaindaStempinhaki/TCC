@@ -3,9 +3,11 @@ import 'package:auto_injector/auto_injector.dart';
 import '../../data/repositories/boarding/i_boarding_repository.dart';
 import '../../data/repositories/trip/i_trip_repository.dart';
 import '../../data/repositories/vehicle/i_vehicle_repository.dart';
+import '../../domain/usecases/notifications/i_notification_usecases.dart';
+import '../../domain/usecases/notifications/notification_usecases_impl.dart';
+import '../../presentation/controllers/notifications/notification_viewmodel.dart';
 import '../theme/theme_controller.dart';
 
-// User Module
 import '../../data/services/user/i_user_firebase_service.dart';
 import '../../data/services/user/user_firebase_service_impl.dart';
 import '../../data/repositories/user/i_user_repositoy.dart';
@@ -15,8 +17,6 @@ import '../../domain/usecases/user/user_use_cases_impl.dart';
 import '../../domain/facades/user/i_user_use_case_facade.dart';
 import '../../domain/facades/user/user_use_case_facade.dart';
 import '../../presentation/controllers/user/user_viewmodel.dart';
-
-// Company Module (Incluindo Avaliações)
 import '../../data/services/company/i_company_firebase_service.dart';
 import '../../data/services/company/company_firebase_service_impl.dart';
 import '../../data/repositories/company/i_company_repository.dart';
@@ -27,8 +27,6 @@ import '../../domain/facades/company/i_company_use_case_facade.dart';
 import '../../domain/facades/company/company_use_case_facade_impl.dart';
 import '../../presentation/controllers/company/company_viewmodel.dart';
 import '../../presentation/controllers/company/company_list_viewmodel.dart';
-
-// CompanyMember Module
 import '../../data/services/company_member/i_company_member_service.dart';
 import '../../data/services/company_member/company_member_service_impl.dart';
 import '../../data/repositories/company_member/i_company_member_repository.dart';
@@ -38,8 +36,6 @@ import '../../domain/usecases/company_member/company_member_usecases_impl.dart';
 import '../../domain/facades/company_member/i_company_member_facade.dart';
 import '../../domain/facades/company_member/company_member_facade_impl.dart';
 import '../../presentation/controllers/company_member/company_member_viewmodel.dart';
-
-// Route Module
 import '../../data/services/route/i_route_service.dart';
 import '../../data/services/route/route_service_impl.dart';
 import '../../data/repositories/route/i_route_repository.dart';
@@ -50,8 +46,6 @@ import '../../domain/facades/route/i_route_facade.dart';
 import '../../domain/facades/route/route_facade_impl.dart';
 import '../../presentation/controllers/route/route_viewmodel.dart';
 import '../../presentation/controllers/route/route_list_viewmodel.dart';
-
-// Vehicle Module
 import '../../data/services/vehicle/i_vehicle_service.dart';
 import '../../data/services/vehicle/vehicle_service_impl.dart';
 import '../../data/repositories/vehicle/vehicle_repository_impl.dart';
@@ -61,8 +55,6 @@ import '../../domain/facades/vehicle/i_vehicle_facade.dart';
 import '../../domain/facades/vehicle/vehicle_facade_impl.dart';
 import '../../presentation/controllers/vehicle/vehicle_viewmodel.dart';
 import '../../presentation/controllers/vehicle/vehicle_list_viewmodel.dart';
-
-// Trip Module
 import '../../data/services/trip/i_trip_service.dart';
 import '../../data/services/trip/trip_service_impl.dart';
 import '../../data/repositories/trip/trip_repository_impl.dart';
@@ -72,8 +64,6 @@ import '../../domain/facades/trip/i_trip_facade.dart';
 import '../../domain/facades/trip/trip_facade_impl.dart';
 import '../../presentation/controllers/trip/trip_viewmodel.dart';
 import '../../presentation/controllers/trip/trip_list_viewmodel.dart';
-
-// Boarding Module
 import '../../data/services/boarding/i_boarding_service.dart';
 import '../../data/services/boarding/boarding_service_impl.dart';
 import '../../data/repositories/boarding/boarding_repository_impl.dart';
@@ -83,8 +73,12 @@ import '../../domain/facades/boarding/i_boarding_facade.dart';
 import '../../domain/facades/boarding/boarding_facade_impl.dart';
 import '../../presentation/controllers/boarding/boarding_viewmodel.dart';
 import '../../presentation/controllers/boarding/boarding_list_viewmodel.dart';
-
-// Authentication Module
+import '../../data/services/notification/i_notification_service.dart';
+import '../../data/services/notification/notification_service_impl.dart';
+import '../../data/repositories/notification/i_notification_repository.dart';
+import '../../data/repositories/notification/notification_repository_impl.dart';
+import '../../domain/facades/notification/i_notification_facade.dart';
+import '../../domain/facades/notification/notification_facade_impl.dart';
 import '../../data/repositories/authentication/auth_repository_impl.dart';
 import '../../data/repositories/authentication/i_auth_repository.dart';
 import '../../data/services/authentication/local/auth_local_session_manager.dart';
@@ -226,6 +220,25 @@ void setupDependencyInjection() {
   injector.addSingleton<IBoardingFacade>(BoardingFacadeImpl.new);
 
   // ==========================================================
+  // Notification Module
+  // ==========================================================
+  injector.addSingleton<INotificationService>(() => NotificationServiceImpl());
+  injector.addSingleton<INotificationRepository>(NotificationRepositoryImpl.new);
+  injector.addSingleton<IInitializeNotificationsUseCase>(InitializeNotificationsUseCaseImpl.new);
+  injector.addSingleton<IToggleNotificationsUseCase>(ToggleNotificationsUseCaseImpl.new);
+  injector.addSingleton<ISyncNotificationTokenUseCase>(SyncNotificationTokenUseCaseImpl.new);
+  injector.addSingleton<IClearNotificationTokenUseCase>(ClearNotificationTokenUseCaseImpl.new);
+  injector.addSingleton<IWatchUserNotificationsUseCase>(WatchUserNotificationsUseCaseImpl.new);
+  injector.addSingleton<IFetchUserNotificationsUseCase>(FetchUserNotificationsUseCaseImpl.new);
+  injector.addSingleton<IWatchForegroundPushMessagesUseCase>(WatchForegroundPushMessagesUseCaseImpl.new);
+  injector.addSingleton<IWatchNotificationTokenRefreshUseCase>(WatchNotificationTokenRefreshUseCaseImpl.new);
+  injector.addSingleton<IMarkNotificationAsReadUseCase>(MarkNotificationAsReadUseCaseImpl.new);
+  injector.addSingleton<IMarkAllNotificationsAsReadUseCase>(MarkAllNotificationsAsReadUseCaseImpl.new);
+  injector.addSingleton<IDeleteNotificationUseCase>(DeleteNotificationUseCaseImpl.new);
+  injector.addSingleton<IShowLocalNotificationUseCase>(ShowLocalNotificationUseCaseImpl.new);
+  injector.addSingleton<INotificationFacade>(NotificationFacadeImpl.new);
+
+  // ==========================================================
   // Authentication Module
   // ==========================================================
   injector.addSingleton<ILocalSessionStore>(SharedPrefLocalSessionService.new);
@@ -262,6 +275,7 @@ void setupDependencyInjection() {
   injector.addSingleton<TripListViewModel>(TripListViewModel.new);
   injector.addSingleton<BoardingViewModel>(BoardingViewModel.new);
   injector.addSingleton<BoardingListViewModel>(BoardingListViewModel.new);
+  injector.addSingleton<NotificationViewModel>(NotificationViewModel.new);
 
   injector.commit();
 }

@@ -9,7 +9,7 @@ class TripServiceImpl implements ITripService {
   final FirebaseFirestore _firestore;
 
   TripServiceImpl({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference get _collection => _firestore.collection('trips');
   CollectionReference get _notificationsCollection =>
@@ -90,6 +90,7 @@ class TripServiceImpl implements ITripService {
       'passengerId': stop.passengerId,
       'passengerName': stop.passengerName,
       'passengerPhotoUrl': stop.passengerPhotoUrl,
+      'passengerAddress': stop.passengerAddress,
       'latitude': stop.latitude,
       'longitude': stop.longitude,
       'location': GeoPoint(stop.latitude, stop.longitude),
@@ -136,6 +137,7 @@ class TripServiceImpl implements ITripService {
       passengerId: (map['passengerId'] ?? '').toString(),
       passengerName: (map['passengerName'] ?? 'Passageiro').toString(),
       passengerPhotoUrl: map['passengerPhotoUrl']?.toString(),
+      passengerAddress: map['passengerAddress']?.toString(),
       latitude: lat,
       longitude: lng,
       orderIndex: int.tryParse((map['orderIndex'] ?? '0').toString()) ?? 0,
@@ -255,8 +257,7 @@ class TripServiceImpl implements ITripService {
               ? _parseDateTime(map['arrivalTime'] ?? map['horarioChegada'])
               : null,
       status: _statusFromString((map['status'] ?? 'scheduled').toString()),
-      passengerCount:
-          int.tryParse(
+      passengerCount: int.tryParse(
             (map['passengerCount'] ?? map['numeroPassageiros'] ?? '0')
                 .toString(),
           ) ??
@@ -264,8 +265,7 @@ class TripServiceImpl implements ITripService {
       direction: _directionFromString(
         (map['direction'] ?? map['sentido'] ?? 'outbound').toString(),
       ),
-      tripGroupIndex:
-          int.tryParse(
+      tripGroupIndex: int.tryParse(
             (map['tripGroupIndex'] ?? map['indiceGrupo'] ?? '1').toString(),
           ) ??
           1,
@@ -289,8 +289,7 @@ class TripServiceImpl implements ITripService {
     final dLat = (lat2 - lat1) * (math.pi / 180.0);
     final dLon = (lon2 - lon1) * (math.pi / 180.0);
 
-    final a =
-        math.sin(dLat / 2) * math.sin(dLat / 2) +
+    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
         math.cos(lat1 * (math.pi / 180.0)) *
             math.cos(lat2 * (math.pi / 180.0)) *
             math.sin(dLon / 2) *
@@ -305,7 +304,11 @@ class TripServiceImpl implements ITripService {
     required List<int> alreadyNotified,
   }) {
     if (currentEtaMinutes < 0) return null;
+    if (currentEtaMinutes == 0 && !alreadyNotified.contains(0)) {
+      return 0;
+    }
     for (final threshold in _etaThresholds) {
+      if (threshold == 0) continue;
       if (currentEtaMinutes <= threshold &&
           currentEtaMinutes >= (threshold - 2) &&
           !alreadyNotified.contains(threshold)) {
@@ -476,9 +479,8 @@ class TripServiceImpl implements ITripService {
     required TripModel baseTrip,
     required List<TripStopPoint> confirmedStops,
   }) async {
-    final capacity = baseTrip.vehicleCapacity > 0
-        ? baseTrip.vehicleCapacity
-        : 15;
+    final capacity =
+        baseTrip.vehicleCapacity > 0 ? baseTrip.vehicleCapacity : 15;
 
     if (confirmedStops.isEmpty) {
       final single = await createTrip(
@@ -637,13 +639,22 @@ class TripServiceImpl implements ITripService {
     final speedMetersPerMin =
         ((averageSpeedKmh > 5 ? averageSpeedKmh : 35.0) * 1000.0) / 60.0;
 
+    // Prioriza alunos prontos antes dos aguardando no cálculo de ETA (igual ao mapa)
+    final orderedStops = [...existing.stops]..sort((a, b) {
+        if (a.isCompleted != b.isCompleted) return a.isCompleted ? 1 : -1;
+        if (a.isPassengerReady != b.isPassengerReady) {
+          return a.isPassengerReady ? -1 : 1;
+        }
+        return a.orderIndex.compareTo(b.orderIndex);
+      });
+
     double currentLegLat = latitude;
     double currentLegLng = longitude;
     double cumulativeMeters = 0.0;
 
     final updatedStops = <TripStopPoint>[];
 
-    for (final stop in existing.stops) {
+    for (final stop in orderedStops) {
       if (stop.isCompleted) {
         updatedStops.add(stop.copyWith(estimatedMinutesRemaining: 0));
         continue;
@@ -661,7 +672,10 @@ class TripServiceImpl implements ITripService {
       currentLegLat = stop.latitude;
       currentLegLng = stop.longitude;
 
-      final etaMinutes = (cumulativeMeters / speedMetersPerMin).round();
+      final int etaMinutes = cumulativeMeters <= 120.0
+          ? 0
+          : (cumulativeMeters / speedMetersPerMin).round();
+
       final thresholdToTrigger = _resolveEtaThresholdToTrigger(
         currentEtaMinutes: etaMinutes,
         alreadyNotified: stop.notifiedThresholds,
@@ -722,9 +736,8 @@ class TripServiceImpl implements ITripService {
       if (stop.passengerId == passengerId) {
         return stop.copyWith(
           isCompleted: isCompleted,
-          estimatedMinutesRemaining: isCompleted
-              ? 0
-              : stop.estimatedMinutesRemaining,
+          estimatedMinutesRemaining:
+              isCompleted ? 0 : stop.estimatedMinutesRemaining,
         );
       }
       return stop;

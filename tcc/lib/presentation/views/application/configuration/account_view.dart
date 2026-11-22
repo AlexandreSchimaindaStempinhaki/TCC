@@ -12,6 +12,7 @@ import '../../../../core/routes/auth_routes.dart';
 import '../../../../core/routes/indigo_routes.dart';
 import '../../../controllers/authentication/auth_session_viewmodel.dart';
 import '../../../controllers/company/company_list_viewmodel.dart';
+import '../../../controllers/notifications/notification_viewmodel.dart';
 import '../../../controllers/user/user_viewmodel.dart';
 
 class AccountView extends StatefulWidget {
@@ -25,9 +26,9 @@ class _AccountViewState extends State<AccountView> {
   late final AuthViewModel authController;
   late final UserViewModel _userViewModel;
   late final CompanyListViewModel _companyListViewModel;
+  late final NotificationViewModel _notificationViewModel;
 
   final _isInitialLoading = signal(true);
-  bool _notificationsEnabled = true;
   bool _isLoggingOut = false;
 
   @override
@@ -36,6 +37,7 @@ class _AccountViewState extends State<AccountView> {
     authController = injector.get<AuthViewModel>();
     _userViewModel = injector.get<UserViewModel>();
     _companyListViewModel = injector.get<CompanyListViewModel>();
+    _notificationViewModel = injector.get<NotificationViewModel>();
 
     _loadInitialData();
   }
@@ -47,8 +49,40 @@ class _AccountViewState extends State<AccountView> {
       _companyListViewModel.commands.fetchOwnedCompanies(),
       _companyListViewModel.commands.fetchMemberCompanies(),
     ]);
+
+    // Apenas sincroniza a sessão se o usuário já tiver ativado as notificações antes
+    // (não abre o popup de permissão automaticamente ao entrar na tela).
+    final currentUser = _userViewModel.state.user.value;
+    if (_notificationViewModel.state.isEnabled.value) {
+      await _notificationViewModel.commands.syncUserSession(
+        cpf: currentUser?.cpf,
+        requestPermission: false,
+      );
+    }
+
     if (mounted) {
       _isInitialLoading.value = false;
+    }
+  }
+
+  Future<void> _handleToggleNotifications(bool val) async {
+    final currentUser = _userViewModel.state.user.value;
+
+    // Quando val == true, dispara o popup padrão do Android pedindo permissão.
+    final success = await _notificationViewModel.commands.toggleNotifications(
+      enable: val,
+      cpf: currentUser?.cpf,
+    );
+
+    if (!mounted) return;
+    if (val && !success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Permissão de notificações negada. Ative nas configurações do aparelho para receber alertas.',
+          ),
+        ),
+      );
     }
   }
 
@@ -211,19 +245,26 @@ class _AccountViewState extends State<AccountView> {
                           }),
                           const SizedBox(height: 8),
 
-                          AccountOption(
-                            icon: Icons.notifications_none_outlined,
-                            title: 'Notificações',
-                            trailing: Switch(
-                              value: _notificationsEnabled,
-                              activeColor: colorScheme.primary,
-                              onChanged: (val) {
-                                setState(() {
-                                  _notificationsEnabled = val;
-                                });
-                              },
-                            ),
-                          ),
+                          Watch((context) {
+                            final isEnabled =
+                                _notificationViewModel.state.isEnabled.value;
+                            final isToggling =
+                                _notificationViewModel.state.isToggling.value;
+
+                            return AccountOption(
+                              icon: isEnabled
+                                  ? Icons.notifications_active_outlined
+                                  : Icons.notifications_off_outlined,
+                              title: 'Notificações',
+                              trailing: Switch(
+                                value: isEnabled,
+                                activeColor: colorScheme.primary,
+                                onChanged: isToggling
+                                    ? null
+                                    : _handleToggleNotifications,
+                              ),
+                            );
+                          }),
                           const SizedBox(height: 8),
 
                           AccountOption(
@@ -250,6 +291,8 @@ class _AccountViewState extends State<AccountView> {
 
                                 try {
                                   final router = GoRouter.of(context);
+                                  await _notificationViewModel.commands
+                                      .onSignOut();
                                   await authController.commands.signOut();
 
                                   if (!context.mounted) return;
