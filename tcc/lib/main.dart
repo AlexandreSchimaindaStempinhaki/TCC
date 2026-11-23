@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import 'core/di/dependency_injection.dart';
+import 'core/network/network_status_service.dart';
 import 'core/routes/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
@@ -22,16 +23,30 @@ void main() async {
 
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  try {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  } catch (_) {}
 
   setupDependencyInjection();
 
   final themeController = injector.get<ThemeController>();
-  await themeController.loadTheme();
+  try {
+    await themeController.loadTheme();
+  } catch (_) {}
 
-  await injector.get<NotificationViewModel>().commands.initialize();
+  // Checa internet sem travar o boot caso esteja offline
+  await NetworkStatusService.checkConnection(force: true);
+
+  if (NetworkStatusService.isConnected.value) {
+    try {
+      await injector
+          .get<NotificationViewModel>()
+          .commands
+          .initialize()
+          .timeout(const Duration(seconds: 4));
+    } catch (_) {}
+  }
 
   runApp(
     Watch(
