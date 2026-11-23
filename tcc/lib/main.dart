@@ -35,7 +35,6 @@ void main() async {
     await themeController.loadTheme();
   } catch (_) {}
 
-  // Checa internet sem travar o boot caso esteja offline
   await NetworkStatusService.checkConnection(force: true);
 
   if (NetworkStatusService.isConnected.value) {
