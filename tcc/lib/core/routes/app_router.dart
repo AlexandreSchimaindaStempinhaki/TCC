@@ -44,11 +44,14 @@ class AppRouter {
   static final GoRouter router = GoRouter(
     initialLocation: splashPath,
     refreshListenable: RouterNotifier(),
-    redirect: (context, state) async {
-      final isNoInternetRoute = state.matchedLocation == noInternetPath;
-      final online = await NetworkStatusService.checkConnection();
+    redirect: (context, state) {
+      // Dispara verificação em segundo plano para manter o signal atualizado
+      NetworkStatusService.checkInBackground();
 
-      // 1. Sem internet: manda para a tela de sem conexão (inclusive ao abrir o app)
+      final online = NetworkStatusService.isConnected.value;
+      final isNoInternetRoute = state.matchedLocation == noInternetPath;
+
+      // 1. Sem internet: manda direto para a tela de sem conexão (sem passar por loading)
       if (!online) {
         if (isNoInternetRoute) return null;
         final from = Uri.encodeQueryComponent(state.uri.toString());
@@ -66,7 +69,6 @@ class AppRouter {
         return HomePaths.home;
       }
 
-      // Permite que a tela de carregamento inicial rode até o fim sem redirecionamento precoce
       if (state.matchedLocation == splashPath) {
         return null;
       }
