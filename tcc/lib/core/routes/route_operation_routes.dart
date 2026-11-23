@@ -75,7 +75,7 @@ final List<RouteBase> routeOperationRoutes = [
             : null;
         final rawBadge = extra['roleBadge'] as String?;
 
-        // CEO, Gerente e Motorista mantêm o badge da equipe; demais ficam como Passageiro
+        // Evita que um passageiro receba badge de equipe por engano
         final isStaff = RouteAccessGuard.isCompanyStaff(
           company: company,
           companyCnpj: route.companyCnpj,
@@ -118,13 +118,14 @@ final List<RouteBase> routeOperationRoutes = [
       final company = extra['company'] is CompanyModel
           ? extra['company'] as CompanyModel
           : null;
-
-      // CEO, Gerente e Motorista sempre recebem visão de equipe para ver passageiros
-      final effectiveStaff = RouteAccessGuard.isCompanyStaff(
-        company: company,
-        companyCnpj: route.companyCnpj,
-        route: route,
-      );
+      final requestedStaff = (extra['isStaff'] as bool?) ?? false;
+      final effectiveStaff =
+          requestedStaff &&
+          RouteAccessGuard.isCompanyStaff(
+            company: company,
+            companyCnpj: route.companyCnpj,
+            route: route,
+          );
 
       return RouteAttendanceCalendarView(
         route: route,
@@ -159,13 +160,14 @@ final List<RouteBase> routeOperationRoutes = [
       final company = extra['company'] is CompanyModel
           ? extra['company'] as CompanyModel
           : null;
-
-      // CEO, Gerente e Motorista sempre recebem visão de equipe para ver passageiros do dia
-      final effectiveStaff = RouteAccessGuard.isCompanyStaff(
-        company: company,
-        companyCnpj: route.companyCnpj,
-        route: route,
-      );
+      final requestedStaff = (extra['isStaff'] as bool?) ?? false;
+      final effectiveStaff =
+          requestedStaff &&
+          RouteAccessGuard.isCompanyStaff(
+            company: company,
+            companyCnpj: route.companyCnpj,
+            route: route,
+          );
 
       return RouteDayScheduleView(
         route: route,

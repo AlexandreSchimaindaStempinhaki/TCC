@@ -114,7 +114,8 @@ class RouteAccessGuard {
     if (company != null) return company;
 
     try {
-      final selected = injector.get<CompanyViewModel>().state.selectedCompany.value;
+      final selected =
+          injector.get<CompanyViewModel>().state.selectedCompany.value;
       if (selected != null) {
         final targetCnpj = _cleanDigits(companyCnpj ?? '');
         if (targetCnpj.isEmpty || _cleanDigits(selected.cnpj) == targetCnpj) {
@@ -184,10 +185,12 @@ class RouteAccessGuard {
     try {
       final memberVm = injector.get<CompanyMemberViewModel>();
       final selectedCnpj = _cleanDigits(
-        injector.get<CompanyViewModel>().state.selectedCompany.value?.cnpj ?? '',
+        injector.get<CompanyViewModel>().state.selectedCompany.value?.cnpj ??
+            '',
       );
       final isSelectedContext =
-          targetCnpj.isEmpty || (selectedCnpj.isNotEmpty && selectedCnpj == targetCnpj);
+          targetCnpj.isEmpty ||
+          (selectedCnpj.isNotEmpty && selectedCnpj == targetCnpj);
 
       if (isSelectedContext) {
         if (memberVm.state.isCurrentUserOwner.value) {
@@ -230,16 +233,6 @@ class RouteAccessGuard {
         resolvedCompany.memberIds.any((id) => _matchesUser(id, userIds))) {
       return CompanyAccessRole.driver;
     }
-
-    try {
-      final listVm = injector.get<CompanyListViewModel>();
-      if (targetCnpj.isNotEmpty &&
-          listVm.state.memberCompanies.value.any(
-            (c) => _cleanDigits(c.cnpj) == targetCnpj,
-          )) {
-        return CompanyAccessRole.driver;
-      }
-    } catch (_) {}
 
     if (highestLinkRole == CompanyAccessRole.driver) {
       return CompanyAccessRole.driver;
