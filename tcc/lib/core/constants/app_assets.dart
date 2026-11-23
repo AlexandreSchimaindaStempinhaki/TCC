@@ -7,4 +7,5 @@ abstract class AppAssets {
 
   static const String perfil = 'assets/images/app/alexandre.jpeg';
 
+  static const String noInternet = 'assets/images/app/no_internet.png';
 }

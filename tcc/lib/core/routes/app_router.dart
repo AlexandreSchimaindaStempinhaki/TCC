@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
 import '../../presentation/controllers/authentication/auth_session_viewmodel.dart';
+import '../../presentation/views/application/common/no_internet_view.dart';
 import '../../presentation/views/application/home/home_view.dart';
 import '../../presentation/views/authentication/splash_view.dart';
 import '../di/dependency_injection.dart';
+import '../network/network_status_service.dart';
 import 'account_routes.dart';
 import 'auth_routes.dart';
 import 'company_routes.dart';
@@ -21,6 +23,7 @@ class RouterNotifier extends ChangeNotifier {
 
     _disposer = effect(() {
       authController.session.session.value;
+      NetworkStatusService.isConnected.value;
       notifyListeners();
     });
   }
@@ -36,11 +39,33 @@ class AppRouter {
   AppRouter._();
 
   static const String splashPath = '/splash';
+  static const String noInternetPath = '/no-internet';
 
   static final GoRouter router = GoRouter(
     initialLocation: splashPath,
     refreshListenable: RouterNotifier(),
-    redirect: (context, state) {
+    redirect: (context, state) async {
+      final isNoInternetRoute = state.matchedLocation == noInternetPath;
+      final online = await NetworkStatusService.checkConnection();
+
+      // 1. Sem internet: manda para a tela de sem conexão (inclusive ao abrir o app)
+      if (!online) {
+        if (isNoInternetRoute) return null;
+        final from = Uri.encodeQueryComponent(state.uri.toString());
+        return '$noInternetPath?from=$from';
+      }
+
+      // 2. Voltou a ter internet enquanto estava na tela de sem conexão
+      if (online && isNoInternetRoute) {
+        final from = state.uri.queryParameters['from'];
+        if (from != null &&
+            from.isNotEmpty &&
+            !from.startsWith(noInternetPath)) {
+          return from;
+        }
+        return HomePaths.home;
+      }
+
       // Permite que a tela de carregamento inicial rode até o fim sem redirecionamento precoce
       if (state.matchedLocation == splashPath) {
         return null;
@@ -88,6 +113,15 @@ class AppRouter {
         path: splashPath,
         name: 'splash',
         builder: (context, state) => const SplashView(),
+      ),
+      GoRoute(
+        path: noInternetPath,
+        name: 'no_internet',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: NoInternetView(
+            returnTo: state.uri.queryParameters['from'],
+          ),
+        ),
       ),
       ...authRoutes,
       ...homeRoutes,
