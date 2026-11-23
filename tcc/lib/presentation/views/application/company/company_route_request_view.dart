@@ -5,7 +5,7 @@ import '../../../../domain/models/company_entity.dart';
 import '../../../widgets/feedback/animated_three_dots.dart';
 import '../../../widgets/company/company_requests_header_card.dart';
 import '../../../widgets/routes/user_route_request_card.dart';
-import '../../mixins/company_route_requests_logic.dart';
+import '../../mixins/company/company_route_requests_logic.dart';
 
 class CompanyRouteRequestsView extends StatefulWidget {
   final CompanyModel? company;

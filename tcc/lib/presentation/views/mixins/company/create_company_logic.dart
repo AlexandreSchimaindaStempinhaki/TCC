@@ -4,14 +4,14 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
-import '../../../../core/di/dependency_injection.dart';
-import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/routes/home_routes.dart';
-import '../../../../core/utils/app_formatters.dart';
-import '../../../../domain/models/company_entity.dart';
-import '../../controllers/company/company_list_viewmodel.dart';
-import '../../controllers/company/company_viewmodel.dart';
-import '../application/company/create_companion_view.dart';
+import '../../../../../core/di/dependency_injection.dart';
+import '../../../../../core/extensions/context_extensions.dart';
+import '../../../../../core/routes/home_routes.dart';
+import '../../../../../core/utils/app_formatters.dart';
+import '../../../../../domain/models/company_entity.dart';
+import '../../../controllers/company/company_list_viewmodel.dart';
+import '../../../controllers/company/company_viewmodel.dart';
+import '../../application/company/create_companion_view.dart';
 
 mixin CreateCompanyMixin on State<CreateCompanyView> {
   late final CompanyViewModel companyViewModel;

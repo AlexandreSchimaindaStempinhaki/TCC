@@ -10,7 +10,7 @@ import '../../../widgets/feedback/animated_three_dots.dart';
 import '../../../widgets/headers/header_background.dart';
 import '../../../widgets/routes/route_location_selector.dart';
 import '../../../widgets/inputs/text_field.dart';
-import '../../mixins/create_route_logic.dart';
+import '../../mixins/route/create_route_logic.dart';
 
 class CreateRouteView extends StatefulWidget {
   final CompanyModel? company;

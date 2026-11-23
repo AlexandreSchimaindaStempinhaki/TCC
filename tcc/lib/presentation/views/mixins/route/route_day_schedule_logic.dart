@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
-import '../../../core/di/dependency_injection.dart';
-import '../../../domain/models/boarding_entity.dart';
-import '../../../domain/models/user_entity.dart';
-import '../../controllers/boarding/boarding_list_viewmodel.dart';
-import '../../controllers/boarding/boarding_state_viewmodel.dart';
-import '../../controllers/boarding/boarding_viewmodel.dart';
-import '../../controllers/route/route_viewmodel.dart';
-import '../../controllers/user/user_viewmodel.dart';
-import '../../widgets/calendar/day_attendance_status.dart';
-import '../../widgets/calendar/route_schedule_resolver.dart';
-import '../application/routes/route_day_schedule_view.dart';
+import '../../../../core/di/dependency_injection.dart';
+import '../../../../domain/models/boarding_entity.dart';
+import '../../../../domain/models/user_entity.dart';
+import '../../../controllers/boarding/boarding_list_viewmodel.dart';
+import '../../../controllers/boarding/boarding_state_viewmodel.dart';
+import '../../../controllers/boarding/boarding_viewmodel.dart';
+import '../../../controllers/route/route_viewmodel.dart';
+import '../../../controllers/user/user_viewmodel.dart';
+import '../../../widgets/calendar/day_attendance_status.dart';
+import '../../../widgets/calendar/route_schedule_resolver.dart';
+import '../../application/routes/route_day_schedule_view.dart';
 
 mixin RouteDayScheduleMixin on State<RouteDayScheduleView> {
   late final BoardingViewModel boardingViewModel;

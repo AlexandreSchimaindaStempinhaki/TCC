@@ -8,7 +8,7 @@ import 'package:tcc/presentation/widgets/feedback/animated_three_dots.dart';
 
 import '../../../../domain/models/company_entity.dart';
 import '../../../../domain/models/vehicle_entity.dart';
-import '../../mixins/vehicle_details_logic.dart';
+import '../../mixins/company/vehicle_details_logic.dart';
 
 class VehicleDetailsView extends StatefulWidget {
   final VehicleModel vehicle;

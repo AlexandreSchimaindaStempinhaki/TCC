@@ -5,25 +5,25 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
-import '../../../core/di/dependency_injection.dart';
-import '../../../core/routes/company_routes.dart';
-import '../../../core/routes/home_routes.dart';
-import '../../../core/routes/route_operation_routes.dart';
-import '../../../domain/models/boarding_entity.dart';
-import '../../../domain/models/company_entity.dart';
-import '../../../domain/models/route_entity.dart';
-import '../../../domain/models/trip_entity.dart';
-import '../../../domain/models/user_entity.dart';
-import '../../../domain/models/vehicle_entity.dart';
-import '../../controllers/boarding/boarding_list_viewmodel.dart';
-import '../../controllers/boarding/boarding_viewmodel.dart';
-import '../../controllers/company/company_list_viewmodel.dart';
-import '../../controllers/route/route_viewmodel.dart';
-import '../../controllers/trip/trip_list_viewmodel.dart';
-import '../../controllers/trip/trip_viewmodel.dart';
-import '../../controllers/user/user_viewmodel.dart';
-import '../../widgets/calendar/route_schedule_resolver.dart';
-import '../application/routes/route_entered_view.dart';
+import '../../../../core/di/dependency_injection.dart';
+import '../../../../core/routes/company_routes.dart';
+import '../../../../core/routes/home_routes.dart';
+import '../../../../core/routes/route_operation_routes.dart';
+import '../../../../domain/models/boarding_entity.dart';
+import '../../../../domain/models/company_entity.dart';
+import '../../../../domain/models/route_entity.dart';
+import '../../../../domain/models/trip_entity.dart';
+import '../../../../domain/models/user_entity.dart';
+import '../../../../domain/models/vehicle_entity.dart';
+import '../../../controllers/boarding/boarding_list_viewmodel.dart';
+import '../../../controllers/boarding/boarding_viewmodel.dart';
+import '../../../controllers/company/company_list_viewmodel.dart';
+import '../../../controllers/route/route_viewmodel.dart';
+import '../../../controllers/trip/trip_list_viewmodel.dart';
+import '../../../controllers/trip/trip_viewmodel.dart';
+import '../../../controllers/user/user_viewmodel.dart';
+import '../../../widgets/calendar/route_schedule_resolver.dart';
+import '../../application/routes/route_entered_view.dart';
 
 mixin RouteEnteredMixin on State<RouteEnteredView> {
   late final RouteViewModel routeViewModel;
@@ -643,75 +643,108 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
 
     final effectiveSlot = targetSlotTime ?? closest.slotTime;
 
-    final allTodayBoardings = boardingListViewModel.state.routeBoardings.value;
-    final confirmedBoardings = isOutbound
-        ? boardingListViewModel.state.confirmedOutboundList.value
-        : boardingListViewModel.state.confirmedReturnList.value;
+    final confirmedOutbound =
+        boardingListViewModel.state.confirmedOutboundList.value;
+    final confirmedReturn =
+        boardingListViewModel.state.confirmedReturnList.value;
+    final confirmedBoardings = isOutbound ? confirmedOutbound : confirmedReturn;
+    final oppositeConfirmed = isOutbound ? confirmedReturn : confirmedOutbound;
 
     final passengers = routeViewModel.state.passengers.value;
     final rawStops = <TripStopPoint>[];
     final addedIds = <String>{};
 
-    final explicitUserIds = allTodayBoardings
-        .map(
-          (b) => _cleanDigits(b.userId).isNotEmpty
-              ? _cleanDigits(b.userId)
-              : b.userId.trim(),
-        )
-        .toSet();
+    void appendFromBoardings(
+      List<BoardingModel> source, {
+      required bool useOutboundPoint,
+      required bool filterBySlot,
+    }) {
+      for (final b in source) {
+        if (filterBySlot && effectiveSlot != null) {
+          final chosenSlot = useOutboundPoint
+              ? (b.selectedDepartureTime?.trim().isNotEmpty == true
+                    ? b.selectedDepartureTime!.trim()
+                    : (slots.isNotEmpty ? slots.first.time : null))
+              : (b.selectedReturnTime?.trim().isNotEmpty == true
+                    ? b.selectedReturnTime!.trim()
+                    : resolved.defaultReturnForOutbound(
+                        b.selectedDepartureTime,
+                      ));
 
-    for (final b in confirmedBoardings) {
-      final chosenSlot = isOutbound
-          ? (b.selectedDepartureTime?.trim().isNotEmpty == true
-                ? b.selectedDepartureTime!.trim()
-                : (slots.isNotEmpty ? slots.first.time : null))
-          : (b.selectedReturnTime?.trim().isNotEmpty == true
-                ? b.selectedReturnTime!.trim()
-                : resolved.defaultReturnForOutbound(b.selectedDepartureTime));
+          if (chosenSlot != null && chosenSlot != effectiveSlot) {
+            continue;
+          }
+        }
 
-      if (effectiveSlot != null &&
-          chosenSlot != null &&
-          chosenSlot != effectiveSlot) {
-        continue;
+        final profile = _findPassengerProfile(b.userId);
+        final geo = useOutboundPoint
+            ? (profile?.boardingPoint ??
+                  profile?.disembarkationPoint ??
+                  currentRoute.origin)
+            : (profile?.disembarkationPoint ??
+                  profile?.boardingPoint ??
+                  currentRoute.destination);
+
+        final key = _cleanDigits(b.userId).isNotEmpty
+            ? _cleanDigits(b.userId)
+            : b.userId.trim();
+        if (addedIds.contains(key)) continue;
+        addedIds.add(key);
+
+        rawStops.add(
+          TripStopPoint(
+            passengerId: b.userId,
+            passengerName: profile?.name ?? 'Passageiro',
+            passengerPhotoUrl: profile?.photoUrl,
+            latitude: geo.latitude,
+            longitude: geo.longitude,
+            orderIndex: 0,
+            isPassengerReady: b.isReadyForBoarding,
+            isCompleted:
+                b.attendanceStatus == BoardingAttendanceStatus.boarded,
+          ),
+        );
       }
+    }
 
-      final profile = _findPassengerProfile(b.userId);
-      final geo = isOutbound
-          ? (profile?.boardingPoint ?? currentRoute.origin)
-          : (profile?.disembarkationPoint ??
-                profile?.boardingPoint ??
-                currentRoute.destination);
+    // 1. Tenta os confirmados do turno + horário mais próximo
+    appendFromBoardings(
+      confirmedBoardings,
+      useOutboundPoint: isOutbound,
+      filterBySlot: true,
+    );
 
-      final key = _cleanDigits(b.userId).isNotEmpty
-          ? _cleanDigits(b.userId)
-          : b.userId.trim();
-      if (addedIds.contains(key)) continue;
-      addedIds.add(key);
-
-      rawStops.add(
-        TripStopPoint(
-          passengerId: b.userId,
-          passengerName: profile?.name ?? 'Passageiro',
-          passengerPhotoUrl: profile?.photoUrl,
-          latitude: geo.latitude,
-          longitude: geo.longitude,
-          orderIndex: 0,
-          isPassengerReady: b.isReadyForBoarding,
-          isCompleted: b.attendanceStatus == BoardingAttendanceStatus.boarded,
-        ),
+    // 2. Fallback: se ninguém bateu no horário exato, inclui todos confirmados do turno
+    if (rawStops.isEmpty && confirmedBoardings.isNotEmpty) {
+      appendFromBoardings(
+        confirmedBoardings,
+        useOutboundPoint: isOutbound,
+        filterBySlot: false,
       );
     }
 
-    if (allTodayBoardings.isEmpty && passengers.isNotEmpty) {
+    // 3. Fallback: se não há confirmados nesse sentido, inclui confirmados do outro sentido hoje
+    if (rawStops.isEmpty && oppositeConfirmed.isNotEmpty) {
+      appendFromBoardings(
+        oppositeConfirmed,
+        useOutboundPoint: !isOutbound,
+        filterBySlot: false,
+      );
+    }
+
+    // 4. Fallback final: passageiros aprovados da rota (usando o ponto de embarque/desembarque salvo)
+    if (rawStops.isEmpty && passengers.isNotEmpty) {
       for (final p in passengers) {
         final id = (p.cpf != null && p.cpf!.trim().isNotEmpty)
             ? _cleanDigits(p.cpf!)
             : p.uid;
-        if (addedIds.contains(id) || explicitUserIds.contains(id)) continue;
+        if (addedIds.contains(id)) continue;
         addedIds.add(id);
 
         final geo = isOutbound
-            ? (p.boardingPoint ?? currentRoute.origin)
+            ? (p.boardingPoint ??
+                  p.disembarkationPoint ??
+                  currentRoute.origin)
             : (p.disembarkationPoint ??
                   p.boardingPoint ??
                   currentRoute.destination);
@@ -918,8 +951,25 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
       final startLng = pos?.longitude ?? currentRoute.origin.longitude;
 
       if (mounted) {
-        startingRouteMessage.value = 'Organizando paradas e passageiros...';
+        startingRouteMessage.value = 'Carregando passageiros e pontos...';
       }
+
+      final now = DateTime.now();
+      final todayDate = DateTime(now.year, now.month, now.day);
+
+      // Garante perfis dos passageiros e embarques do dia atualizados antes de montar as paradas
+      await routeViewModel.commands.fetchRouteById(
+        currentRoute.id,
+        loadMembers: true,
+      );
+      if (routeViewModel.state.passengers.value.isEmpty &&
+          currentRoute.passengerIds.isNotEmpty) {
+        await routeViewModel.commands.loadRouteMembersDetails(currentRoute);
+      }
+      await boardingListViewModel.commands.fetchByRouteAndDate(
+        routeId: routeIdStr,
+        date: todayDate,
+      );
 
       final closest = resolveClosestScheduleNow();
       selectedDirection.value = closest.direction;
@@ -947,8 +997,6 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
         (idx) => stopsForThisVehicle[idx].copyWith(orderIndex: idx + 1),
       );
 
-      final now = DateTime.now();
-      final todayDate = DateTime(now.year, now.month, now.day);
       final driverId = currentUserId;
       final nextGroupIndex = activeTripsForRoute.length + 1;
 
@@ -1024,7 +1072,7 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
         _showSnackBar(
           'Rota iniciada com o veículo:\n'
           '${selectedVehicle.displayTitle}\n'
-          '$scheduleText',
+          '$scheduleText (${reindexedStops.length} parada(s))',
         );
       }
     } catch (e) {
@@ -1081,7 +1129,6 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
         }
       }
 
-      // Só desativa isTripActive da rota se não houver outro veículo ainda em andamento
       if (remainingOtherTrips.isEmpty) {
         await routeViewModel.commands.finishRouteTrip(currentRoute.id);
       }

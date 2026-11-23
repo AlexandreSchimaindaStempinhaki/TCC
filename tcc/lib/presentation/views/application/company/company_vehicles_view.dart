@@ -4,7 +4,7 @@ import 'package:signals_flutter/signals_flutter.dart';
 import '../../../../domain/models/company_entity.dart';
 import '../../../widgets/feedback/animated_three_dots.dart';
 import '../../../widgets/company/company_vehicle_card.dart';
-import '../../mixins/company_vehicles_logic.dart';
+import '../../mixins/company/company_vehicles_logic.dart';
 
 class CompanyVehiclesView extends StatefulWidget {
   final CompanyModel? company;

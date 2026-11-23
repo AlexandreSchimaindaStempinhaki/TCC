@@ -45,6 +45,30 @@ class CompanyMemberViewModelCommands {
     return fallback;
   }
 
+  Set<String> _personKeys(String rawId) {
+    final keys = <String>{};
+    final trimmed = rawId.trim();
+    if (trimmed.isNotEmpty) {
+      keys.add(trimmed.toLowerCase());
+      final digits = cleanDigits(trimmed);
+      if (digits.length == 11) keys.add('cpf:$digits');
+    }
+
+    final profile = _viewModel.state.userProfilesCache[trimmed];
+    if (profile != null) {
+      final uid = _firstNonEmpty([profile['uid']]);
+      if (uid.isNotEmpty) keys.add('uid:${uid.toLowerCase()}');
+
+      final cpfDigits = cleanDigits(_firstNonEmpty([profile['cpf']]));
+      if (cpfDigits.length == 11) keys.add('cpf:$cpfDigits');
+
+      final email = _firstNonEmpty([profile['email']]).toLowerCase();
+      if (email.isNotEmpty) keys.add('email:$email');
+    }
+
+    return keys;
+  }
+
   CompanyModel? resolveCompany(CompanyModel? widgetCompany) {
     final companyVm = injector.get<CompanyViewModel>();
     return widgetCompany ?? companyVm.state.selectedCompany.value;
@@ -441,33 +465,35 @@ class CompanyMemberViewModelCommands {
 
     await _fetchUserProfiles(allIdsToFetch);
 
-    _viewModel.state.ownersList.value = ownerIds
-        .map((id) => _buildMemberItem(id: id, roleCategory: 'owner'))
-        .toList();
+    // Deduplica cada pessoa pelo perfil real (CPF, UID e e-mail) mantendo apenas o cargo mais alto
+    final seenPersonKeys = <String>{};
 
-    _viewModel.state.managersList.value = managerIds
-        .where((id) => !ownerIds.contains(id))
-        .map((id) => _buildMemberItem(id: id, roleCategory: 'manager'))
-        .toList();
-
-    _viewModel.state.driversList.value = driverIds
-        .where((id) => !ownerIds.contains(id) && !managerIds.contains(id))
-        .map((id) => _buildMemberItem(id: id, roleCategory: 'driver'))
-        .toList();
-
-    if (userIsAuthorizedStaff) {
-      _viewModel.state.passengersList.value = passengerIds
-          .where(
-            (id) =>
-                !ownerIds.contains(id) &&
-                !managerIds.contains(id) &&
-                !driverIds.contains(id),
-          )
-          .map((id) => _buildMemberItem(id: id, roleCategory: 'passenger'))
-          .toList();
-    } else {
-      _viewModel.state.passengersList.value = [];
+    List<CompanyMemberItem> buildUniqueRoleList(
+      Set<String> ids,
+      String roleCategory,
+    ) {
+      final result = <CompanyMemberItem>[];
+      for (final id in ids) {
+        final keys = _personKeys(id);
+        if (keys.any(seenPersonKeys.contains)) continue;
+        seenPersonKeys.addAll(keys);
+        result.add(_buildMemberItem(id: id, roleCategory: roleCategory));
+      }
+      return result;
     }
+
+    _viewModel.state.ownersList.value = buildUniqueRoleList(ownerIds, 'owner');
+    _viewModel.state.managersList.value = buildUniqueRoleList(
+      managerIds,
+      'manager',
+    );
+    _viewModel.state.driversList.value = buildUniqueRoleList(
+      driverIds,
+      'driver',
+    );
+    _viewModel.state.passengersList.value = userIsAuthorizedStaff
+        ? buildUniqueRoleList(passengerIds, 'passenger')
+        : [];
 
     _viewModel.state.isLoading.value = false;
   }
@@ -522,16 +548,25 @@ class CompanyMemberViewModelCommands {
 
       if (company != null) {
         final updatedMemberIds = List<String>.from(company.memberIds);
+        final itemUid = item.userModel.uid.trim();
+        final itemEmail = item.userModel.email.trim().toLowerCase();
+
+        bool isSameMember(String raw) {
+          final trimmed = raw.trim();
+          final digits = cleanDigits(trimmed);
+          return trimmed == memberId ||
+              (itemUid.isNotEmpty && trimmed == itemUid) ||
+              (itemEmail.isNotEmpty && trimmed.toLowerCase() == itemEmail) ||
+              (targetCpf.length == 11 && digits == targetCpf) ||
+              (cleanMemberId.length == 11 && digits == cleanMemberId);
+        }
+
         if (newRoleCategory == 'manager' || newRoleCategory == 'driver') {
-          if (!updatedMemberIds.contains(memberId)) {
-            updatedMemberIds.add(memberId);
+          if (!updatedMemberIds.any(isSameMember)) {
+            updatedMemberIds.add(targetCpf.isNotEmpty ? targetCpf : memberId);
           }
         } else {
-          updatedMemberIds.removeWhere(
-            (id) =>
-                id.trim() == memberId ||
-                (cleanMemberId.isNotEmpty && cleanDigits(id) == cleanMemberId),
-          );
+          updatedMemberIds.removeWhere(isSameMember);
         }
 
         try {

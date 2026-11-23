@@ -6,7 +6,7 @@ import '../../../../domain/models/company_entity.dart';
 import '../../../../domain/models/route_entity.dart';
 import '../../../widgets/feedback/animated_three_dots.dart';
 import '../../../widgets/calendar/day_attendance_panel_card.dart';
-import '../../mixins/route_day_schedule_logic.dart';
+import '../../mixins/route/route_day_schedule_logic.dart';
 
 class RouteDayScheduleView extends StatefulWidget {
   final RouteModel route;

@@ -7,7 +7,7 @@ import '../../../../domain/models/company_entity.dart';
 import '../../../widgets/feedback/animated_three_dots.dart';
 import '../../../widgets/headers/header_background.dart';
 import '../../../widgets/inputs/text_field.dart';
-import '../../mixins/create_company_logic.dart';
+import '../../mixins/company/create_company_logic.dart';
 
 class CreateCompanyView extends StatefulWidget {
   final CompanyModel? initialCompany;

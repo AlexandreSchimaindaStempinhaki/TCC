@@ -10,7 +10,7 @@ import '../../../widgets/account/account_option.dart';
 import '../../../widgets/feedback/animated_three_dots.dart';
 import '../../../widgets/feedback/indigo_splash_loader.dart';
 import '../../../widgets/routes/route_itinerary_card.dart';
-import '../../mixins/route_entered_logic.dart';
+import '../../mixins/route/route_entered_logic.dart';
 
 class RouteEnteredView extends StatefulWidget {
   final RouteModel route;

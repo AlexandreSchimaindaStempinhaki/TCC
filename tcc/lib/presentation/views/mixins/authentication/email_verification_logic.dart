@@ -5,12 +5,12 @@ import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tcc/presentation/widgets/feedback/logout_confirmation.dart';
-import '../../../core/di/dependency_injection.dart';
-import '../../../core/routes/auth_routes.dart';
-import '../../../core/routes/home_routes.dart';
-import '../../../core/typedefs/types_defs.dart';
-import '../../controllers/authentication/auth_session_viewmodel.dart';
-import '../authentication/email_verification_view.dart';
+import '../../../../core/di/dependency_injection.dart';
+import '../../../../core/routes/auth_routes.dart';
+import '../../../../core/routes/home_routes.dart';
+import '../../../../core/typedefs/types_defs.dart';
+import '../../../controllers/authentication/auth_session_viewmodel.dart';
+import '../../authentication/email_verification_view.dart';
 
 mixin EmailVerificationLogic on State<EmailVerificationPage> {
   late final AuthViewModel authController;

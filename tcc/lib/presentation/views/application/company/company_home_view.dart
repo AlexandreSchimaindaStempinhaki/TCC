@@ -7,7 +7,7 @@ import '../../../../core/routes/home_routes.dart';
 import '../../../../domain/models/company_entity.dart';
 import '../../../widgets/account/account_option.dart';
 import '../../../widgets/feedback/animated_three_dots.dart';
-import '../../mixins/company_home_logic.dart';
+import '../../mixins/company/company_home_logic.dart';
 
 class CompanyHomeView extends StatefulWidget {
   final CompanyModel? initialCompany;

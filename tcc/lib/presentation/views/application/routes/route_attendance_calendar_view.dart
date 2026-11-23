@@ -9,7 +9,7 @@ import '../../../widgets/calendar/calendar_actions_card.dart';
 import '../../../widgets/calendar/calendar_route_header_card.dart';
 import '../../../widgets/calendar/day_attendance_status.dart';
 import '../../../widgets/calendar/monthly_attendance_calendar_card.dart';
-import '../../mixins/route_attendance_calendar_logic.dart';
+import '../../mixins/route/route_attendance_calendar_logic.dart';
 
 class RouteAttendanceCalendarView extends StatefulWidget {
   final RouteModel route;

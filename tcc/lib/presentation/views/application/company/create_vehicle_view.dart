@@ -11,7 +11,7 @@ import '../../../../domain/models/vehicle_entity.dart';
 import '../../../widgets/feedback/animated_three_dots.dart';
 import '../../../widgets/headers/header_background.dart';
 import '../../../widgets/inputs/text_field.dart';
-import '../../mixins/create_vehicle_logic.dart';
+import '../../mixins/company/create_vehicle_logic.dart';
 
 class CreateVehicleView extends StatefulWidget {
   final CompanyModel? company;

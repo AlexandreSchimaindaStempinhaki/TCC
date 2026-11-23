@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/di/dependency_injection.dart';
-import '../../../core/routes/company_routes.dart';
-import '../../../domain/models/company_entity.dart';
-import '../../../domain/models/vehicle_entity.dart';
-import '../../controllers/company/company_viewmodel.dart';
-import '../../controllers/user/user_viewmodel.dart';
-import '../../controllers/vehicle/vehicle_list_viewmodel.dart';
-import '../application/company/company_vehicles_view.dart';
+import '../../../../core/di/dependency_injection.dart';
+import '../../../../core/routes/company_routes.dart';
+import '../../../../domain/models/company_entity.dart';
+import '../../../../domain/models/vehicle_entity.dart';
+import '../../../controllers/company/company_viewmodel.dart';
+import '../../../controllers/user/user_viewmodel.dart';
+import '../../../controllers/vehicle/vehicle_list_viewmodel.dart';
+import '../../application/company/company_vehicles_view.dart';
 
 mixin CompanyVehiclesMixin on State<CompanyVehiclesView> {
   late final VehicleListViewModel vehicleListViewModel;

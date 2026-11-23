@@ -110,7 +110,7 @@ class LiveMapRoutingService {
 
     if (readyStops.isEmpty || waitingStops.isEmpty) {
       final singleGroup = readyStops.isNotEmpty ? readyStops : waitingStops;
-      final data = await _callDirectionsApi(
+      final data = await _callRoutesApi(
         origin: driverPos,
         destination: destination,
         waypoints: singleGroup,
@@ -123,13 +123,13 @@ class LiveMapRoutingService {
       final primary = routes.first as Map<String, dynamic>;
       final reordered = _applyWaypointOrder(
         singleGroup,
-        primary['waypoint_order'] as List<dynamic>?,
+        primary['optimizedIntermediateWaypointIndex'] as List<dynamic>?,
       );
-      return _parseGoogleRoute(primary, reordered, destinationLabel);
+      return _parseGoogleRoutesV2(primary, reordered, destinationLabel);
     }
 
     if (readyStops.length > 1) {
-      final readyData = await _callDirectionsApi(
+      final readyData = await _callRoutesApi(
         origin: driverPos,
         destination: destination,
         waypoints: readyStops,
@@ -140,7 +140,8 @@ class LiveMapRoutingService {
       if (readyRoutes != null && readyRoutes.isNotEmpty) {
         orderedReady = _applyWaypointOrder(
           readyStops,
-          (readyRoutes.first as Map<String, dynamic>)['waypoint_order']
+          (readyRoutes.first
+                  as Map<String, dynamic>)['optimizedIntermediateWaypointIndex']
               as List<dynamic>?,
         );
       }
@@ -148,7 +149,7 @@ class LiveMapRoutingService {
 
     if (waitingStops.length > 1) {
       final lastReady = orderedReady.last;
-      final waitingData = await _callDirectionsApi(
+      final waitingData = await _callRoutesApi(
         origin: LatLng(lastReady.latitude, lastReady.longitude),
         destination: destination,
         waypoints: waitingStops,
@@ -159,14 +160,15 @@ class LiveMapRoutingService {
       if (waitingRoutes != null && waitingRoutes.isNotEmpty) {
         orderedWaiting = _applyWaypointOrder(
           waitingStops,
-          (waitingRoutes.first as Map<String, dynamic>)['waypoint_order']
+          (waitingRoutes.first
+                  as Map<String, dynamic>)['optimizedIntermediateWaypointIndex']
               as List<dynamic>?,
         );
       }
     }
 
     final finalOrder = [...orderedReady, ...orderedWaiting];
-    final unifiedData = await _callDirectionsApi(
+    final unifiedData = await _callRoutesApi(
       origin: driverPos,
       destination: destination,
       waypoints: finalOrder,
@@ -176,60 +178,109 @@ class LiveMapRoutingService {
     final routes = unifiedData?['routes'] as List<dynamic>?;
     if (routes == null || routes.isEmpty) return null;
 
-    return _parseGoogleRoute(
+    return _parseGoogleRoutesV2(
       routes.first as Map<String, dynamic>,
       finalOrder,
       destinationLabel,
     );
   }
 
-  Future? _callDirectionsApi({
+  Future? _callRoutesApi({
     required LatLng origin,
     required LatLng destination,
     required List<TripStopPoint> waypoints,
     required bool optimizeWaypoints,
     required String apiKey,
   }) async {
-    final queryParams = <String, String>{
-      'origin': '${origin.latitude},${origin.longitude}',
-      'destination': '${destination.latitude},${destination.longitude}',
-      'mode': 'driving',
-      'language': 'pt-BR',
-      'departure_time': 'now',
-      'key': apiKey,
+    final uri = Uri.parse(
+      'https://routes.googleapis.com/directions/v2:computeRoutes',
+    );
+
+    final body = <String, dynamic>{
+      'origin': {
+        'location': {
+          'latLng': {
+            'latitude': origin.latitude,
+            'longitude': origin.longitude,
+          },
+        },
+      },
+      'destination': {
+        'location': {
+          'latLng': {
+            'latitude': destination.latitude,
+            'longitude': destination.longitude,
+          },
+        },
+      },
+      'travelMode': 'DRIVE',
+      'routingPreference': 'TRAFFIC_AWARE',
+      'languageCode': 'pt-BR',
+      'units': 'METRIC',
     };
 
     if (waypoints.isNotEmpty) {
-      final serialized = waypoints
+      body['intermediates'] = waypoints
           .map(
-            (w) =>
-                '${w.latitude.toStringAsFixed(6)},${w.longitude.toStringAsFixed(6)}',
+            (w) => {
+              'location': {
+                'latLng': {'latitude': w.latitude, 'longitude': w.longitude},
+              },
+            },
           )
-          .join('|');
-      queryParams['waypoints'] =
-          optimizeWaypoints ? 'optimize:true|$serialized' : serialized;
+          .toList();
+      if (optimizeWaypoints) {
+        body['optimizeWaypointOrder'] = true;
+      }
     }
 
-    final uri = Uri.https(
-      'maps.googleapis.com',
-      '/maps/api/directions/json',
-      queryParams,
-    );
+    const fieldMask =
+        'routes.duration,'
+        'routes.distanceMeters,'
+        'routes.polyline.encodedPolyline,'
+        'routes.optimizedIntermediateWaypointIndex,'
+        'routes.legs.distanceMeters,'
+        'routes.legs.duration,'
+        'routes.legs.steps.distanceMeters,'
+        'routes.legs.steps.staticDuration,'
+        'routes.legs.steps.polyline.encodedPolyline,'
+        'routes.legs.steps.navigationInstruction,'
+        'routes.legs.steps.startLocation,'
+        'routes.legs.steps.endLocation';
 
-    final response = await http.get(uri).timeout(const Duration(seconds: 12));
-    if (response.statusCode != 200) return null;
+    final response = await http
+        .post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Goog-Api-Key': apiKey,
+            'X-Goog-FieldMask': fieldMask,
+          },
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 12));
 
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    if (data['status'] != 'OK') {
+    if (response.statusCode != 200) {
       debugPrint(
-        'Google Directions API: ${data['status']} (${data['error_message'] ?? ''})',
+        'Google Routes API HTTP ${response.statusCode}: ${response.body}',
       );
       return null;
     }
-    return data;
+
+    return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
-  ComputedRouteResult _parseGoogleRoute(
+  double _parseDurationSeconds(dynamic raw) {
+    if (raw == null) return 0;
+    if (raw is num) return raw.toDouble();
+    final str = raw.toString().trim();
+    if (str.endsWith('s')) {
+      return double.tryParse(str.substring(0, str.length - 1)) ?? 0;
+    }
+    return double.tryParse(str) ?? 0;
+  }
+
+  ComputedRouteResult _parseGoogleRoutesV2(
     Map<String, dynamic> primaryRoute,
     List<TripStopPoint> orderedStops,
     String destinationLabel,
@@ -240,22 +291,14 @@ class LiveMapRoutingService {
     final etaByPassengerId = <String, int>{};
     final addressByPassengerId = <String, String>{};
 
-    double totalMeters = 0;
-    double totalSeconds = 0;
+    double totalMeters =
+        (primaryRoute['distanceMeters'] as num?)?.toDouble() ?? 0;
+    double totalSeconds = _parseDurationSeconds(primaryRoute['duration']);
     double cumulativeSeconds = 0;
 
     for (int i = 0; i < legs.length; i++) {
       final leg = legs[i] as Map<String, dynamic>;
-      final distVal =
-          ((leg['distance'] as Map<String, dynamic>?)?['value'] as num?)
-                  ?.toDouble() ??
-              0;
-      final durationMap = (leg['duration_in_traffic'] ?? leg['duration'])
-          as Map<String, dynamic>?;
-      final durVal = (durationMap?['value'] as num?)?.toDouble() ?? 0;
-
-      totalMeters += distVal;
-      totalSeconds += durVal;
+      final durVal = _parseDurationSeconds(leg['duration']);
       cumulativeSeconds += durVal;
 
       String legEndLabel = destinationLabel;
@@ -268,20 +311,16 @@ class LiveMapRoutingService {
             'Parada #${i + 1} • ${LiveMapMarkerFactory.firstName(stop.passengerName)}';
         etaByPassengerId[stop.passengerId] =
             (cumulativeSeconds / 60).ceil().clamp(1, 999).toInt();
-        final endAddress = (leg['end_address'] as String?)?.trim();
-        if (endAddress != null && endAddress.isNotEmpty) {
-          addressByPassengerId[stop.passengerId] = endAddress;
-        }
       }
 
       final steps = leg['steps'] as List<dynamic>? ?? const [];
       for (final rawStep in steps) {
         final step = rawStep as Map<String, dynamic>;
-        final poly = (step['polyline'] as Map<String, dynamic>?)?['points']
+        final poly = (step['polyline'] as Map<String, dynamic>?)?['encodedPolyline']
             as String?;
         final decoded = (poly != null && poly.isNotEmpty)
             ? _decodePolyline(poly)
-            : _fallbackStepEndpoints(step);
+            : _fallbackStepEndpointsV2(step);
 
         if (decoded.isEmpty) continue;
 
@@ -291,24 +330,24 @@ class LiveMapRoutingService {
           detailedPoints.addAll(decoded);
         }
 
-        final rawHtml = step['html_instructions'] as String?;
-        final maneuver = step['maneuver'] as String?;
-        final street = _extractStreetFromHtml(rawHtml);
+        final navInst =
+            step['navigationInstruction'] as Map<String, dynamic>?;
+        final rawInstruction =
+            (navInst?['instructions'] as String?)?.trim() ?? '';
+        final maneuver = (navInst?['maneuver'] as String?)?.trim();
 
         navSteps.add(
           NavStep(
             points: decoded,
             distanceMeters:
-                ((step['distance'] as Map<String, dynamic>?)?['value'] as num?)
-                        ?.toDouble() ??
+                (step['distanceMeters'] as num?)?.toDouble() ??
                     LiveMapNavigationEngine.polylineLengthMeters(decoded),
-            durationSeconds:
-                ((step['duration'] as Map<String, dynamic>?)?['value'] as num?)
-                        ?.toDouble() ??
-                    0,
-            instruction: _formatGoogleInstruction(rawHtml, maneuver, street),
-            roadName: street,
-            maneuverIcon: _googleManeuverIcon(maneuver),
+            durationSeconds: _parseDurationSeconds(step['staticDuration']),
+            instruction: rawInstruction.isNotEmpty
+                ? rawInstruction
+                : (_routesV2ActionPt(maneuver) ?? 'Siga em frente'),
+            roadName: rawInstruction.isNotEmpty ? rawInstruction : null,
+            maneuverIcon: _routesV2ManeuverIcon(maneuver),
             legIndex: i,
             legEndLabel: legEndLabel,
             isStopArrival: isStopLeg,
@@ -318,8 +357,8 @@ class LiveMapRoutingService {
     }
 
     if (detailedPoints.length < 2) {
-      final overview = (primaryRoute['overview_polyline']
-          as Map<String, dynamic>?)?['points'] as String?;
+      final overview = (primaryRoute['polyline']
+          as Map<String, dynamic>?)?['encodedPolyline'] as String?;
       if (overview != null && overview.isNotEmpty) {
         detailedPoints.addAll(_decodePolyline(overview));
       }
@@ -465,13 +504,17 @@ class LiveMapRoutingService {
     return ordered.length == stops.length ? ordered : stops;
   }
 
-  List<LatLng> _fallbackStepEndpoints(Map<String, dynamic> step) {
+  List<LatLng> _fallbackStepEndpointsV2(Map<String, dynamic> step) {
     final pts = <LatLng>[];
-    for (final key in const ['start_location', 'end_location']) {
-      final loc = step[key] as Map<String, dynamic>?;
+    for (final key in const ['startLocation', 'endLocation']) {
+      final loc = (step[key] as Map<String, dynamic>?)?['latLng']
+          as Map<String, dynamic>?;
       if (loc != null) {
         pts.add(
-          LatLng((loc['lat'] as num).toDouble(), (loc['lng'] as num).toDouble()),
+          LatLng(
+            (loc['latitude'] as num).toDouble(),
+            (loc['longitude'] as num).toDouble(),
+          ),
         );
       }
     }
@@ -509,112 +552,53 @@ class LiveMapRoutingService {
     return points;
   }
 
-  String? _cleanHtml(String? raw) {
-    if (raw == null || raw.trim().isEmpty) return null;
-    final cleaned = raw
-        .replaceAll(RegExp(r'<div[^>]*>'), ' • ')
-        .replaceAll(RegExp(r'<[^>]*>'), '')
-        .replaceAll('&nbsp;', ' ')
-        .replaceAll('&amp;', '&')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-    return cleaned.isEmpty ? null : cleaned;
-  }
-
-  String? _extractStreetFromHtml(String? rawHtml) {
-    if (rawHtml == null || rawHtml.trim().isEmpty) return null;
-    final mainPart = rawHtml.split(RegExp(r'<div[^>]*>')).first;
-
-    final prepMatch = RegExp(
-      r'(?:\bna|\bno|\bpela|\bpelo|\bpara|\bpara a|\bpara o|\bem)\s*<b>([^<]+)</b>',
-      caseSensitive: false,
-    ).firstMatch(mainPart);
-    if (prepMatch != null) {
-      final candidate = _cleanHtml(prepMatch.group(1));
-      if (candidate != null && candidate.length >= 2) return candidate;
-    }
-
-    const ignored = {
-      'esquerda', 'direita', 'norte', 'sul', 'leste', 'oeste',
-      'nordeste', 'noroeste', 'sudeste', 'sudoeste', 'frente', 'retorno',
-    };
-    final matches = RegExp(r'<b>([^<]+)</b>').allMatches(mainPart).toList();
-    for (final m in matches.reversed) {
-      final candidate = _cleanHtml(m.group(1));
-      if (candidate != null &&
-          candidate.length >= 2 &&
-          !ignored.contains(candidate.toLowerCase())) {
-        return candidate;
-      }
-    }
-    return null;
-  }
-
-  String _formatGoogleInstruction(
-    String? rawHtml,
-    String? maneuver,
-    String? street,
-  ) {
-    final action = _googleActionPt(maneuver);
-    if (action != null && street != null && street.isNotEmpty) {
-      return '$action • $street';
-    }
-    final cleaned = _cleanHtml(rawHtml?.split(RegExp(r'<div[^>]*>')).first);
-    if (cleaned != null && cleaned.isNotEmpty) return cleaned;
-    return street ?? action ?? 'Siga em frente';
-  }
-
-  String? _googleActionPt(String? maneuver) {
+  String? _routesV2ActionPt(String? maneuver) {
     const map = {
-      'turn-left': 'Vire à esquerda',
-      'turn-slight-left': 'Mantenha-se à esquerda',
-      'turn-sharp-left': 'Curva acentuada à esquerda',
-      'keep-left': 'Pegue a saída à esquerda',
-      'fork-left': 'Pegue a saída à esquerda',
-      'ramp-left': 'Pegue a saída à esquerda',
-      'turn-right': 'Vire à direita',
-      'turn-slight-right': 'Mantenha-se à direita',
-      'turn-sharp-right': 'Curva acentuada à direita',
-      'keep-right': 'Pegue a saída à direita',
-      'fork-right': 'Pegue a saída à direita',
-      'ramp-right': 'Pegue a saída à direita',
-      'uturn-left': 'Faça o retorno',
-      'uturn-right': 'Faça o retorno',
-      'roundabout-left': 'Na rotatória, siga para',
-      'roundabout-right': 'Na rotatória, siga para',
-      'merge': 'Acesse',
-      'straight': 'Siga em frente',
+      'TURN_LEFT': 'Vire à esquerda',
+      'TURN_SLIGHT_LEFT': 'Mantenha-se à esquerda',
+      'TURN_SHARP_LEFT': 'Curva acentuada à esquerda',
+      'FORK_LEFT': 'Pegue a saída à esquerda',
+      'RAMP_LEFT': 'Pegue a saída à esquerda',
+      'TURN_RIGHT': 'Vire à direita',
+      'TURN_SLIGHT_RIGHT': 'Mantenha-se à direita',
+      'TURN_SHARP_RIGHT': 'Curva acentuada à direita',
+      'FORK_RIGHT': 'Pegue a saída à direita',
+      'RAMP_RIGHT': 'Pegue a saída à direita',
+      'UTURN_LEFT': 'Faça o retorno',
+      'UTURN_RIGHT': 'Faça o retorno',
+      'ROUNDABOUT_LEFT': 'Entre na rotatória',
+      'ROUNDABOUT_RIGHT': 'Entre na rotatória',
+      'MERGE': 'Acesse a via',
+      'STRAIGHT': 'Siga em frente',
     };
     return map[maneuver];
   }
 
-  IconData _googleManeuverIcon(String? maneuver) {
+  IconData _routesV2ManeuverIcon(String? maneuver) {
     switch (maneuver) {
-      case 'turn-left':
-      case 'fork-left':
-      case 'ramp-left':
+      case 'TURN_LEFT':
+      case 'FORK_LEFT':
+      case 'RAMP_LEFT':
         return Icons.turn_left_rounded;
-      case 'turn-slight-left':
-      case 'keep-left':
+      case 'TURN_SLIGHT_LEFT':
         return Icons.turn_slight_left_rounded;
-      case 'turn-sharp-left':
+      case 'TURN_SHARP_LEFT':
         return Icons.turn_sharp_left_rounded;
-      case 'turn-right':
-      case 'fork-right':
-      case 'ramp-right':
+      case 'TURN_RIGHT':
+      case 'FORK_RIGHT':
+      case 'RAMP_RIGHT':
         return Icons.turn_right_rounded;
-      case 'turn-slight-right':
-      case 'keep-right':
+      case 'TURN_SLIGHT_RIGHT':
         return Icons.turn_slight_right_rounded;
-      case 'turn-sharp-right':
+      case 'TURN_SHARP_RIGHT':
         return Icons.turn_sharp_right_rounded;
-      case 'uturn-left':
+      case 'UTURN_LEFT':
         return Icons.u_turn_left_rounded;
-      case 'uturn-right':
+      case 'UTURN_RIGHT':
         return Icons.u_turn_right_rounded;
-      case 'roundabout-left':
+      case 'ROUNDABOUT_LEFT':
         return Icons.roundabout_left_rounded;
-      case 'roundabout-right':
+      case 'ROUNDABOUT_RIGHT':
         return Icons.roundabout_right_rounded;
       default:
         return Icons.straight_rounded;

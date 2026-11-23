@@ -4,15 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
-import '../../../core/di/dependency_injection.dart';
-import '../../../core/routes/route_operation_routes.dart';
-import '../../../domain/models/company_entity.dart';
-import '../../../domain/models/route_entity.dart';
-import '../../controllers/company/company_list_viewmodel.dart';
-import '../../controllers/company/company_viewmodel.dart';
-import '../../controllers/route/route_list_viewmodel.dart';
-import '../../controllers/user/user_viewmodel.dart';
-import '../application/routes/my_routes_view.dart';
+import '../../../../core/di/dependency_injection.dart';
+import '../../../../core/routes/route_operation_routes.dart';
+import '../../../../domain/models/company_entity.dart';
+import '../../../../domain/models/route_entity.dart';
+import '../../../controllers/company/company_list_viewmodel.dart';
+import '../../../controllers/company/company_viewmodel.dart';
+import '../../../controllers/route/route_list_viewmodel.dart';
+import '../../../controllers/user/user_viewmodel.dart';
+import '../../application/routes/my_routes_view.dart';
 
 class JoinedRouteItem {
   final RouteModel route;

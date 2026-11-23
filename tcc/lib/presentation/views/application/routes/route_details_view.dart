@@ -7,7 +7,7 @@ import 'package:tcc/presentation/widgets/feedback/animated_three_dots.dart';
 import 'package:tcc/presentation/widgets/routes/route_itinerary_card.dart';
 
 import '../../../../core/routes/home_routes.dart';
-import '../../mixins/route_details_logic.dart';
+import '../../mixins/route/route_details_logic.dart';
 
 class RouteDetailsView extends StatefulWidget {
   final Map<String, dynamic> route;

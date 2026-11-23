@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
-import '../../../core/di/dependency_injection.dart';
-import '../../../core/routes/account_routes.dart';
-import '../../../core/routes/company_routes.dart';
-import '../../../domain/models/company_entity.dart';
-import '../../controllers/company_member/company_member_state_viewmodel.dart';
-import '../../controllers/company_member/company_member_viewmodel.dart';
-import '../../widgets/account/account_option.dart';
-import '../application/company/company_members_view.dart';
+import '../../../../core/di/dependency_injection.dart';
+import '../../../../core/routes/account_routes.dart';
+import '../../../../core/routes/company_routes.dart';
+import '../../../../domain/models/company_entity.dart';
+import '../../../controllers/company_member/company_member_state_viewmodel.dart';
+import '../../../controllers/company_member/company_member_viewmodel.dart';
+import '../../../widgets/account/account_option.dart';
+import '../../application/company/company_members_view.dart';
 
-export '../../controllers/company_member/company_member_state_viewmodel.dart'
+export '../../../controllers/company_member/company_member_state_viewmodel.dart'
     show CompanyMemberItem;
 
 mixin CompanyMembersMixin on State<CompanyMembersView> {

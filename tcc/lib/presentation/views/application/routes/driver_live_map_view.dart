@@ -13,7 +13,7 @@ import '../../../widgets/live_map/live_map_floating_controls.dart';
 import '../../../widgets/live_map/live_map_marker_factory.dart';
 import '../../../widgets/live_map/live_map_navigation_engine.dart';
 import '../../../widgets/live_map/live_map_top_bar.dart';
-import '../../mixins/driver_live_map_logic.dart';
+import '../../mixins/route/driver_live_map_logic.dart';
 
 class DriverLiveMapView extends StatefulWidget {
   final RouteModel route;

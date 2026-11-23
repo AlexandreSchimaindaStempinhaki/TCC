@@ -5,13 +5,13 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
-import '../../../core/di/dependency_injection.dart';
-import '../../../domain/models/company_entity.dart';
-import '../../../domain/models/vehicle_entity.dart';
-import '../../controllers/company/company_viewmodel.dart';
-import '../../controllers/vehicle/vehicle_list_viewmodel.dart';
-import '../../controllers/vehicle/vehicle_viewmodel.dart';
-import '../application/company/create_vehicle_view.dart';
+import '../../../../core/di/dependency_injection.dart';
+import '../../../../domain/models/company_entity.dart';
+import '../../../../domain/models/vehicle_entity.dart';
+import '../../../controllers/company/company_viewmodel.dart';
+import '../../../controllers/vehicle/vehicle_list_viewmodel.dart';
+import '../../../controllers/vehicle/vehicle_viewmodel.dart';
+import '../../application/company/create_vehicle_view.dart';
 
 mixin CreateVehicleMixin on State<CreateVehicleView> {
   late final VehicleViewModel vehicleViewModel;
