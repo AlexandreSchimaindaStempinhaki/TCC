@@ -4,7 +4,7 @@ import 'package:signals_flutter/signals_flutter.dart';
 import '../../../widgets/feedback/animated_three_dots.dart';
 import '../../../widgets/routes/my_route_card.dart';
 import '../../../widgets/navigation/nav_bar.dart';
-import '../../mixins/route/my_routes_logic.dart';
+import '../../mixins/routes/my_routes_logic.dart';
 
 class MyRoutesView extends StatefulWidget {
   const MyRoutesView({super.key});

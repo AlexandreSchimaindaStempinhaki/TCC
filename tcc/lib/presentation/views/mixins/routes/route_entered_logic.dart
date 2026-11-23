@@ -678,12 +678,11 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
 
         final profile = _findPassengerProfile(b.userId);
         final geo = useOutboundPoint
-            ? (profile?.boardingPoint ??
-                  profile?.disembarkationPoint ??
-                  currentRoute.origin)
-            : (profile?.disembarkationPoint ??
-                  profile?.boardingPoint ??
-                  currentRoute.destination);
+            ? (profile?.boardingPoint ?? profile?.disembarkationPoint)
+            : (profile?.disembarkationPoint ?? profile?.boardingPoint);
+
+        // Não cria parada fantasma em cima da origem/destino se não houver ponto salvo
+        if (geo == null) continue;
 
         final key = _cleanDigits(b.userId).isNotEmpty
             ? _cleanDigits(b.userId)
@@ -732,22 +731,20 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
       );
     }
 
-    // 4. Fallback final: passageiros aprovados da rota (usando o ponto de embarque/desembarque salvo)
+    // 4. Fallback final: passageiros aprovados da rota que tenham ponto salvo
     if (rawStops.isEmpty && passengers.isNotEmpty) {
       for (final p in passengers) {
         final id = (p.cpf != null && p.cpf!.trim().isNotEmpty)
             ? _cleanDigits(p.cpf!)
             : p.uid;
         if (addedIds.contains(id)) continue;
-        addedIds.add(id);
 
         final geo = isOutbound
-            ? (p.boardingPoint ??
-                  p.disembarkationPoint ??
-                  currentRoute.origin)
-            : (p.disembarkationPoint ??
-                  p.boardingPoint ??
-                  currentRoute.destination);
+            ? (p.boardingPoint ?? p.disembarkationPoint)
+            : (p.disembarkationPoint ?? p.boardingPoint);
+
+        if (geo == null) continue;
+        addedIds.add(id);
 
         rawStops.add(
           TripStopPoint(
@@ -957,7 +954,6 @@ mixin RouteEnteredMixin on State<RouteEnteredView> {
       final now = DateTime.now();
       final todayDate = DateTime(now.year, now.month, now.day);
 
-      // Garante perfis dos passageiros e embarques do dia atualizados antes de montar as paradas
       await routeViewModel.commands.fetchRouteById(
         currentRoute.id,
         loadMembers: true,

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:signals_flutter/signals_flutter.dart';
-import 'package:tcc/presentation/widgets/feedback/animated_three_dots.dart';
 
 import '../../../../domain/models/company_entity.dart';
 import '../../../../domain/models/route_entity.dart';
@@ -13,7 +12,7 @@ import '../../../widgets/live_map/live_map_floating_controls.dart';
 import '../../../widgets/live_map/live_map_marker_factory.dart';
 import '../../../widgets/live_map/live_map_navigation_engine.dart';
 import '../../../widgets/live_map/live_map_top_bar.dart';
-import '../../mixins/route/driver_live_map_logic.dart';
+import '../../mixins/routes/driver_live_map_logic.dart';
 
 class DriverLiveMapView extends StatefulWidget {
   final RouteModel route;
@@ -152,7 +151,6 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final isDriver = widget.isDriver;
 
@@ -183,7 +181,15 @@ class _DriverLiveMapViewState extends State<DriverLiveMapView>
       final rawStops = (liveTrip != null && liveTrip.stops.isNotEmpty)
           ? liveTrip.stops
           : widget.stops;
-      final stops = resolveOrderedStops(rawStops, driverLatLng);
+      final stops = resolveOrderedStops(rawStops, driverLatLng).where((s) {
+        final isGenericName =
+            s.passengerName.trim().toLowerCase() == 'passageiro';
+        final distToDest = LiveMapNavigationEngine.distanceMeters(
+          LatLng(s.latitude, s.longitude),
+          destLatLng,
+        );
+        return !(isGenericName && distToDest < 25);
+      }).toList();
 
       if (isDriver) ensureDriverStopCards(stops, isDark: isDark);
 
