@@ -20,6 +20,12 @@ class CompanyMemberViewModelCommands {
 
   String cleanDigits(String value) => value.replaceAll(RegExp(r'\D'), '');
 
+  String formatCpf(String cpf) {
+    final digits = cleanDigits(cpf);
+    if (digits.length != 11) return cpf;
+    return '${digits.substring(0, 3)}.${digits.substring(3, 6)}.${digits.substring(6, 9)}-${digits.substring(9)}';
+  }
+
   String _normalizeText(String input) {
     const withAccents = 'áàâãäéèêëíìîïóòôõöúùûüçñÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ';
     const withoutAccents = 'aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN';
@@ -28,6 +34,15 @@ class CompanyMemberViewModelCommands {
       result = result.replaceAll(withAccents[i], withoutAccents[i]);
     }
     return result;
+  }
+
+  String _firstNonEmpty(List<dynamic> values, {String fallback = ''}) {
+    for (final v in values) {
+      if (v == null) continue;
+      final s = v.toString().trim();
+      if (s.isNotEmpty) return s;
+    }
+    return fallback;
   }
 
   CompanyModel? resolveCompany(CompanyModel? widgetCompany) {
@@ -51,13 +66,14 @@ class CompanyMemberViewModelCommands {
     }
 
     if (loggedUser != null) {
+      if (loggedUser.uid.trim().isNotEmpty) ids.add(loggedUser.uid.trim());
       final cpf = loggedUser.cpf;
       if (cpf != null && cpf.trim().isNotEmpty) {
         ids.add(cpf.trim());
         ids.add(cleanDigits(cpf));
       }
       final email = loggedUser.email;
-      if (email != null && email.trim().isNotEmpty) {
+      if (email.trim().isNotEmpty) {
         ids.add(email.trim());
         ids.add(email.trim().toLowerCase());
       }
@@ -481,14 +497,12 @@ class CompanyMemberViewModelCommands {
         : (cleanMemberId.isNotEmpty ? cleanMemberId : memberId);
 
     try {
-      // 1. Tenta atualizar via Command/Facade oficial
       await changeMemberRole(
         companyCnpj: rawCnpj,
         userCpf: targetCpf,
         newRole: mappedRole,
       );
 
-      // 2. Garante persistência no Firestore para ambos os padrões de campos
       final firestore = FirebaseFirestore.instance;
       final membersRef = firestore.collection('company_members');
 
@@ -565,9 +579,10 @@ class CompanyMemberViewModelCommands {
 
       try {
         final cleanCpf = cleanDigits(id);
+        final looksLikeCpf = cleanCpf.length == 11;
         DocumentSnapshot? doc;
 
-        if (cleanCpf.isNotEmpty) {
+        if (looksLikeCpf) {
           final byCpfDoc = await usersRef.doc(cleanCpf).get();
           if (byCpfDoc.exists) doc = byCpfDoc;
         }
@@ -577,12 +592,30 @@ class CompanyMemberViewModelCommands {
           if (byRawDoc.exists) doc = byRawDoc;
         }
 
-        if (doc == null && cleanCpf.isNotEmpty) {
+        if (doc == null) {
+          final queryByUid = await usersRef
+              .where('uid', isEqualTo: id)
+              .limit(1)
+              .get();
+          if (queryByUid.docs.isNotEmpty) doc = queryByUid.docs.first;
+        }
+
+        if (doc == null && looksLikeCpf) {
           final queryByCpf = await usersRef
               .where('cpf', isEqualTo: cleanCpf)
               .limit(1)
               .get();
           if (queryByCpf.docs.isNotEmpty) doc = queryByCpf.docs.first;
+        }
+
+        if (doc == null && looksLikeCpf) {
+          final queryByFormattedCpf = await usersRef
+              .where('cpf', isEqualTo: formatCpf(cleanCpf))
+              .limit(1)
+              .get();
+          if (queryByFormattedCpf.docs.isNotEmpty) {
+            doc = queryByFormattedCpf.docs.first;
+          }
         }
 
         if (doc == null) {
@@ -610,20 +643,28 @@ class CompanyMemberViewModelCommands {
     final profile =
         _viewModel.state.userProfilesCache[id.trim()] ?? <String, dynamic>{};
 
-    final uid = (profile['uid'] ?? id.trim()).toString();
-    final name =
-        (profile['name'] ??
-                (roleCategory == 'owner' ? 'Proprietário' : 'Usuário'))
-            .toString();
-    final email = (profile['email'] ?? '').toString();
-    final rawCpf = (profile['cpf'] ?? cleanDigits(id)).toString().trim();
-    final rawPhone = (profile['phone'] ?? '').toString().trim();
-    final rawPhotoUrl = (profile['photoUrl'] ?? '').toString().trim();
-    final rawDriverLicense =
-        (profile['driverLicense'] ?? '').toString().trim();
+    final uid = _firstNonEmpty([profile['uid'], id]);
+    final name = _firstNonEmpty(
+      [profile['nome'], profile['name']],
+      fallback: roleCategory == 'owner' ? 'Proprietário' : 'Usuário',
+    );
+    final email = _firstNonEmpty([profile['email']]);
+    final rawCpf = _firstNonEmpty([
+      profile['cpf'],
+      cleanDigits(id).length == 11 ? cleanDigits(id) : '',
+    ]);
+    final rawPhone = _firstNonEmpty([profile['telefone'], profile['phone']]);
+    final rawPhotoUrl = _firstNonEmpty([
+      profile['fotoUrl'],
+      profile['photoUrl'],
+    ]);
+    final rawDriverLicense = _firstNonEmpty([
+      profile['carteiraMotorista'],
+      profile['driverLicense'],
+    ]);
 
     DateTime? birthDate;
-    final rawBirthDate = profile['birthDate'];
+    final rawBirthDate = profile['dataNascimento'] ?? profile['birthDate'];
     if (rawBirthDate is Timestamp) {
       birthDate = rawBirthDate.toDate();
     } else if (rawBirthDate is DateTime) {
@@ -632,6 +673,10 @@ class CompanyMemberViewModelCommands {
       birthDate = DateTime.tryParse(rawBirthDate.trim());
     }
 
+    final rawBoarding = profile['pontoEmbarque'] ?? profile['boardingPoint'];
+    final rawDisembarkation =
+        profile['pontoDesembarque'] ?? profile['disembarkationPoint'];
+
     final resolvedUser = UserModel(
       uid: uid,
       name: name,
@@ -639,12 +684,9 @@ class CompanyMemberViewModelCommands {
       cpf: rawCpf.isNotEmpty ? rawCpf : null,
       phone: rawPhone.isNotEmpty ? rawPhone : null,
       birthDate: birthDate,
-      boardingPoint: profile['boardingPoint'] is GeoPoint
-          ? profile['boardingPoint'] as GeoPoint
-          : null,
-      disembarkationPoint: profile['disembarkationPoint'] is GeoPoint
-          ? profile['disembarkationPoint'] as GeoPoint
-          : null,
+      boardingPoint: rawBoarding is GeoPoint ? rawBoarding : null,
+      disembarkationPoint:
+          rawDisembarkation is GeoPoint ? rawDisembarkation : null,
       driverLicense: rawDriverLicense.isNotEmpty ? rawDriverLicense : null,
       photoUrl: rawPhotoUrl.isNotEmpty ? rawPhotoUrl : null,
     );

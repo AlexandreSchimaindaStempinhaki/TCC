@@ -282,7 +282,7 @@ class _CompanyMembersViewState extends State<CompanyMembersView>
             child: Watch((context) {
               if (isLoading.value) {
                 return Center(
-                  child: AnimatedThreeDots(color: colorScheme.primary),
+                  child: AnimatedThreeDots(color: colorScheme.onSurface),
                 );
               }
 

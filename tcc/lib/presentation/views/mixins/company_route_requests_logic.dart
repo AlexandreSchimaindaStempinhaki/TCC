@@ -31,6 +31,12 @@ mixin CompanyRouteRequestsMixin on State<CompanyRouteRequestsView> {
 
   String cleanDigits(String value) => value.replaceAll(RegExp(r'\D'), '');
 
+  String formatCpf(String cpf) {
+    final digits = cleanDigits(cpf);
+    if (digits.length != 11) return cpf;
+    return '${digits.substring(0, 3)}.${digits.substring(3, 6)}.${digits.substring(6, 9)}-${digits.substring(9)}';
+  }
+
   String formatCnpj(String cnpj) {
     final digits = cleanDigits(cnpj);
     if (digits.length != 14) return cnpj;
@@ -99,9 +105,10 @@ mixin CompanyRouteRequestsMixin on State<CompanyRouteRequestsView> {
 
       try {
         final cleanCpf = cleanDigits(id);
+        final looksLikeCpf = cleanCpf.length == 11;
         DocumentSnapshot? doc;
 
-        if (cleanCpf.isNotEmpty) {
+        if (looksLikeCpf) {
           final byCpfDoc = await usersRef.doc(cleanCpf).get();
           if (byCpfDoc.exists) doc = byCpfDoc;
         }
@@ -111,13 +118,33 @@ mixin CompanyRouteRequestsMixin on State<CompanyRouteRequestsView> {
           if (byRawDoc.exists) doc = byRawDoc;
         }
 
-        if (doc == null && cleanCpf.isNotEmpty) {
+        if (doc == null) {
+          final queryByUid = await usersRef
+              .where('uid', isEqualTo: id)
+              .limit(1)
+              .get();
+          if (queryByUid.docs.isNotEmpty) {
+            doc = queryByUid.docs.first;
+          }
+        }
+
+        if (doc == null && looksLikeCpf) {
           final queryByCpf = await usersRef
               .where('cpf', isEqualTo: cleanCpf)
               .limit(1)
               .get();
           if (queryByCpf.docs.isNotEmpty) {
             doc = queryByCpf.docs.first;
+          }
+        }
+
+        if (doc == null && looksLikeCpf) {
+          final queryByFormattedCpf = await usersRef
+              .where('cpf', isEqualTo: formatCpf(cleanCpf))
+              .limit(1)
+              .get();
+          if (queryByFormattedCpf.docs.isNotEmpty) {
+            doc = queryByFormattedCpf.docs.first;
           }
         }
 

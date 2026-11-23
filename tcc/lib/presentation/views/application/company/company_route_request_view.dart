@@ -83,7 +83,7 @@ class _CompanyRouteRequestsViewState extends State<CompanyRouteRequestsView>
 
         if (loading) {
           return Center(
-            child: AnimatedThreeDots(color: colorScheme.primary),
+            child: AnimatedThreeDots(color: colorScheme.onSurface),
           );
         }
 
