@@ -50,8 +50,6 @@ final List<RouteBase> companyRoutes = [
     name: CompanyRouteNames.createCompany,
     redirect: (context, state) {
       final extra = state.extra;
-      // Criar uma nova empresa é permitido para qualquer usuário autenticado.
-      // Editar uma empresa existente é permitido apenas ao Dono (CEO).
       if (extra is CompanyModel) {
         return RouteAccessGuard.requireOwner(
           company: extra,
@@ -68,7 +66,7 @@ final List<RouteBase> companyRoutes = [
     },
   ),
 
-  // ================= VISUALIZAÇÃO DA EMPRESA (COM AÇÕES DE GESTÃO PROTEGIDAS) =================
+  // ================= VISUALIZAÇÃO DA EMPRESA =================
   GoRoute(
     path: CompanyPaths.companyHome,
     name: CompanyRouteNames.companyHome,
@@ -97,6 +95,8 @@ final List<RouteBase> companyRoutes = [
     redirect: (context, state) {
       final extra = state.extra;
       CompanyModel? company;
+      String? companyCnpj;
+      RouteModel? route;
       bool wantsPassengers = false;
 
       if (extra is CompanyModel) {
@@ -105,13 +105,19 @@ final List<RouteBase> companyRoutes = [
         company = extra['company'] is CompanyModel
             ? extra['company'] as CompanyModel
             : null;
+        route = extra['route'] is RouteModel
+            ? extra['route'] as RouteModel
+            : null;
+        companyCnpj = (extra['companyCnpj'] as String?) ?? route?.companyCnpj;
         wantsPassengers = (extra['initialShowPassengers'] as bool?) ?? false;
       }
 
-      // Aba de passageiros é estritamente restrita à equipe da empresa
+      // Aba de passageiros liberada para CEO, Gerente e Motorista da empresa
       if (wantsPassengers) {
         return RouteAccessGuard.requireCompanyStaff(
-          company: company,
+          company: company ?? route?.company,
+          companyCnpj: companyCnpj,
+          route: route,
           fallback: HomePaths.home,
         );
       }
@@ -126,14 +132,23 @@ final List<RouteBase> companyRoutes = [
         final company = extra['company'] is CompanyModel
             ? extra['company'] as CompanyModel
             : null;
+        final route = extra['route'] is RouteModel
+            ? extra['route'] as RouteModel
+            : null;
+        final companyCnpj =
+            (extra['companyCnpj'] as String?) ?? route?.companyCnpj;
         final requestedShowPassengers =
             (extra['initialShowPassengers'] as bool?) ?? false;
         final allowedShowPassengers =
             requestedShowPassengers &&
-            RouteAccessGuard.isCompanyStaff(company: company);
+            RouteAccessGuard.isCompanyStaff(
+              company: company ?? route?.company,
+              companyCnpj: companyCnpj,
+              route: route,
+            );
 
         return CompanyMembersView(
-          company: company,
+          company: company ?? route?.company,
           initialShowPassengers: allowedShowPassengers,
         );
       }
